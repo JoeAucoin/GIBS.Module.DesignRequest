@@ -1,0 +1,598 @@
+@using System.Net
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using System.Text
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<Index> Localizer
+@inject ISettingService SettingService
+@inject INotificationService NotificationService
+@inject IUserService UserService
+@inject IFileService FileService
+
+<div class="text-center">
+    <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="List Records" ResourceKey="List" />
+    <ActionLink Action="Appliances" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="Manage Appliances" ResourceKey="Appliances" />
+    <ActionLink Action="Details" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="Manage Details" ResourceKey="Details" />
+</div>
+
+@if (_isSubmitted)
+{
+    @if (!string.IsNullOrEmpty(_successFeedback))
+    {
+        <div class="alert alert-success mt-3" style="white-space: pre-wrap;">
+            @((MarkupString)_successFeedback)
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success mt-3">
+            @Localizer["Message.SubmissionSuccess"]
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>@Localizer["Upload Files"]</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <Label Class="col-sm-3" For="fileName" HelpText="Provide a name for the file" ResourceKey="Label.FileName">File Name:</Label>
+                <div class="col-sm-9">
+                    <input id="fileName" class="form-control" @bind="@_newFileToRequest.Name" required />
+                </div>
+            </div>
+            <div class="row mb-3">
+                <Label Class="col-sm-3" For="fileDescription" HelpText="Provide a description for the file" ResourceKey="Label.FileDescription">File Description:</Label>
+                <div class="col-sm-9">
+                    <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <Label Class="col-sm-3" For="upload" HelpText="Upload the file you want" ResourceKey="Label.UploadFile">File:</Label>
+                <div class="col-sm-9">
+                    <FileManager UploadMultiple="false" Filter="jpg,png,gif,jpeg,pdf"
+                                 FolderId="@_folderId"
+                                 ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"
+                                 OnUpload="@HandleFileUpload" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (_uploadedFiles.Any())
+    {
+        <h5 class="mt-4">@Localizer["Uploaded Files"]</h5>
+        <ul class="list-group">
+            @foreach (var file in _uploadedFiles)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@file.Name</strong><br />
+                        <small>@file.Description</small>
+                    </div>
+                    <a href="@file.FilePath" target="_blank" class="btn btn-primary btn-sm">@Localizer["View"]</a>
+                </li>
+            }
+        </ul>
+    }
+}
+else
+{
+    <form @ref="form" class="@(validated ? " was-validated" : "needs-validation")" novalidate>
+
+        @if (!string.IsNullOrEmpty(_instructions))
+        {
+            <div class="alert alert-info text-center" style="white-space: pre-wrap;">
+                @((MarkupString)_instructions)
+            </div>
+        }
+
+        @* Honeypot field for bot protection *@
+        <div style="position: absolute; left: -5000px;" aria-hidden="true">
+            <input type="text" name="fax" tabindex="-1" @bind="@_DesignRequest.Fax" autocomplete="off" />
+        </div>
+
+        <div class="container">
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="name" HelpText="Enter your name" ResourceKey="Name">Your Full Name: </Label>
+                <div class="col-sm-9">
+                    <input id="name" class="form-control" @bind="@_DesignRequest.ContactName" required />
+                </div>
+            </div>
+            @if (_showCompany)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="company" HelpText="Enter your company" ResourceKey="Company">Company: </Label>
+                    <div class="col-sm-9">
+                        <input id="company" class="form-control" @bind="@_DesignRequest.Company" />
+                    </div>
+                </div>
+            }
+
+            @if (_showPhone)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="phone" HelpText="Enter your phone" ResourceKey="Phone">Phone: </Label>
+                    <div class="col-sm-9">
+                        <input id="phone" class="form-control" @bind="@_DesignRequest.Phone" />
+                    </div>
+                </div>
+            }
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="email" HelpText="Enter your email" ResourceKey="Email">Email: </Label>
+                <div class="col-sm-9">
+                    <input id="email" type="email" class="form-control" @bind="@_DesignRequest.Email" required />
+                </div>
+            </div>
+            @if (_showWebsite)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="website" HelpText="Enter your website" ResourceKey="Website">Website: </Label>
+                    <div class="col-sm-9">
+                        <input id="website" class="form-control" @bind="@_DesignRequest.Website" />
+                    </div>
+                </div>
+            }
+            @if (_showInterest)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="interest" HelpText="Select your interest(s)" ResourceKey="Interest">Interest: </Label>
+                    <div class="col-sm-9">
+                        @foreach (var interest in _interests)
+                        {
+                            <div class="form-check">
+                                <input id="interest-@interest" type="checkbox" class="form-check-input" checked="@_selectedInterests[interest]" @onchange="(e) => OnInterestChanged(e, interest)" />
+                                <label class="form-check-label" for="interest-@interest">@interest</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="questioncomments" HelpText="Enter your Design Notes, requests or comments" ResourceKey="QuestionComments">Design Notes: </Label>
+                <div class="col-sm-9">
+                    <textarea id="questioncomments" class="form-control" @bind="@_DesignRequest.QuestionComments" required></textarea>
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="clientProjectName" HelpText="Enter the Client/Project Name" ResourceKey="ClientProjectName">Client/Project Name: </Label>
+                <div class="col-sm-9">
+                    <input id="clientProjectName" class="form-control" @bind="@_DesignRequest.ProjectName" required />
+                </div>
+            </div>
+
+            @if (_showAddress)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="address" HelpText="Enter the project address" ResourceKey="Address">Project Address: </Label>
+                    <div class="col-sm-9">
+                        <textarea id="address" class="form-control" @bind="@_DesignRequest.Address" rows="3" required></textarea>
+                    </div>
+                </div>
+            }
+
+            @if (_showInstallationDate)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Installation Date: </Label>
+                    <div class="col-sm-9">
+                        <input id="installationDate" type="date" class="form-control" @bind="@_DesignRequest.InstallationDate" />
+                    </div>
+                </div>
+            }
+
+            @if (_showDimensions)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Dimensions: </Label>
+                    <div class="col-sm-9">
+                        <input id="overallSpaceDimensions" class="form-control" @bind="@_DesignRequest.OverallSpaceDimensions" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="ceilingHeight" HelpText="Enter the ceiling height" ResourceKey="CeilingHeight">Ceiling Height: </Label>
+                    <div class="col-sm-9">
+                        <input id="ceilingHeight" class="form-control" @bind="@_DesignRequest.CeilingHeight" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="lengthOfKitchen" HelpText="Enter the length of the kitchen" ResourceKey="LengthOfKitchen">Length of Kitchen: </Label>
+                    <div class="col-sm-9">
+                        <input id="lengthOfKitchen" class="form-control" @bind="@_DesignRequest.LengthOfKitchen" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="slopeOfPatio" HelpText="Enter the slope of the patio" ResourceKey="SlopeOfPatio">Slope of Patio: </Label>
+                    <div class="col-sm-9">
+                        <input id="slopeOfPatio" class="form-control" @bind="@_DesignRequest.SlopeOfPatio" />
+                    </div>
+                </div>
+            }
+
+            @if (_showConfiguration)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="shapeConfiguration" HelpText="Enter the shape/configuration" ResourceKey="ShapeConfiguration">Shape/Configuration: </Label>
+                    <div class="col-sm-9">
+                        <input id="shapeConfiguration" class="form-control" @bind="@_DesignRequest.ShapeConfiguration" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="doorStyle" HelpText="Enter the door style" ResourceKey="DoorStyle">Door Style: </Label>
+                    <div class="col-sm-9">
+                        <input id="doorStyle" class="form-control" @bind="@_DesignRequest.DoorStyle" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
+                    <div class="col-sm-9">
+                        <input id="color" class="form-control" @bind="@_DesignRequest.Color" />
+                    </div>
+                </div>
+            }
+
+            @if (_showCountertop)
+            {
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
+                    <div class="col-sm-9">
+                        <input id="countertopThickness" class="form-control" @bind="@_DesignRequest.CountertopThickness" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
+                    <div class="col-sm-9">
+                        <input id="counterDepth" class="form-control" @bind="@_DesignRequest.CounterDepth" />
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="counterHeight" HelpText="Enter the counter height" ResourceKey="CounterHeight">Counter Height: </Label>
+                    <div class="col-sm-9">
+                        <input id="counterHeight" class="form-control" @bind="@_DesignRequest.CounterHeight" />
+                    </div>
+                </div>
+            }
+
+
+            @if (_showAppliances && _availableAppliances != null)
+            {
+                <div class="row mt-3">
+                    <div class="col">
+                        <h5>Appliances</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    @foreach (var appliance in _availableAppliances)
+                                    {
+                                        var selection = _selectedAppliances[appliance.ApplianceId];
+                                        <div class="col-md-12 mb-3">
+                                            <div class="form-check">
+                                                <input id="appliance-@appliance.ApplianceId" type="checkbox" class="form-check-input" @bind="selection.IsSelected" />
+                                                <label class="form-check-label" for="appliance-@appliance.ApplianceId">@appliance.ApplianceName</label>
+                                            </div>
+                                            @if (selection.IsSelected)
+                                            {
+                                                <div class="row g-2 ms-4 mt-1">
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Brand/Model" @bind="selection.BrandModel" />
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Size" @bind="selection.Size" />
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <select class="form-select form-select-sm" @bind="selection.FuelType">
+                                                            <option value="">-- Select Fuel Type --</option>
+                                                            <option value="Electric">Electric</option>
+                                                            <option value="Natural Gas">Natural Gas</option>
+                                                            <option value="Propane">Propane</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (_showDetails && _availableDetails != null)
+            {
+                <div class="row mt-3">
+                    <div class="col">
+                        <h5>Details</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    @foreach (var detail in _availableDetails)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input id="detail-@detail.DetailId" type="checkbox" class="form-check-input" @bind="@_selectedDetails[detail.DetailId]" />
+                                                <label class="form-check-label" for="detail-@detail.DetailId">@detail.DetailName</label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+        <div style="width:100%;" class="mb-2 mt-2 text-center"><button type="button" class="btn btn-success" @onclick="Save">@Localizer["Submit"]</button></div>
+
+    </form>
+}
+
+@code {
+
+    private class ApplianceSelection
+    {
+        public bool IsSelected { get; set; }
+        public string BrandModel { get; set; }
+        public string Size { get; set; }
+        public string FuelType { get; set; }
+    }
+
+    // public override string RenderMode => RenderModes.Static;
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+    private ElementReference form;
+    private bool validated = false;
+    private DesignRequest _DesignRequest = new();
+    private List<string> _interests = new();
+    private Dictionary<string, bool> _selectedInterests = new();
+
+    private List<string> _status = new();
+
+    private bool _isSubmitted = false;
+    private string _instructions;
+    private string _successFeedback;
+    private string _sentToUserName;
+    private string _sentToUserEmail;
+    private string _authorizedUser;
+    private bool _showCompany;
+    private bool _showAddress;
+    private bool _showPhone;
+    private bool _showWebsite;
+    private bool _showInterest;
+    private bool _showAppliances;
+    private bool _showDetails;
+    private bool _showInstallationDate;
+    private bool _showDimensions;
+    private bool _showConfiguration;
+    private bool _showCountertop;
+    private int _folderId = 1;
+
+    private List<Appliance> _availableAppliances = new();
+    private List<Detail> _availableDetails = new();
+    private Dictionary<int, ApplianceSelection> _selectedAppliances = new();
+    private Dictionary<int, bool> _selectedDetails = new();
+
+    private FileToRequest _newFileToRequest = new();
+    private List<FileToRequest> _uploadedFiles = new();
+    private int _currentDesignRequestId;
+
+    public override List<Resource> Resources => new List<Resource>()
+    {
+        new Resource { ResourceType = ResourceType.Stylesheet, Url = ModulePath() + "Module.css" },
+        new Resource { ResourceType = ResourceType.Script, Url = ModulePath() + "Module.js" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _DesignRequest.IP_Address = PageState.RemoteIPAddress;
+
+            _DesignRequest.InstallationDate = DateTime.Today.AddMonths(3);
+            // ensure honeypot is empty
+            _DesignRequest.Fax = "";
+
+            var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _instructions = SettingService.GetSetting(settings, "Instructions", "");
+            _successFeedback = SettingService.GetSetting(settings, "SuccessFeedback", "Thank you for your form submission!");
+            _sentToUserEmail = SettingService.GetSetting(settings, "SentToUserEmail", "");
+            _sentToUserName = SettingService.GetSetting(settings, "SentToUserName", "");
+            _authorizedUser = SettingService.GetSetting(settings, "AuthorizedUser", "");
+            var interestList = SettingService.GetSetting(settings, "InterestList", "");
+            if (!string.IsNullOrEmpty(interestList))
+            {
+                _interests = interestList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                _selectedInterests = _interests.ToDictionary(i => i, i => false);
+            }
+            var statusList = SettingService.GetSetting(settings, "StatusList", "");
+            if (!string.IsNullOrEmpty(statusList))
+            {
+                _status = statusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            else
+            {
+                _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
+            }
+            _showCompany = bool.Parse(SettingService.GetSetting(settings, "ShowCompany", "true"));
+            _showAddress = bool.Parse(SettingService.GetSetting(settings, "ShowAddress", "true"));
+            _showPhone = bool.Parse(SettingService.GetSetting(settings, "ShowPhone", "true"));
+            _showWebsite = bool.Parse(SettingService.GetSetting(settings, "ShowWebsite", "true"));
+            _showInterest = bool.Parse(SettingService.GetSetting(settings, "ShowInterest", "true"));
+            _showAppliances = bool.Parse(SettingService.GetSetting(settings, "ShowAppliances", "true"));
+            _showDetails = bool.Parse(SettingService.GetSetting(settings, "ShowDetails", "true"));
+            _showInstallationDate = bool.Parse(SettingService.GetSetting(settings, "ShowInstallationDate", "true"));
+            _showDimensions = bool.Parse(SettingService.GetSetting(settings, "ShowDimensions", "true"));
+            _showConfiguration = bool.Parse(SettingService.GetSetting(settings, "ShowConfiguration", "true"));
+            _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
+            // Correctly parse the setting as an integer
+            if (int.TryParse(SettingService.GetSetting(ModuleState.Settings, "FileFolder", "1"), out int folderId))
+            {
+                _folderId = folderId;
+            }
+            else
+            {
+                // Handle the case where the setting is not a valid integer
+                _folderId = 1; // Default value or handle error
+            }
+
+            if (_showAppliances)
+            {
+                _availableAppliances = await DesignRequestService.GetAppliancesAsync(ModuleState.ModuleId) ?? new List<Appliance>();
+                if (_availableAppliances != null)
+                {
+                    _selectedAppliances = _availableAppliances.ToDictionary(a => a.ApplianceId, a => new ApplianceSelection());
+                }
+            }
+            if (_showDetails)
+            {
+                _availableDetails = await DesignRequestService.GetDetailsAsync(ModuleState.ModuleId) ?? new List<Detail>();
+                if (_availableDetails != null)
+                {
+                    _selectedDetails = _availableDetails.ToDictionary(d => d.DetailId, d => false);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading DesignRequest {Error}", ex.Message);
+            AddModuleMessage(Localizer["Message.LoadError"], MessageType.Error);
+        }
+    }
+
+    private void OnInterestChanged(ChangeEventArgs e, string interest)
+    {
+        if (_selectedInterests.ContainsKey(interest))
+        {
+            _selectedInterests[interest] = (bool)e.Value;
+        }
+    }
+
+    private async void HandleFileUpload(int fileId)
+    {
+        if (_currentDesignRequestId != 0)
+        {
+            var uploadedFile = await FileService.GetFileAsync(fileId);
+            if (uploadedFile != null)
+            {
+                _newFileToRequest.DesignRequestId = _currentDesignRequestId;
+                _newFileToRequest.FileId = uploadedFile.FileId;
+                _newFileToRequest.FilePath = uploadedFile.Url;
+
+                try
+                {
+                    var result = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+                    _uploadedFiles.Add(result);
+                    _newFileToRequest = new(); // Reset for next upload
+                    AddModuleMessage("File uploaded successfully.", MessageType.Success);
+                }
+                catch (Exception ex)
+                {
+                    await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
+                    AddModuleMessage("There was an error saving the file information.", MessageType.Error);
+                }
+            }
+            else
+            {
+                AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            validated = true;
+            var interop = new Oqtane.UI.Interop(JSRuntime);
+            if (await interop.FormValid(form))
+            {
+                // ensure honeypot is empty
+                //_DesignRequest.Fax = "";
+
+                _DesignRequest.Status = _status.FirstOrDefault();
+                _DesignRequest.ContactName = _DesignRequest.ContactName?.Trim();
+                _DesignRequest.Company = _DesignRequest.Company?.Trim();
+                _DesignRequest.ProjectName = _DesignRequest.ProjectName?.Trim();
+                _DesignRequest.Address = _DesignRequest.Address?.Trim();
+                _DesignRequest.Phone = _DesignRequest.Phone?.Trim();
+                _DesignRequest.Email = _DesignRequest.Email?.Trim();
+                if (!string.IsNullOrEmpty(_DesignRequest.Website) && !_DesignRequest.Website.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !_DesignRequest.Website.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    _DesignRequest.Website = "https://" + _DesignRequest.Website;
+                }
+                _DesignRequest.QuestionComments = _DesignRequest.QuestionComments?.Trim();
+
+                _DesignRequest.SendToEmail = _sentToUserEmail.ToString();
+                _DesignRequest.SendToName = _sentToUserName.ToString();
+                _DesignRequest.Interest = string.Join(", ", _selectedInterests.Where(i => i.Value).Select(i => i.Key));
+                _DesignRequest.CeilingHeight = _DesignRequest.CeilingHeight?.Trim();
+                _DesignRequest.Color = _DesignRequest.Color?.Trim();
+                _DesignRequest.CounterDepth = _DesignRequest.CounterDepth?.Trim();
+                _DesignRequest.CounterHeight = _DesignRequest.CounterHeight?.Trim();
+                _DesignRequest.CountertopThickness = _DesignRequest.CountertopThickness?.Trim();
+                _DesignRequest.DoorStyle = _DesignRequest.DoorStyle?.Trim();
+
+                _DesignRequest.ModuleId = ModuleState.ModuleId;
+                _DesignRequest.CreatedBy = PageState.User?.DisplayName ?? "anonymous";
+                _DesignRequest.CreatedOn = DateTime.Now;
+                _DesignRequest.IP_Address = PageState.RemoteIPAddress;
+                _DesignRequest.ModifiedBy = PageState.User?.DisplayName ?? "anonymous";
+                _DesignRequest.ModifiedOn = DateTime.Now;
+
+                var designRequest = await DesignRequestService.AddDesignRequestAsync(_DesignRequest);
+                if (designRequest != null && designRequest.DesignRequestId != 0)
+                {
+                    _currentDesignRequestId = designRequest.DesignRequestId;
+
+                    foreach (var selectedAppliance in _selectedAppliances.Where(kvp => kvp.Value.IsSelected))
+                    {
+                        var applianceToRequest = new ApplianceToRequest
+                        {
+                            DesignRequestId = designRequest.DesignRequestId,
+                            ApplianceId = selectedAppliance.Key,
+                            BrandModel = selectedAppliance.Value.BrandModel,
+                            Size = selectedAppliance.Value.Size,
+                            FuelType = selectedAppliance.Value.FuelType
+                        };
+                        await DesignRequestService.AddApplianceToRequestAsync(applianceToRequest);
+                    }
+
+                    foreach (var selectedDetail in _selectedDetails.Where(kvp => kvp.Value))
+                    {
+                        var detailToRequest = new DetailToRequest
+                        {
+                            DesignRequestId = designRequest.DesignRequestId,
+                            DetailId = selectedDetail.Key
+                        };
+                        await DesignRequestService.AddDetailToRequestAsync(detailToRequest);
+                    }
+
+                    await logger.LogInformation("Contact Form Submitted {DesignRequest}", _DesignRequest);
+                    _isSubmitted = true;
+                }
+                else
+                {
+                    await logger.LogError("Failed to save the design request. The service returned a null or invalid object.");
+                    AddModuleMessage(Localizer["Message.SubmissionError"], MessageType.Error);
+                }
+            }
+            else
+            {
+                AddModuleMessage(Localizer["Message.SaveValidation"], MessageType.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving Contact Form {Error}", ex.Message);
+            AddModuleMessage(Localizer["Message.SubmissionError"], MessageType.Error);
+        }
+    }
+}

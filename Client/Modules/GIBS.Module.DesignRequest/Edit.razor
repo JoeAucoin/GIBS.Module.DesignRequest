@@ -1,0 +1,774 @@
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using System.Linq
+@using System.Globalization
+@using System.Net
+@using Oqtane.Models
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<Edit> Localizer
+@inject ISettingService SettingService
+@inject IFileService FileService
+
+@if (_designRequest == null)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else
+{
+    <form @ref="form" class="@(validated ? " was-validated" : "needs-validation")" novalidate>
+        <div class="container">
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="contactName" HelpText="Enter a ContactName" ResourceKey="ContactName">ContactName: </Label>
+                <div class="col-sm-9">
+                    <input id="contactName" class="form-control" @bind="@_designRequest.ContactName" required />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="projectName" HelpText="Enter the project name" ResourceKey="ProjectName">Project Name: </Label>
+                <div class="col-sm-9">
+                    <input id="projectName" class="form-control" @bind="@_designRequest.ProjectName" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="address" HelpText="Enter the project address" ResourceKey="Address">Address: </Label>
+                <div class="col-sm-9">
+                    <textarea id="address" class="form-control" @bind="@_designRequest.Address" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="questionComments" HelpText="Enter design notes" ResourceKey="DesignNotes">Design Notes: </Label>
+                <div class="col-sm-9">
+                    <textarea id="questionComments" class="form-control" @bind="@_designRequest.QuestionComments" rows="5"></textarea>
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Installation Date: </Label>
+                <div class="col-sm-9">
+                    <input id="installationDate" type="date" class="form-control" @bind="@_designRequest.InstallationDate" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Dimensions: </Label>
+                <div class="col-sm-9">
+                    <input id="overallSpaceDimensions" class="form-control" @bind="@_designRequest.OverallSpaceDimensions" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="ceilingHeight" HelpText="Enter the ceiling height" ResourceKey="CeilingHeight">Ceiling Height: </Label>
+                <div class="col-sm-9">
+                    <input id="ceilingHeight" class="form-control" @bind="@_designRequest.CeilingHeight" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="lengthOfKitchen" HelpText="Enter the length of the kitchen" ResourceKey="LengthOfKitchen">Length of Kitchen: </Label>
+                <div class="col-sm-9">
+                    <input id="lengthOfKitchen" class="form-control" @bind="@_designRequest.LengthOfKitchen" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="slopeOfPatio" HelpText="Enter the slope of the patio" ResourceKey="SlopeOfPatio">Slope of Patio: </Label>
+                <div class="col-sm-9">
+                    <input id="slopeOfPatio" class="form-control" @bind="@_designRequest.SlopeOfPatio" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="shapeConfiguration" HelpText="Enter the shape/configuration" ResourceKey="ShapeConfiguration">Shape/Configuration: </Label>
+                <div class="col-sm-9">
+                    <input id="shapeConfiguration" class="form-control" @bind="@_designRequest.ShapeConfiguration" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="doorStyle" HelpText="Enter the door style" ResourceKey="DoorStyle">Door Style: </Label>
+                <div class="col-sm-9">
+                    <input id="doorStyle" class="form-control" @bind="@_designRequest.DoorStyle" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
+                <div class="col-sm-9">
+                    <input id="color" class="form-control" @bind="@_designRequest.Color" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
+                <div class="col-sm-9">
+                    <input id="countertopThickness" class="form-control" @bind="@_designRequest.CountertopThickness" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
+                <div class="col-sm-9">
+                    <input id="counterDepth" class="form-control" @bind="@_designRequest.CounterDepth" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="counterHeight" HelpText="Enter the counter height" ResourceKey="CounterHeight">Counter Height: </Label>
+                <div class="col-sm-9">
+                    <input id="counterHeight" class="form-control" @bind="@_designRequest.CounterHeight" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="assignedTo" HelpText="Assign this request to a user" ResourceKey="AssignedTo">Assigned To: </Label>
+                <div class="col-sm-9">
+                    <select id="assignedTo" class="form-select" @bind="@_designRequest.AssignedToUserId">
+                        <option value="0">-- Unassigned --</option>
+                        @if (_users != null)
+                        {
+                            @foreach (var user in _users)
+                            {
+                                <option value="@user.UserId">@user.DisplayName</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="status" HelpText="Select the status" ResourceKey="Status">Status: </Label>
+                <div class="col-sm-9">
+                    <select id="status" class="form-select" @bind="@_designRequest.Status">
+                        @if (_status != null)
+                        {
+                            @foreach (var statusValue in _status)
+                            {
+                                <option value="@statusValue">@statusValue</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <TabStrip>
+            <TabPanel Name="Appliances">
+                <h4 class="mt-4">Appliances for this Design</h4>
+                @if (_applianceToRequests != null && _applianceToRequests.Any())
+                {
+                    <table class="table table-striped mt-3">
+                        <thead>
+                            <tr>
+                                <th>Appliance</th>
+                                <th>Brand/Model</th>
+                                <th>Size</th>
+                                <th>Fuel Type</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _applianceToRequests)
+                            {
+                                <tr>
+                                    <td>@item.Appliance?.ApplianceName</td>
+                                    <td>@item.BrandModel</td>
+                                    <td>@item.Size</td>
+                                    <td>@item.FuelType</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditApplianceToRequest(item)">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteApplianceToRequest(item)">Delete</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No appliances have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-header">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add New" : "Edit") Appliance</div>
+                    <div class="card-body">
+                        <div class="row mb-2 align-items-end">
+                            <div class="col-md-3">
+                                <Label For="applianceSelect">Select Appliance:</Label>
+                                <select id="applianceSelect" class="form-select" @bind="@_newApplianceToRequest.ApplianceId">
+                                    <option value="0">-- Select --</option>
+                                    @if (_availableAppliances != null)
+                                    {
+                                        @foreach (var appliance in _availableAppliances)
+                                        {
+                                            <option value="@appliance.ApplianceId">@appliance.ApplianceName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <Label For="brandModel">Brand/Model:</Label>
+                                <input id="brandModel" class="form-control" @bind="@_newApplianceToRequest.BrandModel" />
+                            </div>
+                            <div class="col-md-2">
+                                <Label For="applianceSize">Size:</Label>
+                                <input id="applianceSize" class="form-control" @bind="@_newApplianceToRequest.Size" />
+                            </div>
+                            <div class="col-md-2">
+                                <Label For="fuelType">Fuel Type:</Label>
+                                <select id="fuelType" class="form-select" @bind="@_newApplianceToRequest.FuelType">
+                                    <option value="">-- Select --</option>
+                                    <option value="Electric">Electric</option>
+                                    <option value="Natural Gas">Natural Gas</option>
+                                    <option value="Propane">Propane</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-success" @onclick="SaveApplianceToRequest">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add" : "Update")</button>
+                                @if (_newApplianceToRequest.ApplianceToRequestId != 0)
+                                {
+                                    <button type="button" class="btn btn-secondary" @onclick="CancelEditAppliance">Cancel</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </TabPanel>
+            <TabPanel Name="Details">
+                <h4 class="mt-4">Details for this Design</h4>
+                @if (_detailToRequests != null && _detailToRequests.Any())
+                {
+                    <table class="table table-striped mt-3">
+                        <thead>
+                            <tr>
+                                <th>Detail</th>
+                                <th>Model</th>
+                                <th>Size</th>
+                                <th>Color</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detailToRequests)
+                            {
+                                <tr>
+                                    <td>@item.Detail?.DetailName</td>
+                                    <td>@item.DetailModel</td>
+                                    <td>@item.DetailSize</td>
+                                    <td>@item.DetailColor</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetailToRequest(item)">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteDetailToRequest(item)">Delete</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No details have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-header">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add New" : "Edit") Detail</div>
+                    <div class="card-body">
+                        <div class="row mb-2 align-items-end">
+                            <div class="col-md-3">
+                                <Label For="detailSelect">Select Detail:</Label>
+                                <select id="detailSelect" class="form-select" @bind="@_newDetailToRequest.DetailId">
+                                    <option value="0">-- Select --</option>
+                                    @if (_availableDetails != null)
+                                    {
+                                        @foreach (var detail in _availableDetails)
+                                        {
+                                            <option value="@detail.DetailId">@detail.DetailName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <Label For="detailModel">Model:</Label>
+                                <input id="detailModel" class="form-control" @bind="@_newDetailToRequest.DetailModel" />
+                            </div>
+                            <div class="col-md-2">
+                                <Label For="detailSize">Size:</Label>
+                                <input id="detailSize" class="form-control" @bind="@_newDetailToRequest.DetailSize" />
+                            </div>
+                            <div class="col-md-2">
+                                <Label For="detailColor">Color:</Label>
+                                <input id="detailColor" class="form-control" @bind="@_newDetailToRequest.DetailColor" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-success" @onclick="SaveDetailToRequest">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add" : "Update")</button>
+                                @if (_newDetailToRequest.DetailToRequestId != 0)
+                                {
+                                    <button type="button" class="btn btn-secondary" @onclick="CancelEditDetail">Cancel</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </TabPanel>
+            <TabPanel Name="Files">
+                <h4 class="mt-4">Files</h4>
+                @if (_fileToRequests != null && _fileToRequests.Any())
+                {
+                    <table class="table table-striped mt-3">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var file in _fileToRequests)
+                            {
+                                <tr>
+                                    <td>@file.Name</td>
+                                    <td>@file.Description</td>
+                                    <td class="text-end">
+                                        <a href="@file.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteFileToRequest(file)">Delete</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No files have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Add New File
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="fileName">File Name:</Label>
+                            <div class="col-sm-9">
+                                <input id="fileName" class="form-control" placeholder="Custom/Friendly File Name" @bind="@_newFileToRequest.Name" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="fileDescription">File Description:</Label>
+                            <div class="col-sm-9">
+                                <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="upload">File:</Label>
+                            <div class="col-sm-9">
+                                <FileManager UploadMultiple="false" Filter="jpg,png,gif,jpeg,pdf"
+                                             FolderId="@_folderId"
+                                             ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"
+                                             OnUpload="@HandleFileUpload" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </TabPanel>
+            <TabPanel Name="Notes" Heading="Internal Notes">
+                <h4 class="mt-4">Designer Notes</h4>
+                @if (_noteToRequests != null && _noteToRequests.Any())
+                {
+                    <div class="list-group mt-3">
+                        @foreach (var note in _noteToRequests.OrderByDescending(n => n.CreatedOn))
+                        {
+                            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@note.CreatedBy</h5>
+                                    <small>@note.CreatedOn.ToString("g")</small>
+                                </div>
+                                <p class="mb-1">@note.Note</p>
+                                <small class="d-block text-end">
+                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteNoteToRequest(note)">Delete</button>
+                                </small>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No designer notes have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <textarea class="form-control" @bind="@_newNoteToRequest.Note" rows="3" placeholder="Add a new note..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="button" class="btn btn-success" @onclick="AddNoteToRequest">Add Note</button>
+                    </div>
+                </div>
+            </TabPanel>
+
+        </TabStrip>
+
+        <div class="mt-3">
+            <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
+            <NavLink class="btn btn-secondary" href="@ReturnUrl()">@Localizer["Cancel"]</NavLink>
+        </div>
+        <br /><br />
+        <AuditInfo CreatedBy="@_designRequest.CreatedBy" CreatedOn="@_designRequest.CreatedOn" ModifiedBy="@_designRequest.ModifiedBy" ModifiedOn="@_designRequest.ModifiedOn"></AuditInfo>
+    </form>
+}
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+    public override string Actions => "Edit";
+    public override string Title => "Manage Design Request";
+
+    private ElementReference form;
+    private bool validated = false;
+
+    private DesignRequest _designRequest;
+    private List<User> _users;
+    private List<string> _status = new();
+
+    private List<ApplianceToRequest> _applianceToRequests;
+    private List<Appliance> _availableAppliances;
+    private ApplianceToRequest _newApplianceToRequest = new();
+
+    private List<DetailToRequest> _detailToRequests;
+    private List<Detail> _availableDetails;
+    private DetailToRequest _newDetailToRequest = new();
+
+    private List<NoteToRequest> _noteToRequests;
+    private NoteToRequest _newNoteToRequest = new();
+
+    private List<FileToRequest> _fileToRequests;
+    private FileToRequest _newFileToRequest = new();
+    private int _folderId = 1;
+    //  private readonly IUserRoleService _userRoleService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (int.TryParse(PageState.QueryString["id"], out int designRequestId))
+            {
+                _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
+                if (_designRequest != null)
+                {
+                    var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+                    _folderId = int.Parse(SettingService.GetSetting(settings, "FileFolder", "1"));
+                    var statusList = SettingService.GetSetting(settings, "StatusList", "");
+                    if (!string.IsNullOrEmpty(statusList))
+                    {
+                        _status = statusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    }
+                    else
+                    {
+                        _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
+                    }
+
+                    _users = await DesignRequestService.GetUsersAsync();
+                    DecodeDesignRequestProperties();
+                    await LoadApplianceData();
+                    await LoadDetailData();
+                    await LoadNoteData();
+                    await LoadFileData();
+                }
+                else
+                {
+                    AddModuleMessage("Design Request not found.", MessageType.Warning);
+                    NavigationManager.NavigateTo(NavigateUrl());
+                }
+            }
+            else
+            {
+                AddModuleMessage("Invalid Design Request Id.", MessageType.Error);
+                NavigationManager.NavigateTo(NavigateUrl());
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Design Request {Error}", ex.Message);
+            AddModuleMessage(Localizer["Message.LoadError"], MessageType.Error);
+        }
+    }
+
+    private void DecodeDesignRequestProperties()
+    {
+        if (_designRequest == null) return;
+
+        _designRequest.ContactName = WebUtility.HtmlDecode(_designRequest.ContactName);
+        _designRequest.Company = WebUtility.HtmlDecode(_designRequest.Company);
+        _designRequest.ProjectName = WebUtility.HtmlDecode(_designRequest.ProjectName);
+        _designRequest.Address = WebUtility.HtmlDecode(_designRequest.Address);
+        _designRequest.Phone = WebUtility.HtmlDecode(_designRequest.Phone);
+        _designRequest.Email = WebUtility.HtmlDecode(_designRequest.Email);
+        _designRequest.Website = WebUtility.HtmlDecode(_designRequest.Website);
+        _designRequest.QuestionComments = WebUtility.HtmlDecode(_designRequest.QuestionComments);
+        _designRequest.Interest = WebUtility.HtmlDecode(_designRequest.Interest);
+        _designRequest.OverallSpaceDimensions = WebUtility.HtmlDecode(_designRequest.OverallSpaceDimensions);
+        _designRequest.CeilingHeight = WebUtility.HtmlDecode(_designRequest.CeilingHeight);
+        _designRequest.LengthOfKitchen = WebUtility.HtmlDecode(_designRequest.LengthOfKitchen);
+        _designRequest.SlopeOfPatio = WebUtility.HtmlDecode(_designRequest.SlopeOfPatio);
+        _designRequest.ShapeConfiguration = WebUtility.HtmlDecode(_designRequest.ShapeConfiguration);
+        _designRequest.DoorStyle = WebUtility.HtmlDecode(_designRequest.DoorStyle);
+        _designRequest.Color = WebUtility.HtmlDecode(_designRequest.Color);
+        _designRequest.CountertopThickness = WebUtility.HtmlDecode(_designRequest.CountertopThickness);
+        _designRequest.CounterDepth = WebUtility.HtmlDecode(_designRequest.CounterDepth);
+        _designRequest.CounterHeight = WebUtility.HtmlDecode(_designRequest.CounterHeight);
+        _designRequest.Status = WebUtility.HtmlDecode(_designRequest.Status);
+    }
+
+    private async Task LoadApplianceData()
+    {
+        _availableAppliances = await DesignRequestService.GetAppliancesAsync(ModuleState.ModuleId);
+        _applianceToRequests = await DesignRequestService.GetApplianceToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadDetailData()
+    {
+        _availableDetails = await DesignRequestService.GetDetailsAsync(ModuleState.ModuleId);
+        _detailToRequests = await DesignRequestService.GetDetailToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadNoteData()
+    {
+        _noteToRequests = await DesignRequestService.GetNoteToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadFileData()
+    {
+        _fileToRequests = await DesignRequestService.GetFileToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private void EditApplianceToRequest(ApplianceToRequest item)
+    {
+        _newApplianceToRequest = new ApplianceToRequest
+        {
+            ApplianceToRequestId = item.ApplianceToRequestId,
+            DesignRequestId = item.DesignRequestId,
+            ApplianceId = item.ApplianceId,
+            BrandModel = item.BrandModel,
+            Size = item.Size,
+            FuelType = item.FuelType
+        };
+    }
+
+    private void CancelEditAppliance()
+    {
+        _newApplianceToRequest = new();
+    }
+
+    private async Task SaveApplianceToRequest()
+    {
+        if (_newApplianceToRequest.ApplianceId != 0)
+        {
+            if (_newApplianceToRequest.ApplianceToRequestId == 0)
+            {
+                _newApplianceToRequest.DesignRequestId = _designRequest.DesignRequestId;
+                await DesignRequestService.AddApplianceToRequestAsync(_newApplianceToRequest);
+            }
+            else
+            {
+                await DesignRequestService.UpdateApplianceToRequestAsync(_newApplianceToRequest);
+            }
+            _newApplianceToRequest = new(); // Reset form
+            await LoadApplianceData();
+        }
+        else
+        {
+            AddModuleMessage("Please select an appliance.", MessageType.Warning);
+        }
+    }
+
+    private async Task DeleteApplianceToRequest(ApplianceToRequest item)
+    {
+        try
+        {
+            await DesignRequestService.DeleteApplianceToRequestAsync(item.ApplianceToRequestId, ModuleState.ModuleId);
+            await LoadApplianceData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Appliance From Request: {Error}", ex.Message);
+            AddModuleMessage("Error removing appliance.", MessageType.Error);
+        }
+    }
+
+    private void EditDetailToRequest(DetailToRequest item)
+    {
+        _newDetailToRequest = new DetailToRequest
+        {
+            DetailToRequestId = item.DetailToRequestId,
+            DesignRequestId = item.DesignRequestId,
+            DetailId = item.DetailId,
+            DetailModel = item.DetailModel,
+            DetailSize = item.DetailSize,
+            DetailColor = item.DetailColor
+        };
+    }
+
+    private void CancelEditDetail()
+    {
+        _newDetailToRequest = new();
+    }
+
+    private async Task SaveDetailToRequest()
+    {
+        if (_newDetailToRequest.DetailId != 0)
+        {
+            if (_newDetailToRequest.DetailToRequestId == 0)
+            {
+                _newDetailToRequest.DesignRequestId = _designRequest.DesignRequestId;
+                await DesignRequestService.AddDetailToRequestAsync(_newDetailToRequest);
+            }
+            else
+            {
+                await DesignRequestService.UpdateDetailToRequestAsync(_newDetailToRequest);
+            }
+            _newDetailToRequest = new(); // Reset form
+            await LoadDetailData();
+        }
+        else
+        {
+            AddModuleMessage("Please select a detail.", MessageType.Warning);
+        }
+    }
+
+    private async Task DeleteDetailToRequest(DetailToRequest item)
+    {
+        try
+        {
+            await DesignRequestService.DeleteDetailToRequestAsync(item.DetailToRequestId, ModuleState.ModuleId);
+            await LoadDetailData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Detail From Request: {Error}", ex.Message);
+            AddModuleMessage("Error removing detail.", MessageType.Error);
+        }
+    }
+
+    private async Task AddNoteToRequest()
+    {
+        if (!string.IsNullOrWhiteSpace(_newNoteToRequest.Note))
+        {
+            _newNoteToRequest.DesignRequestId = _designRequest.DesignRequestId;
+            await DesignRequestService.AddNoteToRequestAsync(_newNoteToRequest);
+            _newNoteToRequest = new(); // Reset form
+            await LoadNoteData();
+        }
+        else
+        {
+            AddModuleMessage("Please enter a note.", MessageType.Warning);
+        }
+    }
+
+    private async Task DeleteNoteToRequest(NoteToRequest note)
+    {
+        try
+        {
+            await DesignRequestService.DeleteNoteToRequestAsync(note.NoteId, ModuleState.ModuleId);
+            await LoadNoteData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Note: {Error}", ex.Message);
+            AddModuleMessage("Error deleting note.", MessageType.Error);
+        }
+    }
+
+    private async void HandleFileUpload(int fileId)
+    {
+        // if (string.IsNullOrEmpty(_newFileToRequest.Name))
+        // {
+        //     AddModuleMessage("Please enter a name for the file.", MessageType.Warning);
+        //     return;
+        // }
+
+        var uploadedFile = await FileService.GetFileAsync(fileId);
+        if (uploadedFile != null)
+        {
+            if (string.IsNullOrEmpty(_newFileToRequest.Name))
+            {
+                _newFileToRequest.Name = uploadedFile.Name;
+            }
+            _newFileToRequest.DesignRequestId = _designRequest.DesignRequestId;
+            _newFileToRequest.FileId = uploadedFile.FileId;
+            _newFileToRequest.FilePath = uploadedFile.Url;
+
+            try
+            {
+                await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+                _newFileToRequest = new(); // Reset form
+                await LoadFileData();
+                AddModuleMessage("File added successfully.", MessageType.Success);
+            }
+            catch (Exception ex)
+            {
+                await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
+                AddModuleMessage("There was an error saving the file information.", MessageType.Error);
+            }
+        }
+        else
+        {
+            AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+        }
+        StateHasChanged();
+    }
+
+    private async Task DeleteFileToRequest(FileToRequest file)
+    {
+        try
+        {
+            await DesignRequestService.DeleteFileToRequestAsync(file.FileToRequestId, ModuleState.ModuleId);
+            await LoadFileData();
+            AddModuleMessage("File removed successfully.", MessageType.Success);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting File From Request: {Error}", ex.Message);
+            AddModuleMessage("Error removing file.", MessageType.Error);
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            validated = true;
+            var interop = new Oqtane.UI.Interop(JSRuntime);
+            if (await interop.FormValid(form))
+            {
+                await DesignRequestService.UpdateDesignRequestAsync(_designRequest);
+                await logger.LogInformation("DesignRequest Updated {DesignRequest}", _designRequest);
+                
+                StateHasChanged();
+            }
+            else
+            {
+                AddModuleMessage(Localizer["Message.SaveValidation"], MessageType.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving DesignRequest {Error}", ex.Message);
+            AddModuleMessage(Localizer["Message.SaveError"], MessageType.Error);
+        }
+    }
+
+    private string ReturnUrl()
+    {
+        if (ModuleState != null)
+        {
+            return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List" : NavigateUrl();
+        }
+        else
+        {
+            return NavigateUrl();
+        }
+       
+    }
+}

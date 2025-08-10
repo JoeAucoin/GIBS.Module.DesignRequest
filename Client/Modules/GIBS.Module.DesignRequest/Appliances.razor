@@ -1,0 +1,205 @@
+﻿@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<Appliances> Localizer
+
+
+<h3>Appliances</h3>
+
+@if (_appliances == null)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else
+{
+    <div class="card mt-3">
+        <div class="card-header">@(_editingAppliance == null ? "Add New Appliance" : "Edit Appliance")</div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col">
+                    <Label For="name" HelpText="Enter the appliance name">Name:</Label>
+                    <input id="name" class="form-control" @bind="@_newAppliance.ApplianceName" />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <Label For="description" HelpText="Enter the appliance description">Description:</Label>
+                    <textarea id="description" class="form-control" @bind="@_newAppliance.ApplianceDescription"></textarea>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <Label For="code" HelpText="Enter the appliance code">Code:</Label>
+                    <input id="code" class="form-control" @bind="@_newAppliance.ApplianceCode" />
+                </div>
+                <div class="col-md-6">
+                    <Label For="icon" HelpText="Enter the appliance icon (e.g., 'oi oi-cog')">Icon:</Label>
+                    <input id="icon" class="form-control" @bind="@_newAppliance.ApplianceIcon" />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <Label For="color" HelpText="Select the appliance color">Color:</Label>
+                    <input id="color" type="color" class="form-control form-control-color" @bind="@_newAppliance.ApplianceColor" />
+                </div>
+                <div class="col-md-6">
+                    <Label For="sortOrder" HelpText="Enter the sort order">Sort Order:</Label>
+                    <input id="sortOrder" type="number" class="form-control" @bind="@_newAppliance.SortOrder" />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="form-check">
+                        <input id="isActive" type="checkbox" class="form-check-input" @bind="@_newAppliance.IsActive" />
+                        <label class="form-check-label" for="isActive">Is Active</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-success" @onclick="SaveAppliance">@(_editingAppliance == null ? Localizer["Add"] : Localizer["Update"])</button>
+            @if (_editingAppliance != null)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">@Localizer["Cancel"]</button>
+            }
+        </div>
+    </div>
+
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Code</th>
+                <th>Sort Order</th>
+                <th>Active</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var appliance in _appliances.OrderBy(a => a.SortOrder))
+            {
+                <tr>
+                    <td>@appliance.ApplianceName</td>
+                    <td>@appliance.ApplianceDescription</td>
+                    <td>@appliance.ApplianceCode</td>
+                    <td>@appliance.SortOrder</td>
+                    <td>@appliance.IsActive</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditAppliance(appliance)">@Localizer["Edit"]</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteAppliance(appliance)">@Localizer["Delete"]</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Appliance> _appliances;
+    private Appliance _newAppliance = new Appliance();
+    private Appliance _editingAppliance;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppliances();
+    }
+
+    private async Task LoadAppliances()
+    {
+        try
+        {
+            _appliances = await DesignRequestService.GetAppliancesAsync(ModuleState.ModuleId);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error loading appliances: {Error}", ex.Message);
+            AddModuleMessage("Error loading appliances.", MessageType.Error);
+        }
+    }
+
+    private async Task SaveAppliance()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(_newAppliance.ApplianceName))
+            {
+                if (_editingAppliance == null) // Add new
+                {
+                    _newAppliance.ModuleId = ModuleState.ModuleId;
+                    await DesignRequestService.AddApplianceAsync(_newAppliance);
+                    AddModuleMessage("Appliance Added Successfully", MessageType.Success);
+                }
+                else // Update existing
+                {
+                    _editingAppliance.ApplianceName = _newAppliance.ApplianceName;
+                    _editingAppliance.ApplianceDescription = _newAppliance.ApplianceDescription;
+                    _editingAppliance.ApplianceCode = _newAppliance.ApplianceCode;
+                    _editingAppliance.ApplianceIcon = _newAppliance.ApplianceIcon;
+                    _editingAppliance.ApplianceColor = _newAppliance.ApplianceColor;
+                    _editingAppliance.SortOrder = _newAppliance.SortOrder;
+                    _editingAppliance.IsActive = _newAppliance.IsActive;
+                    await DesignRequestService.UpdateApplianceAsync(_editingAppliance);
+                    AddModuleMessage("Appliance Updated Successfully", MessageType.Success);
+                }
+                await LoadAppliances();
+                CancelEdit();
+            }
+            else
+            {
+                AddModuleMessage("Please enter an appliance name.", MessageType.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error saving appliance: {Error}", ex.Message);
+            AddModuleMessage("Error saving appliance.", MessageType.Error);
+        }
+    }
+
+    private void EditAppliance(Appliance appliance)
+    {
+        _editingAppliance = appliance;
+        _newAppliance = new Appliance
+        {
+            ApplianceId = appliance.ApplianceId,
+            ModuleId = appliance.ModuleId,
+            ApplianceName = appliance.ApplianceName,
+            ApplianceDescription = appliance.ApplianceDescription,
+            ApplianceCode = appliance.ApplianceCode,
+            ApplianceIcon = appliance.ApplianceIcon,
+            ApplianceColor = appliance.ApplianceColor,
+            SortOrder = appliance.SortOrder,
+            IsActive = appliance.IsActive
+        };
+    }
+
+    private void CancelEdit()
+    {
+        _editingAppliance = null;
+        _newAppliance = new Appliance();
+    }
+
+    private async Task DeleteAppliance(Appliance appliance)
+    {
+        try
+        {
+
+            await DesignRequestService.DeleteApplianceAsync(appliance.ApplianceId, ModuleState.ModuleId);
+            await LoadAppliances();
+            AddModuleMessage("Appliance Deleted Successfully", MessageType.Success);
+
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error deleting appliance: {Error}", ex.Message);
+            AddModuleMessage("Error deleting appliance.", MessageType.Error);
+        }
+    }
+}

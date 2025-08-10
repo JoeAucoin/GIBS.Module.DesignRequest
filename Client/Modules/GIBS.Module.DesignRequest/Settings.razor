@@ -1,0 +1,257 @@
+@using GIBS.Module.DesignRequest.Services
+@using Oqtane.Shared
+@using Oqtane.Services
+@using Oqtane.Models
+@using Oqtane.Modules
+@using Oqtane.Providers
+@using Oqtane.Interfaces
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject ISettingService SettingService
+@inject IStringLocalizer<Settings> Localizer
+@inject IDesignRequestService DesignRequestService
+@inject IFolderService FolderService
+@inject IRoleService RoleService
+
+<div class="container">
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="designerRole" HelpText="Select the designer role" ResourceKey="DesignerRole" ResourceType="@resourceType">Designer Role: </Label>
+        <div class="col-sm-9">
+            <select id="designerRole" class="form-select" @bind="@_designerRole">
+                @foreach (Role role in _roles)
+                {
+                    <option value="@(role.RoleId)">@(role.Name)</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="folderList" HelpText="Select the file folder" ResourceKey="FileFolder" ResourceType="@resourceType">Image Folder: </Label>
+        <div class="col-sm-9">
+            <select id="folderList" class="form-select" @bind="@_fileFolder">
+                @foreach (Folder folder in _folders)
+                {
+                    <option value="@(folder.FolderId)">@(new string('-', folder.Level * 2))@(folder.Name)</option>
+                }
+            </select>
+        </div>
+    </div>
+    
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="instructions" HelpText="Enter instructions to display on the form" ResourceKey="Instructions" ResourceType="@resourceType">Instructions: </Label>
+        <div class="col-sm-9">
+            <textarea id="instructions" class="form-control" @bind="@_instructions" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="successFeedback" HelpText="Enter the feedback message to display after successful submission" ResourceKey="SuccessFeedback" ResourceType="@resourceType">Success Feedback: </Label>
+        <div class="col-sm-9">
+            <textarea id="successFeedback" class="form-control" @bind="@_successFeedback" rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="sentToUserName" HelpText="Enter sentToUser Name" ResourceKey="SentToUserName" ResourceType="@resourceType">SentToUserName: </Label>
+        <div class="col-sm-9">
+            <input id="sentToUserName" class="form-control" @bind="@_sentToUserName" required />
+        </div>
+    </div>
+
+
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="sentToUserEmail" HelpText="Enter sentToUser Email" ResourceKey="SentToUserEmail" ResourceType="@resourceType">SentToUserEmail: </Label>
+        <div class="col-sm-9">
+            <input id="sentToUserEmail" class="form-control" @bind="@_sentToUserEmail" required />
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="authorizedUser" HelpText="Select the user to manage contact form." ResourceKey="AuthorizedUser" ResourceType="@resourceType">Authorized User: </Label>
+        <div class="col-sm-9">
+            <select id="authorizedUser" class="form-select" @bind="@_authorizedUser">
+                <option value="">-- Select User --</option>
+                @if (_users != null)
+                {
+                    @foreach (var user in _users)
+                    {
+                        <option value="@user.UserId">@user.DisplayName</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="interestList" HelpText="Enter a comma-separated list of interests for the dropdown" ResourceKey="InterestList" ResourceType="@resourceType">Interest List: </Label>
+        <div class="col-sm-9">
+            <textarea id="interestList" class="form-control" @bind="@_interestList" rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="statusList" HelpText="Enter available status types" ResourceKey="StatusList" ResourceType="@resourceType">Status List: </Label>
+        <div class="col-sm-9">
+            <textarea id="statusList" class="form-control" @bind="@_statusList" rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="showFields" HelpText="Select which fields to show on the form" ResourceKey="ShowFields" ResourceType="@resourceType">Show Fields: </Label>
+        <div class="col-sm-9">
+            <div class="form-check">
+                <input type="checkbox" id="showCompany" class="form-check-input" @bind="@_showCompany" />
+                <label class="form-check-label" for="showCompany">Company</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showAddress" class="form-check-input" @bind="@_showAddress" />
+                <label class="form-check-label" for="showAddress">Address</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showPhone" class="form-check-input" @bind="@_showPhone" />
+                <label class="form-check-label" for="showPhone">Phone</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showWebsite" class="form-check-input" @bind="@_showWebsite" />
+                <label class="form-check-label" for="showWebsite">Website</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showInterest" class="form-check-input" @bind="@_showInterest" />
+                <label class="form-check-label" for="showInterest">Interest</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showAppliances" class="form-check-input" @bind="@_showAppliances" />
+                <label class="form-check-label" for="showAppliances">Appliances</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showDetails" class="form-check-input" @bind="@_showDetails" />
+                <label class="form-check-label" for="showDetails">Details</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showInstallationDate" class="form-check-input" @bind="@_showInstallationDate" />
+                <label class="form-check-label" for="showInstallationDate">Installation Date</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showDimensions" class="form-check-input" @bind="@_showDimensions" />
+                <label class="form-check-label" for="showDimensions">Dimensions</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showConfiguration" class="form-check-input" @bind="@_showConfiguration" />
+                <label class="form-check-label" for="showConfiguration">Configuration</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="showCountertop" class="form-check-input" @bind="@_showCountertop" />
+                <label class="form-check-label" for="showCountertop">Countertop</label>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string resourceType = "GIBS.Module.DesignRequest.Settings, GIBS.Module.DesignRequest.Client.Oqtane"; // for localization
+    public override string Title => "DesignRequest Settings";
+    private string _designerRole;
+    private string _instructions;
+    private string _successFeedback;
+    private string _interestList;
+    private string _sentToUserName;
+    private string _sentToUserEmail;
+    private string _authorizedUser;
+    public List<User> _users { get; set; } = new List<User>();
+    private List<Role> _roles { get; set; } = new List<Role>();
+    private bool _showCompany;
+    private bool _showAddress;
+    private bool _showPhone;
+    private bool _showWebsite;
+    private bool _showInterest;
+    private bool _showAppliances;
+    private bool _showDetails;
+    private bool _showInstallationDate;
+    private bool _showDimensions;
+    private bool _showConfiguration;
+    private bool _showCountertop;
+    private string _statusList;
+
+    private List<Folder> _folders = new List<Folder>();
+    private string _fileFolder;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (UserSecurity.IsAuthorized(PageState.User, RoleNames.Host))
+            {
+                _roles = await RoleService.GetRolesAsync(PageState.Site.SiteId, true);
+                _roles.RemoveAll(item => item.Name == RoleNames.Everyone || item.Name == RoleNames.Unauthenticated);
+            }
+            else
+            {
+                _roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
+                _roles.RemoveAll(item => item.Name == RoleNames.Everyone || item.Name == RoleNames.Unauthenticated);
+            }
+            
+            _folders = await FolderService.GetFoldersAsync(PageState.Site.SiteId);
+            //_roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
+            _users = await DesignRequestService.GetUsersAsync();
+            Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _instructions = SettingService.GetSetting(settings, "Instructions", "");
+            _successFeedback = SettingService.GetSetting(settings, "SuccessFeedback", "");
+            _authorizedUser = SettingService.GetSetting(settings, "AuthorizedUser", "");
+            _sentToUserName = SettingService.GetSetting(settings, "SentToUserName", "");
+            _sentToUserEmail = SettingService.GetSetting(settings, "SentToUserEmail", "");
+            _interestList = SettingService.GetSetting(settings, "InterestList", "");
+            _statusList = SettingService.GetSetting(settings, "StatusList", "");
+            _showCompany = bool.Parse(SettingService.GetSetting(settings, "ShowCompany", "true"));
+            _showAddress = bool.Parse(SettingService.GetSetting(settings, "ShowAddress", "true"));
+            _showPhone = bool.Parse(SettingService.GetSetting(settings, "ShowPhone", "true"));
+            _showWebsite = bool.Parse(SettingService.GetSetting(settings, "ShowWebsite", "true"));
+            _showInterest = bool.Parse(SettingService.GetSetting(settings, "ShowInterest", "true"));
+            _showAppliances = bool.Parse(SettingService.GetSetting(settings, "ShowAppliances", "true"));
+            _showDetails = bool.Parse(SettingService.GetSetting(settings, "ShowDetails", "true"));
+            _showInstallationDate = bool.Parse(SettingService.GetSetting(settings, "ShowInstallationDate", "true"));
+            _showDimensions = bool.Parse(SettingService.GetSetting(settings, "ShowDimensions", "true"));
+            _showConfiguration = bool.Parse(SettingService.GetSetting(settings, "ShowConfiguration", "true"));
+            _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
+            _fileFolder = SettingService.GetSetting(settings, "FileFolder", "Root");
+            _designerRole = SettingService.GetSetting(settings, "DesignerRole", "Designer");
+
+        }
+        catch (Exception ex)
+        {
+            AddModuleMessage(ex.Message, MessageType.Error);
+        }
+    }
+
+    public async Task UpdateSettings()
+    {
+        try
+        {
+            Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            SettingService.SetSetting(settings, "Instructions", _instructions);
+            SettingService.SetSetting(settings, "SuccessFeedback", _successFeedback);
+            SettingService.SetSetting(settings, "AuthorizedUser", _authorizedUser);
+            SettingService.SetSetting(settings, "SentToUserEmail", _sentToUserEmail);
+            SettingService.SetSetting(settings, "SentToUserName", _sentToUserName);
+            SettingService.SetSetting(settings, "InterestList", _interestList);
+            SettingService.SetSetting(settings, "StatusList", _statusList);
+            SettingService.SetSetting(settings, "ShowCompany", _showCompany.ToString());
+            SettingService.SetSetting(settings, "ShowAddress", _showAddress.ToString());
+            SettingService.SetSetting(settings, "ShowPhone", _showPhone.ToString());
+            SettingService.SetSetting(settings, "ShowWebsite", _showWebsite.ToString());
+            SettingService.SetSetting(settings, "ShowInterest", _showInterest.ToString());
+            SettingService.SetSetting(settings, "ShowAppliances", _showAppliances.ToString());
+            SettingService.SetSetting(settings, "ShowDetails", _showDetails.ToString());
+            SettingService.SetSetting(settings, "ShowInstallationDate", _showInstallationDate.ToString());
+            SettingService.SetSetting(settings, "ShowDimensions", _showDimensions.ToString());
+            SettingService.SetSetting(settings, "ShowConfiguration", _showConfiguration.ToString());
+            SettingService.SetSetting(settings, "ShowCountertop", _showCountertop.ToString());
+            SettingService.SetSetting(settings, "FileFolder", _fileFolder);
+            SettingService.SetSetting(settings, "DesignerRole", _designerRole);
+            await SettingService.UpdateModuleSettingsAsync(settings, ModuleState.ModuleId);
+        }
+        catch (Exception ex)
+        {
+            AddModuleMessage(ex.Message, MessageType.Error);
+        }
+    }
+}

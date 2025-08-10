@@ -1,0 +1,205 @@
+﻿@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<Details> Localizer
+
+
+<h3>Details</h3>
+
+@if (_details == null)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else
+{
+    <div class="card mt-3">
+        <div class="card-header">@(_editingDetail == null ? "Add New Detail" : "Edit Detail")</div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col">
+                    <Label For="name" HelpText="Enter the detail name">Name:</Label>
+                    <input id="name" class="form-control" @bind="@_newDetail.DetailName" />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <Label For="description" HelpText="Enter the detail description">Description:</Label>
+                    <textarea id="description" class="form-control" @bind="@_newDetail.DetailDescription"></textarea>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <Label For="code" HelpText="Enter the detail code">Code:</Label>
+                    <input id="code" class="form-control" @bind="@_newDetail.DetailCode" />
+                </div>
+                <div class="col-md-6">
+                    <Label For="icon" HelpText="Enter the detail icon (e.g., 'oi oi-cog')">Icon:</Label>
+                    <input id="icon" class="form-control" @bind="@_newDetail.DetailIcon" />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <Label For="color" HelpText="Select the detail color">Color:</Label>
+                    <input id="color" type="color" class="form-control form-control-color" @bind="@_newDetail.DetailColor" />
+                </div>
+                <div class="col-md-6">
+                    <Label For="sortOrder" HelpText="Enter the sort order">Sort Order:</Label>
+                    <input id="sortOrder" type="number" class="form-control" @bind="@_newDetail.SortOrder" />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="form-check">
+                        <input id="isActive" type="checkbox" class="form-check-input" @bind="@_newDetail.IsActive" />
+                        <label class="form-check-label" for="isActive">Is Active</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-success" @onclick="SaveDetail">@(_editingDetail == null ? Localizer["Add"] : Localizer["Update"])</button>
+            @if (_editingDetail != null)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">@Localizer["Cancel"]</button>
+            }
+        </div>
+    </div>
+
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Code</th>
+                <th>Sort Order</th>
+                <th>Active</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var detail in _details.OrderBy(d => d.SortOrder))
+            {
+                <tr>
+                    <td>@detail.DetailName</td>
+                    <td>@detail.DetailDescription</td>
+                    <td>@detail.DetailCode</td>
+                    <td>@detail.SortOrder</td>
+                    <td>@detail.IsActive</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetail(detail)">@Localizer["Edit"]</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteDetail(detail)">@Localizer["Delete"]</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Detail> _details;
+    private Detail _newDetail = new Detail();
+    private Detail _editingDetail;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDetails();
+    }
+
+    private async Task LoadDetails()
+    {
+        try
+        {
+            _details = await DesignRequestService.GetDetailsAsync(ModuleState.ModuleId);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error loading details: {Error}", ex.Message);
+            AddModuleMessage("Error loading details.", MessageType.Error);
+        }
+    }
+
+    private async Task SaveDetail()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(_newDetail.DetailName))
+            {
+                if (_editingDetail == null) // Add new
+                {
+                    _newDetail.ModuleId = ModuleState.ModuleId;
+                    await DesignRequestService.AddDetailAsync(_newDetail);
+                    AddModuleMessage("Detail Added Successfully", MessageType.Success);
+                }
+                else // Update existing
+                {
+                    _editingDetail.DetailName = _newDetail.DetailName;
+                    _editingDetail.DetailDescription = _newDetail.DetailDescription;
+                    _editingDetail.DetailCode = _newDetail.DetailCode;
+                    _editingDetail.DetailIcon = _newDetail.DetailIcon;
+                    _editingDetail.DetailColor = _newDetail.DetailColor;
+                    _editingDetail.SortOrder = _newDetail.SortOrder;
+                    _editingDetail.IsActive = _newDetail.IsActive;
+                    await DesignRequestService.UpdateDetailAsync(_editingDetail);
+                    AddModuleMessage("Detail Updated Successfully", MessageType.Success);
+                }
+                await LoadDetails();
+                CancelEdit();
+            }
+            else
+            {
+                AddModuleMessage("Please enter a detail name.", MessageType.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error saving detail: {Error}", ex.Message);
+            AddModuleMessage("Error saving detail.", MessageType.Error);
+        }
+    }
+
+    private void EditDetail(Detail detail)
+    {
+        _editingDetail = detail;
+        _newDetail = new Detail
+        {
+            DetailId = detail.DetailId,
+            ModuleId = detail.ModuleId,
+            DetailName = detail.DetailName,
+            DetailDescription = detail.DetailDescription,
+            DetailCode = detail.DetailCode,
+            DetailIcon = detail.DetailIcon,
+            DetailColor = detail.DetailColor,
+            SortOrder = detail.SortOrder,
+            IsActive = detail.IsActive
+        };
+    }
+
+    private void CancelEdit()
+    {
+        _editingDetail = null;
+        _newDetail = new Detail();
+    }
+
+    private async Task DeleteDetail(Detail detail)
+    {
+        try
+        {
+
+            await DesignRequestService.DeleteDetailAsync(detail.DetailId, ModuleState.ModuleId);
+            await LoadDetails();
+            AddModuleMessage("Detail Deleted Successfully", MessageType.Success);
+            
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error deleting detail: {Error}", ex.Message);
+            AddModuleMessage("Error deleting detail.", MessageType.Error);
+        }
+    }
+}

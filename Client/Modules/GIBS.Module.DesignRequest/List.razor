@@ -1,0 +1,93 @@
+﻿@using Oqtane.Models
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject Services.IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<List> Localizer
+
+@if (_designRequests == null)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>@Localizer["Contact Name"]</th>
+                <th>@Localizer["Project Name"]</th>
+                <th>@Localizer["Status"]</th>
+                <th>@Localizer["Assigned To"]</th>
+                <th>@Localizer["Created On"]</th>
+                <th style="width: 1px;">&nbsp;</th>
+                <th style="width: 1px;">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var designRequest in _designRequests)
+            {
+                <tr>
+                    <td>@designRequest.ContactName</td>
+                    <td>@designRequest.ProjectName</td>
+                    <td>@designRequest.Status</td>
+                    <td>@GetUserName(designRequest.AssignedToUserId)</td>
+                    <td>@designRequest.CreatedOn.ToShortDateString()</td>
+                    <td><ActionLink Action="Edit" Parameters="@($"id={designRequest.DesignRequestId}")" Class="btn btn-primary btn-sm" Security="SecurityAccessLevel.Edit" ResourceKey="EditButton" Text="@Localizer["EditButton"]" /></td>
+                    <td><ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", designRequest.ProjectName])" Action="Delete" Security="SecurityAccessLevel.Edit" Class="btn btn-danger btn-sm" OnClick="@(async () => await Delete(designRequest.DesignRequestId))" ResourceKey="Delete" Id="@designRequest.DesignRequestId.ToString()" />
+                        </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Models.DesignRequest> _designRequests;
+    private List<User> _users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _designRequests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
+            _users = await DesignRequestService.GetUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Design Requests {Error}", ex.Message);
+            AddModuleMessage(Localizer["Error Loading Design Requests"], MessageType.Error);
+        }
+    }
+
+    private string GetUserName(int userId)
+    {
+        if (userId == 0)
+        {
+            return "Unassigned";
+        }
+        var user = _users?.FirstOrDefault(u => u.UserId == userId);
+        return user?.DisplayName ?? $"Unknown User ({userId})";
+    }
+
+    private void Edit(int designRequestId)
+    {
+        NavigationManager.NavigateTo(NavigateUrl("edit", $"id={designRequestId}"));
+    }
+
+    private async Task Delete(int designRequestId)
+    {
+        try
+        {
+            await DesignRequestService.DeleteDesignRequestAsync(designRequestId, ModuleState.ModuleId);
+            await logger.LogInformation("Design Request Deleted {DesignRequestId}", designRequestId);
+            await OnInitializedAsync(); // Refresh the list
+            AddModuleMessage(Localizer["Design Request Deleted Successfully"], MessageType.Success);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Design Request {Error}", ex.Message);
+            AddModuleMessage(Localizer["Error Deleting Design Request"], MessageType.Error);
+        }
+    }
+}
