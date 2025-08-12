@@ -39,8 +39,8 @@ namespace GIBS.Module.DesignRequest.Migrations.EntityBuilders
             CeilingHeight = AddStringColumn(table, "CeilingHeight", 50, true, true);
             LengthOfKitchen = AddStringColumn(table, "LengthOfKitchen", 50, true, true);
             SlopeOfPatio = AddStringColumn(table, "SlopeOfPatio", 50, true, true);
-            ShapeConfiguration = AddStringColumn(table, "ShapeConfiguration", 50, true, true);
-            DoorStyle = AddStringColumn(table, "DoorStyle", 50, true, true);
+            ShapeConfiguration = AddStringColumn(table, "ShapeConfiguration", 255, true, true);
+            DoorStyle = AddStringColumn(table, "DoorStyle", 100, true, true);
             Color = AddStringColumn(table, "Color", 50, true, true);
             CountertopThickness = AddStringColumn(table, "CountertopThickness", 50, true, true);
             CounterDepth = AddStringColumn(table, "CounterDepth", 50, true, true);

@@ -35,7 +35,7 @@ else
             <div class="row mb-2">
                 <div class="col-md-6">
                     <Label For="code" HelpText="Enter the appliance code">Code:</Label>
-                    <input id="code" class="form-control" @bind="@_newAppliance.ApplianceCode" />
+                    <input id="code" class="form-control" @bind="@_newAppliance.ApplianceCode" required maxlength="2" />
                 </div>
                 <div class="col-md-6">
                     <Label For="icon" HelpText="Enter the appliance icon (e.g., 'oi oi-cog')">Icon:</Label>
@@ -107,6 +107,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _newAppliance.ApplianceColor = "#FF0000";
+        _newAppliance.IsActive = true;
+        _newAppliance.SortOrder = 10; // Default to 10 if not set
         await LoadAppliances();
     }
 
@@ -133,6 +136,7 @@ else
                 if (_editingAppliance == null) // Add new
                 {
                     _newAppliance.ModuleId = ModuleState.ModuleId;
+                  
                     await DesignRequestService.AddApplianceAsync(_newAppliance);
                     AddModuleMessage("Appliance Added Successfully", MessageType.Success);
                 }
@@ -184,6 +188,9 @@ else
     {
         _editingAppliance = null;
         _newAppliance = new Appliance();
+        _newAppliance.ApplianceColor = "#FF0000";
+        _newAppliance.IsActive = true;
+        _newAppliance.SortOrder = 10; // Default to 10 if not set
     }
 
     private async Task DeleteAppliance(Appliance appliance)

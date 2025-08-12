@@ -12,10 +12,12 @@ namespace GIBS.Module.DesignRequest.Models
         [Key]
         public int DesignRequestId { get; set; }
         public int ModuleId { get; set; }
+        public int? UserId { get; set; } // Oqtane User
         public string ContactName { get; set; }
         public string Company { get; set; }
         public string ProjectName { get; set; }
         public string Address { get; set; }
+        public string MailingAddress { get; set; } // Optional mailing address
         public string Phone { get; set; }
         public string Email { get; set; }
         public string Website { get; set; }

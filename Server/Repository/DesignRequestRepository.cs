@@ -62,6 +62,26 @@ namespace GIBS.Module.DesignRequest.Repository
             db.SaveChanges();
         }
 
+        // New method implementations for pagination
+        public IEnumerable<Models.DesignRequest> GetDesignRequests(int moduleId, int page, int pageSize)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.DesignRequest
+                .Where(r => r.ModuleId == moduleId)
+                .OrderByDescending(r => r.DesignRequestId)
+                .Skip(page * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+
+        public int CountDesignRequests(int moduleId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.DesignRequest
+                .Count(r => r.ModuleId == moduleId);
+        }
+
+
         // FileToRequest methods
         public IEnumerable<Models.FileToRequest> GetFileToRequests(int DesignRequestId)
         {

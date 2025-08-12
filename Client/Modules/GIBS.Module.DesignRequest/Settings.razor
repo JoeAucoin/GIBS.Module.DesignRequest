@@ -38,9 +38,15 @@
     </div>
     
     <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="instructions" HelpText="Enter instructions to display on the form" ResourceKey="Instructions" ResourceType="@resourceType">Instructions: </Label>
+        <Label Class="col-sm-3" For="instructions" HelpText="Enter instructions to display on the form" ResourceKey="Instructions" ResourceType="@resourceType">Form Instructions: </Label>
         <div class="col-sm-9">
             <textarea id="instructions" class="form-control" @bind="@_instructions" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="fileUploadInstructions" HelpText="Enter instructions for file uploads" ResourceKey="FileUploadInstructions" ResourceType="@resourceType">File Upload Instructions: </Label>
+        <div class="col-sm-9">
+            <textarea id="fileUploadInstructions" class="form-control" @bind="@_fileUploadInstructions" rows="3"></textarea>
         </div>
     </div>
     <div class="row mb-1 align-items-center">
@@ -82,9 +88,15 @@
         </div>
     </div>
     <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="interestList" HelpText="Enter a comma-separated list of interests for the dropdown" ResourceKey="InterestList" ResourceType="@resourceType">Interest List: </Label>
+        <Label Class="col-sm-3" For="interestList" HelpText="Enter a list of interests for the checklist" ResourceKey="InterestList" ResourceType="@resourceType">Interest List: </Label>
         <div class="col-sm-9">
             <textarea id="interestList" class="form-control" @bind="@_interestList" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="configurationShape" HelpText="Enter a list the configuration shapes for the checklist" ResourceKey="ConfigurationShape" ResourceType="@resourceType">Configuration Shape: </Label>
+        <div class="col-sm-9">
+            <textarea id="configurationShape" class="form-control" @bind="@_configurationShape" rows="3"></textarea>
         </div>
     </div>
 
@@ -148,12 +160,16 @@
 </div>
 
 @code {
+
     private string resourceType = "GIBS.Module.DesignRequest.Settings, GIBS.Module.DesignRequest.Client.Oqtane"; // for localization
     public override string Title => "DesignRequest Settings";
     private string _designerRole;
     private string _instructions;
+    private string _fileUploadInstructions;
     private string _successFeedback;
     private string _interestList;
+
+    private string _configurationShape;
     private string _sentToUserName;
     private string _sentToUserEmail;
     private string _authorizedUser;
@@ -195,11 +211,13 @@
             _users = await DesignRequestService.GetUsersAsync();
             Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _instructions = SettingService.GetSetting(settings, "Instructions", "");
+            _fileUploadInstructions = SettingService.GetSetting(settings, "FileUploadInstructions", "");
             _successFeedback = SettingService.GetSetting(settings, "SuccessFeedback", "");
             _authorizedUser = SettingService.GetSetting(settings, "AuthorizedUser", "");
             _sentToUserName = SettingService.GetSetting(settings, "SentToUserName", "");
             _sentToUserEmail = SettingService.GetSetting(settings, "SentToUserEmail", "");
             _interestList = SettingService.GetSetting(settings, "InterestList", "");
+            _configurationShape = SettingService.GetSetting(settings, "ConfigurationShape", "");
             _statusList = SettingService.GetSetting(settings, "StatusList", "");
             _showCompany = bool.Parse(SettingService.GetSetting(settings, "ShowCompany", "true"));
             _showAddress = bool.Parse(SettingService.GetSetting(settings, "ShowAddress", "true"));
@@ -228,11 +246,13 @@
         {
             Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             SettingService.SetSetting(settings, "Instructions", _instructions);
+            SettingService.SetSetting(settings, "FileUploadInstructions", _fileUploadInstructions);
             SettingService.SetSetting(settings, "SuccessFeedback", _successFeedback);
             SettingService.SetSetting(settings, "AuthorizedUser", _authorizedUser);
             SettingService.SetSetting(settings, "SentToUserEmail", _sentToUserEmail);
             SettingService.SetSetting(settings, "SentToUserName", _sentToUserName);
             SettingService.SetSetting(settings, "InterestList", _interestList);
+            SettingService.SetSetting(settings, "ConfigurationShape", _configurationShape);
             SettingService.SetSetting(settings, "StatusList", _statusList);
             SettingService.SetSetting(settings, "ShowCompany", _showCompany.ToString());
             SettingService.SetSetting(settings, "ShowAddress", _showAddress.ToString());

@@ -35,7 +35,7 @@ else
             <div class="row mb-2">
                 <div class="col-md-6">
                     <Label For="code" HelpText="Enter the detail code">Code:</Label>
-                    <input id="code" class="form-control" @bind="@_newDetail.DetailCode" />
+                    <input id="code" class="form-control" @bind="@_newDetail.DetailCode" required maxlength="2" />
                 </div>
                 <div class="col-md-6">
                     <Label For="icon" HelpText="Enter the detail icon (e.g., 'oi oi-cog')">Icon:</Label>
@@ -107,6 +107,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _newDetail.DetailColor = string.IsNullOrWhiteSpace(_newDetail.DetailColor) ? "#FF0000" : _newDetail.DetailColor;
+        _newDetail.SortOrder = _newDetail.SortOrder == 0 ? 10 : _newDetail.SortOrder; // Default to 10 if not set
+        _newDetail.IsActive = true;
         await LoadDetails();
     }
 
@@ -133,6 +136,7 @@ else
                 if (_editingDetail == null) // Add new
                 {
                     _newDetail.ModuleId = ModuleState.ModuleId;
+                   
                     await DesignRequestService.AddDetailAsync(_newDetail);
                     AddModuleMessage("Detail Added Successfully", MessageType.Success);
                 }
@@ -184,6 +188,9 @@ else
     {
         _editingDetail = null;
         _newDetail = new Detail();
+        _newDetail.DetailColor = string.IsNullOrWhiteSpace(_newDetail.DetailColor) ? "#FF0000" : _newDetail.DetailColor;
+        _newDetail.SortOrder = _newDetail.SortOrder == 0 ? 10 : _newDetail.SortOrder; // Default to 10 if not set
+        _newDetail.IsActive = true;
     }
 
     private async Task DeleteDetail(Detail detail)

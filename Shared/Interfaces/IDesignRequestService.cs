@@ -9,7 +9,8 @@ namespace GIBS.Module.DesignRequest.Services
     {
         Task<List<User>> GetUsersAsync();
 
-        Task<List<Models.DesignRequest>> GetDesignRequestsAsync(int ModuleId);
+        Task<List<Models.DesignRequest>> GetDesignRequestsAsync(int moduleId);
+        Task<Paged<Models.DesignRequest>> GetDesignRequestsAsync(int moduleId, int page, int pageSize);
         Task<Models.DesignRequest> GetDesignRequestAsync(int DesignRequestId, int ModuleId);
         Task<Models.DesignRequest> AddDesignRequestAsync(Models.DesignRequest DesignRequest);
         Task<Models.DesignRequest> UpdateDesignRequestAsync(Models.DesignRequest DesignRequest);

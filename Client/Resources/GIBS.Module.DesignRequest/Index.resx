@@ -150,4 +150,7 @@
   <data name="Submit" xml:space="preserve">
     <value>Save and Add Your Files</value>
   </data>
+  <data name="Message.SubmissionSuccess" xml:space="preserve">
+    <value>Form Successfully Submitted.</value>
+  </data>
 </root>

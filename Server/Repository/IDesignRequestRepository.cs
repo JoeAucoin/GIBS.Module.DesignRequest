@@ -13,6 +13,10 @@ namespace GIBS.Module.DesignRequest.Repository
         Models.DesignRequest UpdateDesignRequest(Models.DesignRequest DesignRequest);
         void DeleteDesignRequest(int DesignRequestId);
 
+        // New methods for pagination
+        IEnumerable<Models.DesignRequest> GetDesignRequests(int moduleId, int page, int pageSize);
+        int CountDesignRequests(int moduleId);
+
         // FileToRequest methods
         IEnumerable<Models.FileToRequest> GetFileToRequests(int DesignRequestId);
         Models.FileToRequest GetFileToRequest(int FileToRequestId);

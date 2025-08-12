@@ -1,4 +1,9 @@
 ﻿@using Oqtane.Models
+@using System.Linq
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Models
+@using System.Globalization
+
 @namespace GIBS.Module.DesignRequest
 @inherits ModuleBase
 @inject Services.IDesignRequestService DesignRequestService
@@ -11,9 +16,9 @@
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
+    <Pager Items="@_designRequests" PageSize="10" Class="table table-striped">
+        <Header>      
+                <th>@Localizer["Record"]</th>
                 <th>@Localizer["Contact Name"]</th>
                 <th>@Localizer["Project Name"]</th>
                 <th>@Localizer["Status"]</th>
@@ -21,24 +26,22 @@ else
                 <th>@Localizer["Created On"]</th>
                 <th style="width: 1px;">&nbsp;</th>
                 <th style="width: 1px;">&nbsp;</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var designRequest in _designRequests)
-            {
-                <tr>
-                    <td>@designRequest.ContactName</td>
-                    <td>@designRequest.ProjectName</td>
-                    <td>@designRequest.Status</td>
-                    <td>@GetUserName(designRequest.AssignedToUserId)</td>
-                    <td>@designRequest.CreatedOn.ToShortDateString()</td>
-                    <td><ActionLink Action="Edit" Parameters="@($"id={designRequest.DesignRequestId}")" Class="btn btn-primary btn-sm" Security="SecurityAccessLevel.Edit" ResourceKey="EditButton" Text="@Localizer["EditButton"]" /></td>
-                    <td><ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", designRequest.ProjectName])" Action="Delete" Security="SecurityAccessLevel.Edit" Class="btn btn-danger btn-sm" OnClick="@(async () => await Delete(designRequest.DesignRequestId))" ResourceKey="Delete" Id="@designRequest.DesignRequestId.ToString()" />
-                        </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        </Header>
+        <Row>
+                <td>@context.DesignRequestId</td>
+                <td>@context.ContactName</td>
+                <td>@context.ProjectName</td>
+                <td>@context.Status</td>
+                <td>@GetUserName(context.AssignedToUserId)</td>
+                <td>@context.CreatedOn.ToShortDateString()</td>
+                <td><ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}")" Class="btn btn-primary btn-sm" 
+                    Security="SecurityAccessLevel.Edit" ResourceKey="EditButton" Text="@Localizer["EditButton"]" /></td>
+                <td><ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", context.ProjectName])" 
+                    Action="Delete" Security="SecurityAccessLevel.Edit" Class="btn btn-danger btn-sm" 
+                    OnClick="@(async () => await Delete(context.DesignRequestId))" ResourceKey="Delete" 
+                    Id="@context.DesignRequestId.ToString()" /></td>
+        </Row>
+    </Pager>
 }
 
 
@@ -50,7 +53,9 @@ else
     {
         try
         {
-            _designRequests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
+            // Fetch the complete list of requests for client-side pagination
+            var requests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
+            _designRequests = requests.OrderByDescending(r => r.DesignRequestId).ToList();
             _users = await DesignRequestService.GetUsersAsync();
         }
         catch (Exception ex)
@@ -81,7 +86,7 @@ else
         {
             await DesignRequestService.DeleteDesignRequestAsync(designRequestId, ModuleState.ModuleId);
             await logger.LogInformation("Design Request Deleted {DesignRequestId}", designRequestId);
-            await OnInitializedAsync(); // Refresh the list
+            await OnInitializedAsync(); // Refresh the entire list
             AddModuleMessage(Localizer["Design Request Deleted Successfully"], MessageType.Success);
         }
         catch (Exception ex)

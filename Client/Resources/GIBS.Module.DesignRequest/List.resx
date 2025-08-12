@@ -123,11 +123,11 @@
   <data name="Name.HelpText" xml:space="preserve">
     <value>Enter the name</value>
   </data>
-  <data name="Save" xml:space="preserve">
-    <value>Save</value>
+  <data name="Save.Text" xml:space="preserve">
+    <value>Update</value>
   </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
+  <data name="Cancel.Text" xml:space="preserve">
+    <value>Return To List</value>
   </data>
   <data name="Message.LoadError" xml:space="preserve">
     <value>Error Loading DesignRequest</value>

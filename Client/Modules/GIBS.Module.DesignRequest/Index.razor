@@ -4,6 +4,7 @@
 @using GIBS.Module.DesignRequest.Models
 @using Oqtane.Services
 @using System.Text
+@using Microsoft.AspNetCore.Components.Authorization
 
 @namespace GIBS.Module.DesignRequest
 @inherits ModuleBase
@@ -14,6 +15,7 @@
 @inject INotificationService NotificationService
 @inject IUserService UserService
 @inject IFileService FileService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <div class="text-center">
     <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="List Records" ResourceKey="List" />
@@ -23,18 +25,13 @@
 
 @if (_isSubmitted)
 {
-    @if (!string.IsNullOrEmpty(_successFeedback))
-    {
-        <div class="alert alert-success mt-3" style="white-space: pre-wrap;">
-            @((MarkupString)_successFeedback)
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-success mt-3">
-            @Localizer["Message.SubmissionSuccess"]
-        </div>
-    }
+   
+     @if (!string.IsNullOrEmpty(_fileUploadInstructions))
+        {
+            <div class="alert alert-info text-center" style="white-space: pre-wrap;">
+                @((MarkupString)_fileUploadInstructions)
+            </div>
+        }
 
     <div class="card mt-4">
         <div class="card-header">
@@ -44,7 +41,7 @@
             <div class="row mb-3">
                 <Label Class="col-sm-3" For="fileName" HelpText="Provide a name for the file" ResourceKey="Label.FileName">File Name:</Label>
                 <div class="col-sm-9">
-                    <input id="fileName" class="form-control" @bind="@_newFileToRequest.Name" required />
+                    <input id="fileName" class="form-control" @bind="@_newFileToRequest.Name" placeholder="Custom Friendly File Name" />
                 </div>
             </div>
             <div class="row mb-3">
@@ -81,6 +78,9 @@
             }
         </ul>
     }
+    <div class="text-center mt-3" style="width:100%;">
+        <NavLink class="btn btn-secondary" href="@NavigateUrl()">@Localizer["Finished"]</NavLink>
+    </div>
 }
 else
 {
@@ -114,6 +114,13 @@ else
                     </div>
                 </div>
             }
+
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="mailingAddress" HelpText="Enter the physical mailing address for samples. No P.O. Boxes!" ResourceKey="MailingAddress">Mailing Address: </Label>
+                    <div class="col-sm-9">
+                        <textarea id="mailingAddress" class="form-control" @bind="@_DesignRequest.MailingAddress" rows="3"></textarea>
+                    </div>
+                </div>
 
             @if (_showPhone)
             {
@@ -155,9 +162,9 @@ else
                 </div>
             }
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="questioncomments" HelpText="Enter your Design Notes, requests or comments" ResourceKey="QuestionComments">Design Notes: </Label>
+                <Label Class="col-sm-3" For="questioncomments" HelpText="Enter your Design Notes, requests or comments" ResourceKey="QuestionComments">Design/Job Notes: </Label>
                 <div class="col-sm-9">
-                    <textarea id="questioncomments" class="form-control" @bind="@_DesignRequest.QuestionComments" required></textarea>
+                    <textarea id="questioncomments" class="form-control" @bind="@_DesignRequest.QuestionComments" rows="5" required></textarea>
                 </div>
             </div>
 
@@ -181,7 +188,7 @@ else
             @if (_showInstallationDate)
             {
                 <div class="row mb-1 align-items-center">
-                    <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Installation Date: </Label>
+                    <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Estimated Installation Date: </Label>
                     <div class="col-sm-9">
                         <input id="installationDate" type="date" class="form-control" @bind="@_DesignRequest.InstallationDate" />
                     </div>
@@ -191,7 +198,7 @@ else
             @if (_showDimensions)
             {
                 <div class="row mb-1 align-items-center">
-                    <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Dimensions: </Label>
+                    <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
                     <div class="col-sm-9">
                         <input id="overallSpaceDimensions" class="form-control" @bind="@_DesignRequest.OverallSpaceDimensions" />
                     </div>
@@ -221,7 +228,13 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="shapeConfiguration" HelpText="Enter the shape/configuration" ResourceKey="ShapeConfiguration">Shape/Configuration: </Label>
                     <div class="col-sm-9">
-                        <input id="shapeConfiguration" class="form-control" @bind="@_DesignRequest.ShapeConfiguration" />
+                        @foreach (var shape in _configurationShapes)
+                        {
+                            <div class="form-check">
+                                <input id="shape-@shape" type="checkbox" class="form-check-input" checked="@_selectedConfigurationShapes[shape]" @onchange="(e) => OnShapeInterestChanged(e, shape)" />
+                                <label class="form-check-label" for="shape-@shape">@shape</label>
+                            </div>
+                        }
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
@@ -236,16 +249,15 @@ else
                         <input id="color" class="form-control" @bind="@_DesignRequest.Color" />
                     </div>
                 </div>
-            }
-
-            @if (_showCountertop)
-            {
+            }       
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
                     <div class="col-sm-9">
                         <input id="countertopThickness" class="form-control" @bind="@_DesignRequest.CountertopThickness" />
                     </div>
                 </div>
+            @if (_showCountertop)
+            {
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
                     <div class="col-sm-9">
@@ -291,7 +303,9 @@ else
                                                             <option value="">-- Select Fuel Type --</option>
                                                             <option value="Electric">Electric</option>
                                                             <option value="Natural Gas">Natural Gas</option>
-                                                            <option value="Propane">Propane</option>
+                                                            <option value="Charcoal/Wood">Charcoal/Wood</option>
+                                                            <option value="Household Propane">Household Propane</option>
+                                                            <option value="Portable Propane Tank">Portable Propane Tank</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -337,6 +351,12 @@ else
 
 @code {
 
+
+
+
+
+
+
     private class ApplianceSelection
     {
         public bool IsSelected { get; set; }
@@ -346,17 +366,22 @@ else
     }
 
     // public override string RenderMode => RenderModes.Static;
-    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Anonymous;
     private ElementReference form;
     private bool validated = false;
     private DesignRequest _DesignRequest = new();
     private List<string> _interests = new();
     private Dictionary<string, bool> _selectedInterests = new();
 
+    private List<string> _configurationShapes = new();
+    private Dictionary<string, bool> _selectedConfigurationShapes = new();
+
     private List<string> _status = new();
 
     private bool _isSubmitted = false;
     private string _instructions;
+
+    private string _fileUploadInstructions;
     private string _successFeedback;
     private string _sentToUserName;
     private string _sentToUserEmail;
@@ -393,6 +418,8 @@ else
     {
         try
         {
+
+
             _DesignRequest.IP_Address = PageState.RemoteIPAddress;
 
             _DesignRequest.InstallationDate = DateTime.Today.AddMonths(3);
@@ -401,6 +428,7 @@ else
 
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _instructions = SettingService.GetSetting(settings, "Instructions", "");
+            _fileUploadInstructions = SettingService.GetSetting(settings, "FileUploadInstructions", "");
             _successFeedback = SettingService.GetSetting(settings, "SuccessFeedback", "Thank you for your form submission!");
             _sentToUserEmail = SettingService.GetSetting(settings, "SentToUserEmail", "");
             _sentToUserName = SettingService.GetSetting(settings, "SentToUserName", "");
@@ -420,6 +448,15 @@ else
             {
                 _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
             }
+
+            var configurationShapes = SettingService.GetSetting(settings, "ConfigurationShape", "");
+            if (!string.IsNullOrEmpty(configurationShapes))
+            {
+                _configurationShapes = configurationShapes.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                _selectedConfigurationShapes = _configurationShapes.ToDictionary(shape => shape, shape => false);
+            }
+
+
             _showCompany = bool.Parse(SettingService.GetSetting(settings, "ShowCompany", "true"));
             _showAddress = bool.Parse(SettingService.GetSetting(settings, "ShowAddress", "true"));
             _showPhone = bool.Parse(SettingService.GetSetting(settings, "ShowPhone", "true"));
@@ -474,20 +511,62 @@ else
         }
     }
 
+    private void OnShapeInterestChanged(ChangeEventArgs e, string shape)
+    {
+        if (_selectedConfigurationShapes.ContainsKey(shape))
+        {
+            _selectedConfigurationShapes[shape] = (bool)e.Value;
+        }
+    }
+
     private async void HandleFileUpload(int fileId)
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
         if (_currentDesignRequestId != 0)
         {
             var uploadedFile = await FileService.GetFileAsync(fileId);
             if (uploadedFile != null)
             {
-                _newFileToRequest.DesignRequestId = _currentDesignRequestId;
-                _newFileToRequest.FileId = uploadedFile.FileId;
-                _newFileToRequest.FilePath = uploadedFile.Url;
-
                 try
                 {
+                    // Construct the new file name
+                    string newFileName = $"{_currentDesignRequestId}_{uploadedFile.Name}";
+
+                    _newFileToRequest.DesignRequestId = _currentDesignRequestId;
+
+                    // Rename the file and get the updated file object
+
+                    if (user.Identity.IsAuthenticated)
+                    {
+                        var renamedFile = await RenameFile(fileId, newFileName);
+                        if (renamedFile == null)
+                        {
+                            AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
+                            return;
+                        }
+
+                        // Use the custom friendly name if provided, otherwise use the new (renamed) file name
+                        _newFileToRequest.FileId = renamedFile.FileId;
+                        _newFileToRequest.FilePath = renamedFile.Url;
+                        if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+                        {
+                            _newFileToRequest.Name = renamedFile.Name;
+                        }
+                    }
+                    else
+                    {
+                        if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+                        {
+                            _newFileToRequest.Name = uploadedFile.Name;
+                        }
+                        _newFileToRequest.FileId = fileId;
+                        _newFileToRequest.FilePath = uploadedFile.Url;
+                    }
+
                     var result = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+
                     _uploadedFiles.Add(result);
                     _newFileToRequest = new(); // Reset for next upload
                     AddModuleMessage("File uploaded successfully.", MessageType.Success);
@@ -506,6 +585,30 @@ else
         }
     }
 
+
+    public async Task<Oqtane.Models.File> RenameFile(int fileId, string newFileName)
+    {
+        try
+        {
+            // Retrieve the existing file from the database
+            var uploadedFile = await FileService.GetFileAsync(fileId);
+
+            if (uploadedFile != null)
+            {
+                // Update the file name
+                uploadedFile.Name = newFileName;
+                // Save the changes back to the database and potentially trigger physical file renaming
+                return await FileService.UpdateFileAsync(uploadedFile);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions (e.g., file not found, permission issues)
+            await logger.LogError(ex, "Error renaming file {FileId}: {Error}", fileId, ex.Message);
+        }
+        return null;
+    }
+
     private async Task Save()
     {
         try
@@ -516,7 +619,7 @@ else
             {
                 // ensure honeypot is empty
                 //_DesignRequest.Fax = "";
-
+                _DesignRequest.UserId = PageState.User?.UserId ?? 0;
                 _DesignRequest.Status = _status.FirstOrDefault();
                 _DesignRequest.ContactName = _DesignRequest.ContactName?.Trim();
                 _DesignRequest.Company = _DesignRequest.Company?.Trim();
@@ -524,6 +627,7 @@ else
                 _DesignRequest.Address = _DesignRequest.Address?.Trim();
                 _DesignRequest.Phone = _DesignRequest.Phone?.Trim();
                 _DesignRequest.Email = _DesignRequest.Email?.Trim();
+                _DesignRequest.MailingAddress = _DesignRequest.MailingAddress?.Trim();
                 if (!string.IsNullOrEmpty(_DesignRequest.Website) && !_DesignRequest.Website.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !_DesignRequest.Website.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
                     _DesignRequest.Website = "https://" + _DesignRequest.Website;
@@ -533,6 +637,7 @@ else
                 _DesignRequest.SendToEmail = _sentToUserEmail.ToString();
                 _DesignRequest.SendToName = _sentToUserName.ToString();
                 _DesignRequest.Interest = string.Join(", ", _selectedInterests.Where(i => i.Value).Select(i => i.Key));
+                _DesignRequest.ShapeConfiguration = string.Join(", ", _selectedConfigurationShapes.Where(s => s.Value).Select(s => s.Key));
                 _DesignRequest.CeilingHeight = _DesignRequest.CeilingHeight?.Trim();
                 _DesignRequest.Color = _DesignRequest.Color?.Trim();
                 _DesignRequest.CounterDepth = _DesignRequest.CounterDepth?.Trim();
@@ -577,6 +682,17 @@ else
 
                     await logger.LogInformation("Contact Form Submitted {DesignRequest}", _DesignRequest);
                     _isSubmitted = true;
+
+                    if (!string.IsNullOrEmpty(_successFeedback))
+
+                    {
+                        AddModuleMessage(_successFeedback, MessageType.Success);
+                    }
+                    else
+                    {
+                        AddModuleMessage(Localizer["Message.SubmissionSuccess"], MessageType.Success);
+                    }
+ 
                 }
                 else
                 {
@@ -594,5 +710,8 @@ else
             await logger.LogError(ex, "Error Saving Contact Form {Error}", ex.Message);
             AddModuleMessage(Localizer["Message.SubmissionError"], MessageType.Error);
         }
+
     }
+
+
 }

@@ -30,39 +30,73 @@ else
                 </div>
             </div>
             <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="phone" HelpText="Enter the contact phone number" ResourceKey="Phone">Phone: </Label>
+                <div class="col-sm-9">
+                    <input id="phone" class="form-control" @bind="@_designRequest.Phone" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="email" HelpText="Enter the contact email address" ResourceKey="Email">Email: </Label>
+                <div class="col-sm-9">
+                    <input id="email" type="email" class="form-control" @bind="@_designRequest.Email" />
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="mailingAddress" HelpText="Enter the physical mailing address for samples. No P.O. Boxes!" ResourceKey="MailingAddress">Mailing Address: </Label>
+                <div class="col-sm-9">
+                    <textarea id="mailingAddress" class="form-control" @bind="@_designRequest.MailingAddress" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="website" HelpText="Enter the project website" ResourceKey="Website">Website: </Label>
+                <div class="col-sm-9">
+                    <input id="website" class="form-control" @bind="@_designRequest.Website" />
+                </div>
+            </div>
+            <hr />
+            <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="projectName" HelpText="Enter the project name" ResourceKey="ProjectName">Project Name: </Label>
                 <div class="col-sm-9">
                     <input id="projectName" class="form-control" @bind="@_designRequest.ProjectName" />
                 </div>
             </div>
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="address" HelpText="Enter the project address" ResourceKey="Address">Address: </Label>
+                <Label Class="col-sm-3" For="address" HelpText="Enter the project address" ResourceKey="Address">Project Address: </Label>
                 <div class="col-sm-9">
                     <textarea id="address" class="form-control" @bind="@_designRequest.Address" rows="3"></textarea>
                 </div>
             </div>
 
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="questionComments" HelpText="Enter design notes" ResourceKey="DesignNotes">Design Notes: </Label>
+                <Label Class="col-sm-3" For="interest" HelpText="Client interest" ResourceKey="Interest">Interest: </Label>
+                <div class="col-sm-9">
+                    <input id="interest" type="text" class="form-control" @bind="@_designRequest.Interest" />
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="questionComments" HelpText="Enter design notes" ResourceKey="DesignNotes">Design/Job Notes: </Label>
                 <div class="col-sm-9">
                     <textarea id="questionComments" class="form-control" @bind="@_designRequest.QuestionComments" rows="5"></textarea>
                 </div>
             </div>
 
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Installation Date: </Label>
+                <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Estimated Installation Date: </Label>
                 <div class="col-sm-9">
                     <input id="installationDate" type="date" class="form-control" @bind="@_designRequest.InstallationDate" />
                 </div>
             </div>
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Dimensions: </Label>
+                <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
                 <div class="col-sm-9">
                     <input id="overallSpaceDimensions" class="form-control" @bind="@_designRequest.OverallSpaceDimensions" />
                 </div>
             </div>
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="ceilingHeight" HelpText="Enter the ceiling height" ResourceKey="CeilingHeight">Ceiling Height: </Label>
+                <Label Class="col-sm-3" For="ceilingHeight" HelpText="Is any Part of the Kitchen covered by a roof or Overhang?" ResourceKey="CeilingHeight">Ceiling Height: </Label>
                 <div class="col-sm-9">
                     <input id="ceilingHeight" class="form-control" @bind="@_designRequest.CeilingHeight" />
                 </div>
@@ -322,6 +356,7 @@ else
                                 <tr>
                                     <td>@file.Name</td>
                                     <td>@file.Description</td>
+                                    
                                     <td class="text-end">
                                         <a href="@file.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
                                     </td>
@@ -410,6 +445,7 @@ else
         <div class="mt-3">
             <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
             <NavLink class="btn btn-secondary" href="@ReturnUrl()">@Localizer["Cancel"]</NavLink>
+           
         </div>
         <br /><br />
         <AuditInfo CreatedBy="@_designRequest.CreatedBy" CreatedOn="@_designRequest.CreatedOn" ModifiedBy="@_designRequest.ModifiedBy" ModifiedOn="@_designRequest.ModifiedOn"></AuditInfo>
@@ -682,25 +718,32 @@ else
 
     private async void HandleFileUpload(int fileId)
     {
-        // if (string.IsNullOrEmpty(_newFileToRequest.Name))
-        // {
-        //     AddModuleMessage("Please enter a name for the file.", MessageType.Warning);
-        //     return;
-        // }
-
+       
         var uploadedFile = await FileService.GetFileAsync(fileId);
         if (uploadedFile != null)
         {
-            if (string.IsNullOrEmpty(_newFileToRequest.Name))
-            {
-                _newFileToRequest.Name = uploadedFile.Name;
-            }
             _newFileToRequest.DesignRequestId = _designRequest.DesignRequestId;
             _newFileToRequest.FileId = uploadedFile.FileId;
             _newFileToRequest.FilePath = uploadedFile.Url;
 
             try
             {
+                string newFileName = $"{_designRequest.DesignRequestId}_{uploadedFile.Name}";
+                var renamedFile = await RenameFile(fileId, newFileName);
+                if (renamedFile == null)
+                {
+                    //    AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
+                    return;
+                }
+
+                // Use the custom friendly name if provided, otherwise use the new (renamed) file name
+                _newFileToRequest.FileId = renamedFile.FileId;
+                _newFileToRequest.FilePath = renamedFile.Url;
+                if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+                {
+                    _newFileToRequest.Name = renamedFile.Name;
+                }
+               
                 await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
                 _newFileToRequest = new(); // Reset form
                 await LoadFileData();
@@ -717,6 +760,84 @@ else
             AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
         }
         StateHasChanged();
+    }
+
+    //  private async void HandleFileUploadOLD(int fileId)
+    // {
+        
+    //     if (_currentDesignRequestId != 0)
+    //     {
+    //         var uploadedFile = await FileService.GetFileAsync(fileId);
+    //         if (uploadedFile != null)
+    //         {
+    //             try
+    //             {
+    //                 // Construct the new file name
+    //                 string newFileName = $"{_currentDesignRequestId}_{uploadedFile.Name}";
+
+    //                 _newFileToRequest.DesignRequestId = _currentDesignRequestId;
+
+    //                 // Rename the file and get the updated file object
+                   
+
+    //                     var renamedFile = await RenameFile(fileId, newFileName);
+    //                     if (renamedFile == null)
+    //                     {
+    //                         AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
+    //                         return;
+    //                     }
+
+    //                     // Use the custom friendly name if provided, otherwise use the new (renamed) file name
+    //                     _newFileToRequest.FileId = renamedFile.FileId;
+    //                     _newFileToRequest.FilePath = renamedFile.Url;
+    //                     if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+    //                     {
+    //                         _newFileToRequest.Name = renamedFile.Name;
+    //                     }
+
+                   
+
+    //                 var result = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+
+    //                 _uploadedFiles.Add(result);
+    //                 _newFileToRequest = new(); // Reset for next upload
+    //                 AddModuleMessage("File uploaded successfully.", MessageType.Success);
+    //             }
+    //             catch (Exception ex)
+    //             {
+    //                 await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
+    //                 AddModuleMessage("There was an error saving the file information.", MessageType.Error);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+    //         }
+    //         StateHasChanged();
+    //     }
+    // }
+
+    public async Task<Oqtane.Models.File> RenameFile(int fileId, string newFileName)
+    {
+        try
+        {
+            // Retrieve the existing file from the database
+            var uploadedFile = await FileService.GetFileAsync(fileId);
+
+            if (uploadedFile != null)
+            {
+                // Update the file name
+                uploadedFile.Name = newFileName;
+                // Save the changes back to the database and potentially trigger physical file renaming
+                return await FileService.UpdateFileAsync(uploadedFile);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions (e.g., file not found, permission issues)
+            await logger.LogError(ex, "Error renaming file {FileId}: {Error}", fileId, ex.Message);
+        }
+        return null;
     }
 
     private async Task DeleteFileToRequest(FileToRequest file)
@@ -744,7 +865,8 @@ else
             {
                 await DesignRequestService.UpdateDesignRequestAsync(_designRequest);
                 await logger.LogInformation("DesignRequest Updated {DesignRequest}", _designRequest);
-                
+                AddModuleMessage("Record successfully updated.", MessageType.Success);
+                validated = false;
                 StateHasChanged();
             }
             else

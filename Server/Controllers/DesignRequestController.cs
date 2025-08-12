@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Mvc;
+using GIBS.Module.DesignRequest.Models;
+using GIBS.Module.DesignRequest.Services;
 using Microsoft.AspNetCore.Authorization;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
-using Oqtane.Shared;
+using Microsoft.AspNetCore.Mvc;
+using Oqtane.Controllers;
 using Oqtane.Enums;
 using Oqtane.Infrastructure;
-using GIBS.Module.DesignRequest.Services;
-using Oqtane.Controllers;
+using Oqtane.Shared;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -55,6 +56,23 @@ namespace GIBS.Module.DesignRequest.Controllers
                 _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized DesignRequest Get Attempt {DesignRequestId} {ModuleId}", id, moduleid);
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return null;
+            }
+        }
+
+        // New endpoint for pagination
+        [HttpGet("paged")]
+        [Authorize(Policy = PolicyNames.ViewModule)]
+        public async Task<ActionResult<Paged<Models.DesignRequest>>> Get(string moduleid, string page, string pagesize)
+        {
+            if (int.TryParse(moduleid, out int ModuleId) && IsAuthorizedEntityId(EntityNames.Module, ModuleId) &&
+                int.TryParse(page, out int Page) && int.TryParse(pagesize, out int PageSize))
+            {
+                return Ok(await _DesignRequestService.GetDesignRequestsAsync(ModuleId, Page, PageSize));
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized Paged DesignRequest Get Attempt {ModuleId}", moduleid);
+                return Forbid();
             }
         }
 

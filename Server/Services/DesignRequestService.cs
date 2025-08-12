@@ -69,6 +69,22 @@ namespace GIBS.Module.DesignRequest.Services
             }
         }
 
+        public Task<Paged<Models.DesignRequest>> GetDesignRequestsAsync(int moduleId, int page, int pageSize)
+        {
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
+            {
+                var data = _DesignRequestRepository.GetDesignRequests(moduleId, page, pageSize);
+                var totalCount = _DesignRequestRepository.CountDesignRequests(moduleId);
+                var pagedResult = new Paged<Models.DesignRequest> { Data = data.ToList(), TotalCount = totalCount };
+                return Task.FromResult(pagedResult);
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized Paged DesignRequest Get Attempt {ModuleId}", moduleId);
+                return Task.FromResult<Paged<Models.DesignRequest>>(null);
+            }
+        }
+
         public Task<Models.DesignRequest> GetDesignRequestAsync(int DesignRequestId, int ModuleId)
         {
             if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, ModuleId, PermissionNames.View))
