@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.Components.Authorization
 @using Oqtane.Modules.Controls
 @using GIBS.Module.DesignRequest.Services
 @using GIBS.Module.DesignRequest.Models
@@ -6,6 +7,7 @@
 @using System.Globalization
 @using System.Net
 @using Oqtane.Models
+@using Oqtane.Security
 
 @namespace GIBS.Module.DesignRequest
 @inherits ModuleBase
@@ -14,6 +16,12 @@
 @inject IStringLocalizer<Edit> Localizer
 @inject ISettingService SettingService
 @inject IFileService FileService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Oqtane.Services.INotificationService NotificationService
+@inject Oqtane.Services.IUserService UserService
+
+@inject Oqtane.Services.IRoleService RoleService
+@inject Oqtane.Services.IUserRoleService UserRoleService
 
 @if (_designRequest == null)
 {
@@ -152,16 +160,20 @@ else
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="assignedTo" HelpText="Assign this request to a user" ResourceKey="AssignedTo">Assigned To: </Label>
                 <div class="col-sm-9">
+                    @_designerUserName
+                    @if (_designerUsers != null)
+                    {
                     <select id="assignedTo" class="form-select" @bind="@_designRequest.AssignedToUserId">
                         <option value="0">-- Unassigned --</option>
-                        @if (_users != null)
-                        {
-                            @foreach (var user in _users)
+                        
+                        
+                            @foreach (var user in _designerUsers)
                             {
                                 <option value="@user.UserId">@user.DisplayName</option>
                             }
-                        }
+                        
                     </select>
+                    }
                 </div>
             </div>
             <div class="row mb-1 align-items-center">
@@ -270,9 +282,10 @@ else
                         <thead>
                             <tr>
                                 <th>Detail</th>
-                                <th>Model</th>
+                                <th>Notes</th>
+                               @*  <th>Model</th>
                                 <th>Size</th>
-                                <th>Color</th>
+                                <th>Color</th> *@
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -281,9 +294,10 @@ else
                             {
                                 <tr>
                                     <td>@item.Detail?.DetailName</td>
-                                    <td>@item.DetailModel</td>
+                                     <td>@item.DetailNote</td>
+                                  @*   <td>@item.DetailModel</td>
                                     <td>@item.DetailSize</td>
-                                    <td>@item.DetailColor</td>
+                                    <td>@item.DetailColor</td> *@
                                     <td class="text-end">
                                         <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetailToRequest(item)">Edit</button>
                                         <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteDetailToRequest(item)">Delete</button>
@@ -300,7 +314,7 @@ else
                 <div class="card mt-3">
                     <div class="card-header">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add New" : "Edit") Detail</div>
                     <div class="card-body">
-                        <div class="row mb-2 align-items-end">
+                        <div class="row mb-2 align-items-start">
                             <div class="col-md-3">
                                 <Label For="detailSelect">Select Detail:</Label>
                                 <select id="detailSelect" class="form-select" @bind="@_newDetailToRequest.DetailId">
@@ -314,18 +328,22 @@ else
                                     }
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-5">
+                                <Label For="detailNote">Notes:</Label>
+                                <textarea id="detailNote" class="form-control" @bind="@_newDetailToRequest.DetailNote" rows="3"></textarea>
+                            </div>
+@*                             <div class="col-md-2">
                                 <Label For="detailModel">Model:</Label>
                                 <input id="detailModel" class="form-control" @bind="@_newDetailToRequest.DetailModel" />
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <Label For="detailSize">Size:</Label>
                                 <input id="detailSize" class="form-control" @bind="@_newDetailToRequest.DetailSize" />
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <Label For="detailColor">Color:</Label>
                                 <input id="detailColor" class="form-control" @bind="@_newDetailToRequest.DetailColor" />
-                            </div>
+                            </div> *@
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-success" @onclick="SaveDetailToRequest">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add" : "Update")</button>
                                 @if (_newDetailToRequest.DetailToRequestId != 0)
@@ -345,7 +363,7 @@ else
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Description</th>
+                                <th>Notes</th>
                                 <th></th>
                                 <th></th>
                             </tr>
@@ -384,7 +402,7 @@ else
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <Label Class="col-sm-3" For="fileDescription">File Description:</Label>
+                            <Label Class="col-sm-3" For="fileDescription">Notes:</Label>
                             <div class="col-sm-9">
                                 <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3"></textarea>
                             </div>
@@ -394,7 +412,7 @@ else
                             <div class="col-sm-9">
                                 <FileManager UploadMultiple="false" Filter="jpg,png,gif,jpeg,pdf"
                                              FolderId="@_folderId"
-                                             ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"
+                                             ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"  
                                              OnUpload="@HandleFileUpload" />
                             </div>
                         </div>
@@ -403,7 +421,7 @@ else
 
             </TabPanel>
             <TabPanel Name="Notes" Heading="Internal Notes">
-                <h4 class="mt-4">Designer Notes</h4>
+                <h4 class="mt-4">Project Notes</h4>
                 @if (_noteToRequests != null && _noteToRequests.Any())
                 {
                     <div class="list-group mt-3">
@@ -445,7 +463,8 @@ else
         <div class="mt-3">
             <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
             <NavLink class="btn btn-secondary" href="@ReturnUrl()">@Localizer["Cancel"]</NavLink>
-           
+            <button type="button" class="btn btn-outline-secondary" @onclick="SendNotification">@Localizer["Send Designer Notification"]</button>
+          
         </div>
         <br /><br />
         <AuditInfo CreatedBy="@_designRequest.CreatedBy" CreatedOn="@_designRequest.CreatedOn" ModifiedBy="@_designRequest.ModifiedBy" ModifiedOn="@_designRequest.ModifiedOn"></AuditInfo>
@@ -453,7 +472,11 @@ else
 }
 
 @code {
-    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+
+    private Oqtane.Models.User UserDetails;
+
     public override string Actions => "Edit";
     public override string Title => "Manage Design Request";
 
@@ -462,6 +485,7 @@ else
 
     private DesignRequest _designRequest;
     private List<User> _users;
+    private List<User> _designerUsers;
     private List<string> _status = new();
 
     private List<ApplianceToRequest> _applianceToRequests;
@@ -478,30 +502,46 @@ else
     private List<FileToRequest> _fileToRequests;
     private FileToRequest _newFileToRequest = new();
     private int _folderId = 1;
-    //  private readonly IUserRoleService _userRoleService;
+    public string _designerRole;
+    private string _designerUserName = string.Empty;
+    private string _returnurl = string.Empty;
+    private bool IsDesignerRole { get; set; }
+
+  //  private readonly IRoleService _RoleService;
+  //  private readonly UserRoleService userRoleService;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            _users = await DesignRequestService.GetUsersAsync();
+            if (PageState.QueryString.ContainsKey("r") && PageState.QueryString.TryGetValue("r", out var returnurl))
+            {
+                _returnurl = returnurl.ToString();
+            }
+            
+            var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _folderId = int.Parse(SettingService.GetSetting(settings, "FileFolder", "1"));
+            _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
+            var statusList = SettingService.GetSetting(settings, "StatusList", "");
+            if (!string.IsNullOrEmpty(statusList))
+            {
+                _status = statusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            else
+            {
+                _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
+            }
+            
+            
             if (int.TryParse(PageState.QueryString["id"], out int designRequestId))
             {
                 _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
                 if (_designRequest != null)
                 {
-                    var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
-                    _folderId = int.Parse(SettingService.GetSetting(settings, "FileFolder", "1"));
-                    var statusList = SettingService.GetSetting(settings, "StatusList", "");
-                    if (!string.IsNullOrEmpty(statusList))
-                    {
-                        _status = statusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    }
-                    else
-                    {
-                        _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
-                    }
-
-                    _users = await DesignRequestService.GetUsersAsync();
+                    
+                    
+                    //_users = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId,_designerRole);
                     DecodeDesignRequestProperties();
                     await LoadApplianceData();
                     await LoadDetailData();
@@ -519,6 +559,36 @@ else
                 AddModuleMessage("Invalid Design Request Id.", MessageType.Error);
                 NavigationManager.NavigateTo(NavigateUrl());
             }
+
+            if (_returnurl == "c")
+            {
+                _designerUserName = GetUserName(_designRequest.AssignedToUserId) + " is Assigned";
+                // Check if the current user is the owner of the request
+
+                if (_designRequest.UserId != PageState.User.UserId)
+                {
+                    var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                    var user = authState.User;
+                    var currentUser = user.Identity?.Name + " attempting to view record #" + _designRequest.DesignRequestId;
+                    await logger.LogError("User {User} does not have permission to view this record", currentUser);
+                    // If the current user is not the owner of the request, redirect to home
+                    NavigationManager.NavigateTo(ReturnUrl());
+                    return;
+                }
+                
+            }
+            else if (_returnurl == "d")
+            {
+                await GetDesignersListAsync();
+                await CheckUserRoleAsync(_designerRole.ToString());
+            }
+            else
+            {
+                
+                //It must be a manager;
+            }
+
+            
         }
         catch (Exception ex)
         {
@@ -526,6 +596,106 @@ else
             AddModuleMessage(Localizer["Message.LoadError"], MessageType.Error);
         }
     }
+    private string GetUserName(int userId)
+    {
+        if (userId == 0)
+        {
+            return "Unassigned";
+        }
+        var user = _users?.FirstOrDefault(u => u.UserId == userId);
+        return user?.DisplayName ?? $"Unknown User ({userId})";
+    }
+
+    private async Task SendNotification()
+    {
+        // 1. Get SiteId (e.g., from the context)
+        int siteId = PageState.Site.SiteId; // You'll need to implement this
+
+        // 2. Get the recipient User (e.g., from a form or system)
+       // User recipient = GetRecipientUser(); // You'll need to implement this
+        User user = await UserService.GetUserAsync(_designRequest.AssignedToUserId, siteId);
+
+        // 3. Create a new Notification object
+        var notification = new Notification
+        {
+            SiteId = siteId,
+            FromUserId = PageState.User.UserId,
+            FromDisplayName = PageState.User.DisplayName,
+            FromEmail = PageState.User.Email,
+            ToUserId = user.UserId,
+            ToDisplayName = user.DisplayName,
+            ToEmail = user.Email,
+            Subject = "New Design Request",
+            Body = "Dear " + user.DisplayName + ",\n\nA new design request has been assigned to you. Please login and review it soon!",
+            CreatedOn = DateTime.UtcNow,
+            SendOn = DateTime.UtcNow    //.AddMinutes(5) // Schedule sending in 5 minutes
+        };
+
+
+
+
+        // 4. Store the notification
+        await NotificationService.AddNotificationAsync(notification);
+
+        // Optional: Provide feedback to the user
+        AddModuleMessage("Designer Notification sent successfully.", MessageType.Success);
+        
+    }
+
+    private User GetRecipientUser()
+    {
+        // Implement logic to retrieve the User object of the recipient
+        // For demonstration, let's create a dummy user
+        return new User { UserId = 1, Username = "testuser", Email = "test@example.com" };
+    }
+
+    private async Task GetDesignersListAsync()
+    {
+        try
+        {
+            var roleName = _designerRole;
+            var roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
+            var targetRole = roles.FirstOrDefault(r => r.Name == roleName);
+
+            if (targetRole != null)
+            {
+                List<UserRole> userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
+                List<User> usersInRole = userRoles
+                    .Where(ur => ur.RoleId == targetRole.RoleId && ur.User != null)
+                    .Select(ur => ur.User)
+                    .ToList();
+                _designerUsers = usersInRole;
+            }
+            else
+            {
+                await logger.LogWarning("The role '{RoleName}' was not found.", roleName);
+                _designerUsers = new List<User>();
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error loading designers list: {Error}", ex.Message);
+            AddModuleMessage("Error loading designers list.", MessageType.Error);
+        }
+    }
+
+    private async Task CheckUserRoleAsync(string _role)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
+        if (!IsDesignerRole)
+        {
+
+            var currentUser = user.Identity?.Name;
+            await logger.LogError("User {User} does not have permission to view this module", currentUser);
+
+            NavigationManager.NavigateTo(NavigateUrl());
+            return; // Stop execution to prevent rendering
+        }
+
+    }
+
 
     private void DecodeDesignRequestProperties()
     {
@@ -640,6 +810,7 @@ else
             DetailToRequestId = item.DetailToRequestId,
             DesignRequestId = item.DesignRequestId,
             DetailId = item.DetailId,
+            DetailNote = item.DetailNote,
             DetailModel = item.DetailModel,
             DetailSize = item.DetailSize,
             DetailColor = item.DetailColor
@@ -694,6 +865,7 @@ else
             _newNoteToRequest.DesignRequestId = _designRequest.DesignRequestId;
             await DesignRequestService.AddNoteToRequestAsync(_newNoteToRequest);
             _newNoteToRequest = new(); // Reset form
+            await Save(); // Save to update ModifiedOn and ModifiedBy
             await LoadNoteData();
         }
         else
@@ -883,7 +1055,23 @@ else
 
     private string ReturnUrl()
     {
-        if (ModuleState != null)
+        if (!string.IsNullOrEmpty(_returnurl))
+        {
+            if(_returnurl == "c")
+            {
+                return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/ListJobs")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/ListJobs" : NavigateUrl();
+            }
+            else if (_returnurl == "d")
+            {
+                return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List" : NavigateUrl();
+            }
+            else
+            {
+                return NavigateUrl(); 
+            }
+        }
+        
+        else if (ModuleState != null)
         {
             return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List" : NavigateUrl();
         }

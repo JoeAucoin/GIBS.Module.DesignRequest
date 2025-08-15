@@ -9,9 +9,9 @@ namespace GIBS.Module.DesignRequest
         {
             Name = "DesignRequest",
             Description = "Design Request Module for Oqtane",
-            Version = "1.0.1",
+            Version = "1.0.2",
             ServerManagerType = "GIBS.Module.DesignRequest.Manager.DesignRequestManager, GIBS.Module.DesignRequest.Server.Oqtane",
-            ReleaseVersions = "1.0.0,1.0.1",
+            ReleaseVersions = "1.0.0,1.0.1,1.0.2",
             Dependencies = "GIBS.Module.DesignRequest.Shared.Oqtane",
             PackageName = "GIBS.Module.DesignRequest" 
         };

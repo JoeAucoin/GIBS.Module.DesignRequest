@@ -3,6 +3,7 @@
 @using GIBS.Module.DesignRequest.Services
 @using GIBS.Module.DesignRequest.Models
 @using Oqtane.Services
+@using Oqtane.Models
 @using System.Text
 @using Microsoft.AspNetCore.Components.Authorization
 
@@ -17,11 +18,25 @@
 @inject IFileService FileService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<div class="text-center">
-    <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="List Records" ResourceKey="List" />
-    <ActionLink Action="Appliances" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="Manage Appliances" ResourceKey="Appliances" />
-    <ActionLink Action="Details" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary mb-3" Text="Manage Details" ResourceKey="Details" />
-</div>
+
+
+
+
+<div class="text-center mb-3">
+    @if (IsLoggedIn)
+    {
+        <ActionLink Action="ListJobs" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List My Jobs" ResourceKey="List" />
+    }
+    @if (IsDesigner)
+    {
+        <ActionLink Action="List" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List Records" ResourceKey="List" />
+    }
+    <ActionLink Action="Appliances" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" Text="Manage Appliances" ResourceKey="Appliances" />
+    <ActionLink Action="Details" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary" Text="Manage Details" ResourceKey="Details" />
+    </div>
+
+
+
 
 @if (_isSubmitted)
 {
@@ -45,7 +60,7 @@
                 </div>
             </div>
             <div class="row mb-3">
-                <Label Class="col-sm-3" For="fileDescription" HelpText="Provide a description for the file" ResourceKey="Label.FileDescription">File Description:</Label>
+                <Label Class="col-sm-3" For="fileDescription" HelpText="Provide a description for the file" ResourceKey="Label.FileDescription">Notes:</Label>
                 <div class="col-sm-9">
                     <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3"></textarea>
                 </div>
@@ -336,6 +351,7 @@ else
                                             </div>
                                         </div>
                                     }
+
                                 </div>
                             </div>
                         </div>
@@ -352,7 +368,8 @@ else
 @code {
 
 
-
+    // public override string RenderMode => RenderModes.Static;
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
 
 
 
@@ -365,8 +382,7 @@ else
         public string FuelType { get; set; }
     }
 
-    // public override string RenderMode => RenderModes.Static;
-    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Anonymous;
+
     private ElementReference form;
     private bool validated = false;
     private DesignRequest _DesignRequest = new();
@@ -407,6 +423,10 @@ else
     private FileToRequest _newFileToRequest = new();
     private List<FileToRequest> _uploadedFiles = new();
     private int _currentDesignRequestId;
+    private string _designerRole = "DesignRequest"; // Default role for designers
+    private bool IsDesigner { get; set; }
+    private bool IsLoggedIn => PageState.User != null && PageState.User.UserId > 0;
+
 
     public override List<Resource> Resources => new List<Resource>()
     {
@@ -417,14 +437,16 @@ else
     protected override async Task OnInitializedAsync()
     {
         try
-        {
-
+        {     
 
             _DesignRequest.IP_Address = PageState.RemoteIPAddress;
 
             _DesignRequest.InstallationDate = DateTime.Today.AddMonths(3);
             // ensure honeypot is empty
             _DesignRequest.Fax = "";
+            _DesignRequest.ContactName = PageState.User?.DisplayName ?? "";
+            _DesignRequest.Email = PageState.User?.Email ?? "";
+
 
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _instructions = SettingService.GetSetting(settings, "Instructions", "");
@@ -468,6 +490,7 @@ else
             _showDimensions = bool.Parse(SettingService.GetSetting(settings, "ShowDimensions", "true"));
             _showConfiguration = bool.Parse(SettingService.GetSetting(settings, "ShowConfiguration", "true"));
             _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
+            _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
             // Correctly parse the setting as an integer
             if (int.TryParse(SettingService.GetSetting(ModuleState.Settings, "FileFolder", "1"), out int folderId))
             {
@@ -478,6 +501,17 @@ else
                 // Handle the case where the setting is not a valid integer
                 _folderId = 1; // Default value or handle error
             }
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            IsDesigner = false;
+
+            if (user.IsInRole(_designerRole) || user.IsInRole("Administrators")) // Replace "Administrators" with the desired role name
+            {
+                IsDesigner = true;
+            }
+
 
             if (_showAppliances)
             {

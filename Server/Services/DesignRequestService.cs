@@ -6,6 +6,7 @@ using Oqtane.Models;
 using Oqtane.Repository;
 using Oqtane.Security;
 using Oqtane.Shared;
+using Oqtane.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,8 +32,10 @@ namespace GIBS.Module.DesignRequest.Services
         private readonly Alias _alias;
         private readonly INotificationRepository _notifications;
         private readonly IUserRepository _userRepository;
+        private readonly IUserRoleRepository _userRoleService;
 
-        public ServerDesignRequestService(IDesignRequestRepository DesignRequestRepository, IApplianceRepository applianceRepository, IDetailRepository detailRepository, IApplianceToRequestRepository applianceToRequestRepository, IDetailToRequestRepository detailToRequestRepository, INoteToRequestRepository noteToRequestRepository, IFileToRequestRepository fileToRequestRepository, IUserPermissions userPermissions, ITenantManager tenantManager, ILogManager logger, IHttpContextAccessor accessor, INotificationRepository notifications, IUserRepository userRepository)
+
+        public ServerDesignRequestService(IDesignRequestRepository DesignRequestRepository, IUserRoleRepository userRoleService, IApplianceRepository applianceRepository, IDetailRepository detailRepository, IApplianceToRequestRepository applianceToRequestRepository, IDetailToRequestRepository detailToRequestRepository, INoteToRequestRepository noteToRequestRepository, IFileToRequestRepository fileToRequestRepository, IUserPermissions userPermissions, ITenantManager tenantManager, ILogManager logger, IHttpContextAccessor accessor, INotificationRepository notifications, IUserRepository userRepository)
         {
             _DesignRequestRepository = DesignRequestRepository;
             _applianceRepository = applianceRepository;
@@ -47,6 +50,7 @@ namespace GIBS.Module.DesignRequest.Services
             _alias = tenantManager.GetAlias();
             _notifications = notifications;
             _userRepository = userRepository;
+            _userRoleService = userRoleService;
         }
 
         // Other service methods...
@@ -54,6 +58,23 @@ namespace GIBS.Module.DesignRequest.Services
         {
             // use the server-side IUserRepository to get the users
             return Task.FromResult(_userRepository.GetUsers().ToList());
+        }
+
+        //GetUsersByRoleAsync
+        public Task<List<User>> GetUsersByRoleAsync(int siteId, string roleName)
+        {
+            List<User> usersInRole = new List<User>();
+
+            // Retrieve UserRole objects for the given site and role name
+            List<UserRole> userRoles = (List<UserRole>)_userRoleService.GetUserRoles(roleName, siteId);
+
+            // Extract the User objects from the UserRole objects
+            foreach (UserRole userRole in userRoles)
+            {
+                usersInRole.Add(userRole.User);
+            }
+
+            return Task.FromResult(usersInRole);
         }
 
         public Task<List<Models.DesignRequest>> GetDesignRequestsAsync(int ModuleId)
@@ -287,7 +308,7 @@ namespace GIBS.Module.DesignRequest.Services
 
         public Task<Models.DesignRequest> UpdateDesignRequestAsync(Models.DesignRequest DesignRequest)
         {
-            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, DesignRequest.ModuleId, PermissionNames.Edit))
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, DesignRequest.ModuleId, PermissionNames.View))
             {
                 DesignRequest = _DesignRequestRepository.UpdateDesignRequest(DesignRequest);
                 _logger.Log(LogLevel.Information, this, LogFunction.Update, "DesignRequest Updated {DesignRequest}", DesignRequest);
@@ -343,7 +364,7 @@ namespace GIBS.Module.DesignRequest.Services
 
         public Task<Appliance> AddApplianceAsync(Appliance appliance)
         {
-            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, appliance.ModuleId, PermissionNames.Edit))
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, appliance.ModuleId, PermissionNames.View))
             {
                 appliance = _applianceRepository.AddAppliance(appliance);
                 _logger.Log(LogLevel.Information, this, LogFunction.Create, "Appliance Added {Appliance}", appliance);
@@ -487,7 +508,7 @@ namespace GIBS.Module.DesignRequest.Services
         {
             // Permissions should be checked based on the associated DesignRequest's ModuleId
             var designRequest = _DesignRequestRepository.GetDesignRequest(applianceToRequest.DesignRequestId);
-            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.Edit))
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.View))
             {
                 applianceToRequest = _applianceToRequestRepository.AddApplianceToRequest(applianceToRequest);
                 _logger.Log(LogLevel.Information, this, LogFunction.Create, "ApplianceToRequest Added {ApplianceToRequest}", applianceToRequest);
@@ -503,7 +524,7 @@ namespace GIBS.Module.DesignRequest.Services
         public Task<ApplianceToRequest> UpdateApplianceToRequestAsync(ApplianceToRequest applianceToRequest)
         {
             var designRequest = _DesignRequestRepository.GetDesignRequest(applianceToRequest.DesignRequestId);
-            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.Edit))
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.View))
             {
                 applianceToRequest = _applianceToRequestRepository.UpdateApplianceToRequest(applianceToRequest);
                 _logger.Log(LogLevel.Information, this, LogFunction.Update, "ApplianceToRequest Updated {ApplianceToRequest}", applianceToRequest);
@@ -560,7 +581,7 @@ namespace GIBS.Module.DesignRequest.Services
         public Task<DetailToRequest> AddDetailToRequestAsync(DetailToRequest detailToRequest)
         {
             var designRequest = _DesignRequestRepository.GetDesignRequest(detailToRequest.DesignRequestId);
-            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.Edit))
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.View))
             {
                 detailToRequest = _detailToRequestRepository.AddDetailToRequest(detailToRequest);
                 _logger.Log(LogLevel.Information, this, LogFunction.Create, "DetailToRequest Added {DetailToRequest}", detailToRequest);
@@ -576,7 +597,7 @@ namespace GIBS.Module.DesignRequest.Services
         public Task<DetailToRequest> UpdateDetailToRequestAsync(DetailToRequest detailToRequest)
         {
             var designRequest = _DesignRequestRepository.GetDesignRequest(detailToRequest.DesignRequestId);
-            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.Edit))
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.View))
             {
                 detailToRequest = _detailToRequestRepository.UpdateDetailToRequest(detailToRequest);
                 _logger.Log(LogLevel.Information, this, LogFunction.Update, "DetailToRequest Updated {DetailToRequest}", detailToRequest);
@@ -633,7 +654,7 @@ namespace GIBS.Module.DesignRequest.Services
         public Task<NoteToRequest> AddNoteToRequestAsync(NoteToRequest noteToRequest)
         {
             var designRequest = _DesignRequestRepository.GetDesignRequest(noteToRequest.DesignRequestId);
-            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.Edit))
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.View))
             {
                 noteToRequest = _noteToRequestRepository.AddNoteToRequest(noteToRequest);
                 _logger.Log(LogLevel.Information, this, LogFunction.Create, "NoteToRequest Added {NoteToRequest}", noteToRequest);

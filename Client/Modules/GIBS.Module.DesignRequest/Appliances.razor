@@ -101,6 +101,9 @@ else
 }
 
 @code {
+
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+
     private List<Appliance> _appliances;
     private Appliance _newAppliance = new Appliance();
     private Appliance _editingAppliance;

@@ -45,7 +45,7 @@ namespace GIBS.Module.DesignRequest.Controllers
 
         // POST api/<controller>
         [HttpPost]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public async Task<ActionResult<NoteToRequest>> Post([FromBody] NoteToRequest noteToRequest)
         {
             if (ModelState.IsValid)

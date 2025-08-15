@@ -13,7 +13,7 @@
 @inherits ModuleBase
 @inject Services.IDesignRequestService DesignRequestService
 @inject NavigationManager NavigationManager
-@inject IStringLocalizer<List> Localizer
+@inject IStringLocalizer<ListJobs> Localizer
 @inject ISettingService SettingService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IUserService UserService
@@ -29,28 +29,24 @@ else
 {
     <Pager Items="@_designRequests" PageSize="10" Class="table table-striped">
         <Header>
-        <th>@Localizer["ID"]</th>
         <th>@Localizer["Contact Name"]</th>
         <th>@Localizer["Project Name"]</th>
         <th>@Localizer["Status"]</th>
         <th>@Localizer["Assigned To"]</th>
         <th>@Localizer["Created On"]</th>
         <th>@Localizer["Updated On"]</th>
-        <th>@Localizer["Updated By"]</th>
         <th style="width: 1px;">&nbsp;</th>
         <th style="width: 1px;">&nbsp;</th>
         </Header>
         <Row>
-            <td>@context.DesignRequestId</td>
             <td>@context.ContactName</td>
             <td>@context.ProjectName</td>
             <td>@context.Status</td>
             <td>@GetUserName(context.AssignedToUserId)</td>
             <td>@context.CreatedOn.ToShortDateString()</td>
             <td>@context.ModifiedOn.ToShortDateString()</td>
-            <td>@context.ModifiedBy</td>
             <td>
-                <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}&r=d")" Class="btn btn-primary btn-sm"
+                <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}&r=c")" Class="btn btn-primary btn-sm"
                             Security="SecurityAccessLevel.View" ResourceKey="EditButton" Text="@Localizer["EditButton"]" />
             </td>
             <td>
@@ -70,24 +66,22 @@ else
     private List<Models.DesignRequest> _designRequests;
     private List<User> _users;
     private bool IsDesignerRole { get; set; }
-    private string _designerRole;
-    private int _designerUserId = 0;
+ //   private string _designerRole;
+ //   private int _designerUserId = 0;
     private int _clientUserId = 0;
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
-            _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
+            _clientUserId = this.PageState.User.UserId; // Default to current user
+            // var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            // _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
 
-            await CheckUserRoleAsync(_designerRole.ToString());
+          //  await CheckUserRoleAsync(_designerRole.ToString());
             // Fetch the complete list of requests for client-side pagination
             var requests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
             IEnumerable<Models.DesignRequest> query = requests;
-            if (_designerUserId > 0)
-            {
-                query = query.Where(r => r.AssignedToUserId == _designerUserId);
-            }
+
             if (_clientUserId > 0)
             {
                 query = query.Where(r => r.UserId == _clientUserId);
@@ -102,36 +96,36 @@ else
         }
     }
 
-    private async Task CheckUserRoleAsync( string _role)
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
-        // IsDesignerRole = user.IsInRole(_role.ToString()) ;
-        if(!IsDesignerRole)
-        {
-            var currentUser = user.Identity?.Name;
-            await logger.LogError("User {User} does not have permission to view this module", currentUser);
+    // private async Task CheckUserRoleAsync(string _role)
+    // {
+    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    //     var user = authState.User;
+    //     IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
+    //     // IsDesignerRole = user.IsInRole(_role.ToString()) ;
+    //     if (!IsDesignerRole)
+    //     {
+    //         var currentUser = user.Identity?.Name;
+    //         await logger.LogError("User {User} does not have permission to view this module", currentUser);
 
-            NavigationManager.NavigateTo(NavigateUrl());
-            return; // Stop execution to prevent rendering
-        }
-        else
-        {
-            // If the user is in the designer role, set the designer user ID to the current user's ID
-            var isDesigner = user.IsInRole(_role.ToString());
-            if (isDesigner)
-            {
-                _designerUserId = PageState.User.UserId;
-            }
-            // else
-            // {
+    //         NavigationManager.NavigateTo(NavigateUrl());
+    //         return; // Stop execution to prevent rendering
+    //     }
+    //     else
+    //     {
+    //         // If the user is in the designer role, set the designer user ID to the current user's ID
+    //         var isDesigner = user.IsInRole(_role.ToString());
+    //         if (isDesigner)
+    //         {
+    //             _designerUserId = PageState.User.UserId;
+    //         }
+    //         // else
+    //         // {
 
-            //     _clientUserId = this.PageState.User.UserId; // Default to current user
-            // }
-        }
+    //         //     
+    //         // }
+    //     }
 
-    }
+    // }
 
     private string GetUserName(int userId)
     {

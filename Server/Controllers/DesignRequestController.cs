@@ -78,7 +78,7 @@ namespace GIBS.Module.DesignRequest.Controllers
 
         // POST api/<controller>
         [HttpPost]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public async Task<Models.DesignRequest> Post([FromBody] Models.DesignRequest DesignRequest)
         {
             if (ModelState.IsValid && IsAuthorizedEntityId(EntityNames.Module, DesignRequest.ModuleId))
@@ -96,7 +96,7 @@ namespace GIBS.Module.DesignRequest.Controllers
 
         // PUT api/<controller>/5
         [HttpPut("{id}")]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public async Task<Models.DesignRequest> Put(int id, [FromBody] Models.DesignRequest DesignRequest)
         {
             if (ModelState.IsValid && DesignRequest.DesignRequestId == id && IsAuthorizedEntityId(EntityNames.Module, DesignRequest.ModuleId))

@@ -20,7 +20,7 @@
             <select id="designerRole" class="form-select" @bind="@_designerRole">
                 @foreach (Role role in _roles)
                 {
-                    <option value="@(role.RoleId)">@(role.Name)</option>
+                    <option value="@(role.Name)">@(role.Name)</option>
                 }
             </select>
         </div>

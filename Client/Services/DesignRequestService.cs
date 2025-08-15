@@ -49,6 +49,11 @@ namespace GIBS.Module.DesignRequest.Services
         {
             return await GetJsonAsync<List<User>>($"{Apiurl}/users");
         }
+        //GetUsersByRoleAsync
+        public async Task<List<User>> GetUsersByRoleAsync(int siteId, string roleName)
+        {
+            return await GetJsonAsync<List<User>>($"{Apiurl}/users");
+        }
 
         // Appliance Methods
         private string ApplianceApiurl => CreateApiUrl("Appliance");

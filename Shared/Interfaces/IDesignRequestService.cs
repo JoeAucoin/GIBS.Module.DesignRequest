@@ -9,6 +9,8 @@ namespace GIBS.Module.DesignRequest.Services
     {
         Task<List<User>> GetUsersAsync();
 
+        Task<List<User>> GetUsersByRoleAsync(int siteId, string roleName);
+
         Task<List<Models.DesignRequest>> GetDesignRequestsAsync(int moduleId);
         Task<Paged<Models.DesignRequest>> GetDesignRequestsAsync(int moduleId, int page, int pageSize);
         Task<Models.DesignRequest> GetDesignRequestAsync(int DesignRequestId, int ModuleId);

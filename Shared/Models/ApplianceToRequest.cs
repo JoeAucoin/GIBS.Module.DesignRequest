@@ -15,6 +15,7 @@ namespace GIBS.Module.DesignRequest.Models
         public int DesignRequestId { get; set; }
         public int ApplianceId { get; set; }
         public string BrandModel { get; set; }
+        public string ApplianceNote { get; set; }
         public string Size { get; set; }
         public string FuelType { get; set; }
         public string CreatedBy { get; set; }

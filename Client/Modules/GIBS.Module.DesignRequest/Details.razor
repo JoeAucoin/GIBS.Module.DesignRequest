@@ -101,6 +101,9 @@ else
 }
 
 @code {
+    
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+
     private List<Detail> _details;
     private Detail _newDetail = new Detail();
     private Detail _editingDetail;

@@ -45,7 +45,7 @@ namespace GIBS.Module.DesignRequest.Controllers
 
         // POST api/<controller>
         [HttpPost]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public async Task<ActionResult<DetailToRequest>> Post([FromBody] DetailToRequest detailToRequest)
         {
             if (ModelState.IsValid)
@@ -58,7 +58,7 @@ namespace GIBS.Module.DesignRequest.Controllers
 
         // PUT api/<controller>/5
         [HttpPut("{id}")]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public async Task<ActionResult<DetailToRequest>> Put(int id, [FromBody] DetailToRequest detailToRequest)
         {
             if (ModelState.IsValid && detailToRequest.DetailToRequestId == id)

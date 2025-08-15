@@ -14,6 +14,7 @@ namespace GIBS.Module.DesignRequest.Models
         public int DetailToRequestId { get; set; }
         public int DesignRequestId { get; set; }
         public int DetailId { get; set; }
+        public string DetailNote { get; set; }
         public string DetailModel { get; set; }
         public string DetailSize { get; set; }
         public string DetailColor { get; set; }
