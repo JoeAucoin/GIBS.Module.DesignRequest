@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder; 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Oqtane.Infrastructure;
@@ -22,6 +22,16 @@ namespace GIBS.Module.DesignRequest.Startup
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<IDesignRequestService, ServerDesignRequestService>();
+
+            services.AddTransient<IDesignRequestRepository, DesignRequestRepository>();
+            services.AddTransient<IApplianceRepository, ApplianceRepository>();
+            services.AddTransient<IDetailRepository, DetailRepository>();
+            services.AddTransient<IApplianceToRequestRepository, ApplianceToRequestRepository>();
+            services.AddTransient<IDetailToRequestRepository, DetailToRequestRepository>();
+            services.AddTransient<INoteToRequestRepository, NoteToRequestRepository>();
+            services.AddTransient<IFileToRequestRepository, FileToRequestRepository>();
+            services.AddTransient<INotificationToRequestRepository, NotificationToRequestRepository>();
+
             services.AddDbContextFactory<DesignRequestContext>(opt => { }, ServiceLifetime.Transient);
         }
     }

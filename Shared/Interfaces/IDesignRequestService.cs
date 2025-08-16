@@ -54,5 +54,12 @@ namespace GIBS.Module.DesignRequest.Services
         Task<FileToRequest> AddFileToRequestAsync(FileToRequest fileToRequest);
         Task<FileToRequest> UpdateFileToRequestAsync(FileToRequest fileToRequest);
         Task DeleteFileToRequestAsync(int fileToRequestId, int moduleId);
+
+        // NotificationToRequest methods
+        Task<List<NotificationToRequest>> GetNotificationToRequestsAsync(int designRequestId, int moduleId);
+        Task<NotificationToRequest> GetNotificationToRequestAsync(int notificationToRequestId, int moduleId);
+        Task<NotificationToRequest> AddNotificationToRequestAsync(NotificationToRequest notificationToRequest);
+        Task<NotificationToRequest> UpdateNotificationToRequestAsync(NotificationToRequest notificationToRequest);
+        Task DeleteNotificationToRequestAsync(int notificationToRequestId, int moduleId);
     }
 }

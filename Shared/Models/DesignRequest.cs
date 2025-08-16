@@ -58,6 +58,8 @@ namespace GIBS.Module.DesignRequest.Models
         public virtual ICollection<FileToRequest> Files { get; set; }
         public virtual ICollection<DetailToRequest> Details { get; set; }
 
+        public virtual ICollection<NotificationToRequest> Notifications { get; set; }
+
         public DesignRequest()
         {
             Notes = new HashSet<NoteToRequest>();

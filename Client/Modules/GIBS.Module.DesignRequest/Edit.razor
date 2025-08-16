@@ -18,7 +18,6 @@
 @inject IFileService FileService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Oqtane.Services.INotificationService NotificationService
-@inject Oqtane.Services.IUserService UserService
 
 @inject Oqtane.Services.IRoleService RoleService
 @inject Oqtane.Services.IUserRoleService UserRoleService
@@ -160,19 +159,19 @@ else
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="assignedTo" HelpText="Assign this request to a user" ResourceKey="AssignedTo">Assigned To: </Label>
                 <div class="col-sm-9">
-                    @_designerUserName
+
                     @if (_designerUsers != null)
                     {
-                    <select id="assignedTo" class="form-select" @bind="@_designRequest.AssignedToUserId">
-                        <option value="0">-- Unassigned --</option>
-                        
-                        
+                        <select id="assignedTo" class="form-select" @bind="@_designRequest.AssignedToUserId">
+                            <option value="0">-- Unassigned --</option>
+
+
                             @foreach (var user in _designerUsers)
                             {
                                 <option value="@user.UserId">@user.DisplayName</option>
                             }
-                        
-                    </select>
+
+                        </select>
                     }
                 </div>
             </div>
@@ -217,7 +216,7 @@ else
                                     <td>@item.FuelType</td>
                                     <td class="text-end">
                                         <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditApplianceToRequest(item)">Edit</button>
-                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteApplianceToRequest(item)">Delete</button>
+                                        <ActionDialog Header="Confirm Delete" Security="SecurityAccessLevel.Admin" Message="@($"Are you sure you want to delete the appliance '{item.Appliance?.ApplianceName}'?")" Action="Delete" OnClick="() => DeleteApplianceToRequest(item)" Class="btn btn-sm btn-danger" />
                                     </td>
                                 </tr>
                             }
@@ -283,7 +282,7 @@ else
                             <tr>
                                 <th>Detail</th>
                                 <th>Notes</th>
-                               @*  <th>Model</th>
+                                @*  <th>Model</th>
                                 <th>Size</th>
                                 <th>Color</th> *@
                                 <th class="text-end">Actions</th>
@@ -294,13 +293,13 @@ else
                             {
                                 <tr>
                                     <td>@item.Detail?.DetailName</td>
-                                     <td>@item.DetailNote</td>
-                                  @*   <td>@item.DetailModel</td>
+                                    <td>@item.DetailNote</td>
+                                    @*   <td>@item.DetailModel</td>
                                     <td>@item.DetailSize</td>
                                     <td>@item.DetailColor</td> *@
                                     <td class="text-end">
                                         <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetailToRequest(item)">Edit</button>
-                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteDetailToRequest(item)">Delete</button>
+                                        <ActionDialog Header="Confirm Delete" Message="@($"Are you sure you want to delete the detail '{item.Detail?.DetailName}'?")" Action="Delete" OnClick="() => DeleteDetailToRequest(item)" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
                                     </td>
                                 </tr>
                             }
@@ -332,7 +331,7 @@ else
                                 <Label For="detailNote">Notes:</Label>
                                 <textarea id="detailNote" class="form-control" @bind="@_newDetailToRequest.DetailNote" rows="3"></textarea>
                             </div>
-@*                             <div class="col-md-2">
+                            @*                             <div class="col-md-2">
                                 <Label For="detailModel">Model:</Label>
                                 <input id="detailModel" class="form-control" @bind="@_newDetailToRequest.DetailModel" />
                             </div>
@@ -364,8 +363,8 @@ else
                             <tr>
                                 <th>Name</th>
                                 <th>Notes</th>
-                                <th></th>
-                                <th></th>
+                                <th style="width:1px;"></th>
+                                <th style="width:1px;"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -374,12 +373,13 @@ else
                                 <tr>
                                     <td>@file.Name</td>
                                     <td>@file.Description</td>
-                                    
+
                                     <td class="text-end">
                                         <a href="@file.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
                                     </td>
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteFileToRequest(file)">Delete</button>
+                                        <ActionDialog Header="Confirm Delete" Message="@($"Are you sure you want to delete the file '{file.Name}'?")" Action="Delete" OnClick="() => DeleteFileToRequest(file)" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
+
                                     </td>
                                 </tr>
                             }
@@ -412,7 +412,7 @@ else
                             <div class="col-sm-9">
                                 <FileManager UploadMultiple="false" Filter="jpg,png,gif,jpeg,pdf"
                                              FolderId="@_folderId"
-                                             ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"  
+                                             ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"
                                              OnUpload="@HandleFileUpload" />
                             </div>
                         </div>
@@ -434,7 +434,7 @@ else
                                 </div>
                                 <p class="mb-1">@note.Note</p>
                                 <small class="d-block text-end">
-                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteNoteToRequest(note)">Delete</button>
+                                    <ActionDialog Header="Confirm Delete" Message="Are you sure you want to delete this note?" Action="Delete" OnClick="() => DeleteNoteToRequest(note)" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
                                 </small>
                             </div>
                         }
@@ -457,14 +457,72 @@ else
                     </div>
                 </div>
             </TabPanel>
-
+            <TabPanel Name="Notifications" Heading="Notifications">
+                <h4 class="mt-4">Notification History</h4>
+                <div class="card mt-3">
+                    <div class="card-header">Send New Notification</div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col">
+                                <Label For="sendToUser">Recipient:</Label>
+                                <select id="sendToUser" class="form-select" @bind="@_newNotificationToRequest.ToUserId">
+                                    <option value="0">-- Select Recipient --</option>
+                                    @if (_users != null)
+                                    {
+                                        @foreach (var user in _users)
+                                        {
+                                            <option value="@user.UserId">@user.DisplayName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col">
+                                <Label For="subject">Subject:</Label>
+                                <input id="subject" class="form-control" placeholder="Notification Subject" @bind="@_newNotificationToRequest.Subject" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <Label For="notificationBody">Body:</Label>
+                                <textarea id="notificationBody" class="form-control" @bind="@_newNotificationToRequest.Body" rows="3" placeholder="Add your message ..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="button" class="btn btn-success" @onclick="SendNotification">Send Notification</button>
+                    </div>
+                </div>
+                @if (_notificationToRequests != null && _notificationToRequests.Any())
+                {
+                    <div class="list-group mt-3">
+                        @foreach (var notification in _notificationToRequests.OrderByDescending(n => n.CreatedOn))
+                        {
+                            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@notification.Subject</h5>
+                                    <small>@notification.CreatedOn.ToString("g")</small>
+                                </div>
+                                <p class="mb-1"><strong>From:</strong> @notification.FromDisplayName</p>
+                                <p class="mb-1"><strong>To:</strong> @notification.ToDisplayName</p>
+                                <div class="mb-1" style="white-space: pre-line;">@((MarkupString)notification.Body)</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No notifications have been sent for this request.</em></p>
+                }
+            </TabPanel>
         </TabStrip>
 
         <div class="mt-3">
             <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
             <NavLink class="btn btn-secondary" href="@ReturnUrl()">@Localizer["Cancel"]</NavLink>
-            <button type="button" class="btn btn-outline-secondary" @onclick="SendNotification">@Localizer["Send Designer Notification"]</button>
-          
+
+
         </div>
         <br /><br />
         <AuditInfo CreatedBy="@_designRequest.CreatedBy" CreatedOn="@_designRequest.CreatedOn" ModifiedBy="@_designRequest.ModifiedBy" ModifiedOn="@_designRequest.ModifiedOn"></AuditInfo>
@@ -473,7 +531,7 @@ else
 
 @code {
 
-    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
 
     private Oqtane.Models.User UserDetails;
 
@@ -501,28 +559,36 @@ else
 
     private List<FileToRequest> _fileToRequests;
     private FileToRequest _newFileToRequest = new();
+
+    private List<NotificationToRequest> _notificationToRequests;
+    private NotificationToRequest _newNotificationToRequest = new();
+
     private int _folderId = 1;
     public string _designerRole;
-    private string _designerUserName = string.Empty;
-    private string _returnurl = string.Empty;
+    private string _projectManagerRole;
+
+    // private string _returnurl = string.Empty;
     private bool IsDesignerRole { get; set; }
 
-  //  private readonly IRoleService _RoleService;
-  //  private readonly UserRoleService userRoleService;
+    //  private readonly IRoleService _RoleService;
+    //  private readonly UserRoleService userRoleService;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _users = await DesignRequestService.GetUsersAsync();
-            if (PageState.QueryString.ContainsKey("r") && PageState.QueryString.TryGetValue("r", out var returnurl))
-            {
-                _returnurl = returnurl.ToString();
-            }
-            
+            // if (PageState.QueryString.ContainsKey("r") && PageState.QueryString.TryGetValue("r", out var returnurl))
+            // {
+            //     _returnurl = returnurl.ToString();
+            // }
+
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _folderId = int.Parse(SettingService.GetSetting(settings, "FileFolder", "1"));
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
+            _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "Administrators");
+
+           
             var statusList = SettingService.GetSetting(settings, "StatusList", "");
             if (!string.IsNullOrEmpty(statusList))
             {
@@ -532,21 +598,30 @@ else
             {
                 _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
             }
-            
-            
+
+
             if (int.TryParse(PageState.QueryString["id"], out int designRequestId))
             {
                 _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
                 if (_designRequest != null)
                 {
-                    
-                    
+                    // Now that _designRequest is loaded, check access
+                    if (!HasAccess())
+                    {
+                        AddModuleMessage("You do not have permission to view this record.", MessageType.Error);
+                        NavigationManager.NavigateTo(ReturnUrl());
+                        return;
+                    }
+
                     //_users = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId,_designerRole);
                     DecodeDesignRequestProperties();
                     await LoadApplianceData();
                     await LoadDetailData();
                     await LoadNoteData();
                     await LoadFileData();
+                    await LoadNotificationData();
+
+                    _newNotificationToRequest.Subject = $"Project: {_designRequest.ProjectName}";
                 }
                 else
                 {
@@ -560,35 +635,35 @@ else
                 NavigationManager.NavigateTo(NavigateUrl());
             }
 
-            if (_returnurl == "c")
-            {
-                _designerUserName = GetUserName(_designRequest.AssignedToUserId) + " is Assigned";
-                // Check if the current user is the owner of the request
+            // if (_returnurl == "c")
+            // {
 
-                if (_designRequest.UserId != PageState.User.UserId)
-                {
-                    var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-                    var user = authState.User;
-                    var currentUser = user.Identity?.Name + " attempting to view record #" + _designRequest.DesignRequestId;
-                    await logger.LogError("User {User} does not have permission to view this record", currentUser);
-                    // If the current user is not the owner of the request, redirect to home
-                    NavigationManager.NavigateTo(ReturnUrl());
-                    return;
-                }
-                
-            }
-            else if (_returnurl == "d")
-            {
-                await GetDesignersListAsync();
-                await CheckUserRoleAsync(_designerRole.ToString());
-            }
-            else
-            {
-                
-                //It must be a manager;
-            }
+            //     // Check if the current user is the owner of the request
 
-            
+            //     if (_designRequest.UserId != PageState.User.UserId)
+            //     {
+            //         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            //         var user = authState.User;
+            //         var currentUser = user.Identity?.Name + " attempting to view record #" + _designRequest.DesignRequestId;
+            //         await logger.LogError("User {User} does not have permission to view this record", currentUser);
+            //         // If the current user is not the owner of the request, redirect to home
+            //         NavigationManager.NavigateTo(ReturnUrl());
+            //         return;
+            //     }
+
+            // }
+            // else if (_returnurl == "d")
+            // {
+
+            // }
+            // else
+            // {
+
+            //     //It must be a manager;
+            // }
+            await GetDesignersListAsync();
+            await CheckUserRoleAsync(_designerRole.ToString());
+
         }
         catch (Exception ex)
         {
@@ -606,41 +681,93 @@ else
         return user?.DisplayName ?? $"Unknown User ({userId})";
     }
 
+    private bool HasAccess()
+    {
+        var user = PageState.User;
+        if (user == null) return false;
+
+        // Project Manager Role: can access all records
+        if (UserSecurity.IsAuthorized(user, _projectManagerRole) || UserSecurity.IsAuthorized(user, "Administrators"))
+            return true;
+            return true;
+
+        // Designer Role: can access if assigned
+        if (UserSecurity.IsAuthorized(user, _designerRole) && user.UserId == _designRequest.AssignedToUserId)
+            return true;
+
+        return false;
+    }
+
     private async Task SendNotification()
     {
-        // 1. Get SiteId (e.g., from the context)
-        int siteId = PageState.Site.SiteId; // You'll need to implement this
-
-        // 2. Get the recipient User (e.g., from a form or system)
-       // User recipient = GetRecipientUser(); // You'll need to implement this
-        User user = await UserService.GetUserAsync(_designRequest.AssignedToUserId, siteId);
-
-        // 3. Create a new Notification object
-        var notification = new Notification
+        if (_newNotificationToRequest.ToUserId == 0 || string.IsNullOrWhiteSpace(_newNotificationToRequest.Subject) || string.IsNullOrWhiteSpace(_newNotificationToRequest.Body))
         {
-            SiteId = siteId,
-            FromUserId = PageState.User.UserId,
-            FromDisplayName = PageState.User.DisplayName,
-            FromEmail = PageState.User.Email,
-            ToUserId = user.UserId,
-            ToDisplayName = user.DisplayName,
-            ToEmail = user.Email,
-            Subject = "New Design Request",
-            Body = "Dear " + user.DisplayName + ",\n\nA new design request has been assigned to you. Please login and review it soon!",
-            CreatedOn = DateTime.UtcNow,
-            SendOn = DateTime.UtcNow    //.AddMinutes(5) // Schedule sending in 5 minutes
-        };
+            AddModuleMessage("Recipient, subject, and body are required.", MessageType.Warning);
+            return;
+        }
 
+        try
+        {
+            var toUser = _users.FirstOrDefault(u => u.UserId == _newNotificationToRequest.ToUserId);
+            var fromUser = _users.FirstOrDefault(u => u.UserId == PageState.User.UserId);
 
+            if (toUser == null || fromUser == null)
+            {
+                AddModuleMessage("Recipient or sender user not found.", MessageType.Error);
+                return;
+            }
+            string _messageFooter = "\n\n\nProject Page: " + PageState.Uri.AbsoluteUri + "\n\n\nThis notification was sent from the Design Request module. If you have any questions, please contact the site administrator.";
+            var notification = new Notification
+            {
+                SiteId = PageState.Site.SiteId,
+                FromUserId = fromUser.UserId,
+                FromDisplayName = fromUser.DisplayName,
+                FromEmail = fromUser.Email,
+                ToUserId = toUser.UserId,
+                ToDisplayName = toUser.DisplayName,
+                ToEmail = toUser.Email,
+                Subject = _newNotificationToRequest.Subject,
+                Body = _newNotificationToRequest.Body + _messageFooter,
+                CreatedOn = DateTime.UtcNow,
+                SendOn = DateTime.UtcNow
+            };
 
+            var mynotification = await NotificationService.AddNotificationAsync(notification);
 
-        // 4. Store the notification
-        await NotificationService.AddNotificationAsync(notification);
+            if (mynotification != null)
+            {
+                var notificationToRequest = new NotificationToRequest
+                {
+                    DesignRequestId = _designRequest.DesignRequestId,
+                    NotificationId = mynotification.NotificationId,
+                    FromUserId = fromUser.UserId,
+                    FromDisplayName = fromUser.DisplayName,
+                    FromEmail = fromUser.Email,
+                    ToUserId = toUser.UserId,
+                    ToDisplayName = toUser.DisplayName,
+                    ToEmail = toUser.Email,
+                    Subject = _newNotificationToRequest.Subject,
+                    Body = _newNotificationToRequest.Body + _messageFooter
+                };
+                await DesignRequestService.AddNotificationToRequestAsync(notificationToRequest);
 
-        // Optional: Provide feedback to the user
-        AddModuleMessage("Designer Notification sent successfully.", MessageType.Success);
-        
+                _newNotificationToRequest = new(); // Reset form
+                await LoadNotificationData(); // Refresh history
+
+                AddModuleMessage("Notification sent successfully.", MessageType.Success);
+            }
+            else
+            {
+                AddModuleMessage("Failed to send notification.", MessageType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Sending Notification: {Error}", ex.Message);
+            AddModuleMessage("Error sending notification.", MessageType.Error);
+        }
     }
+
 
     private User GetRecipientUser()
     {
@@ -746,6 +873,12 @@ else
     private async Task LoadFileData()
     {
         _fileToRequests = await DesignRequestService.GetFileToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadNotificationData()
+    {
+        _notificationToRequests = await DesignRequestService.GetNotificationToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
         StateHasChanged();
     }
 
@@ -890,7 +1023,7 @@ else
 
     private async void HandleFileUpload(int fileId)
     {
-       
+
         var uploadedFile = await FileService.GetFileAsync(fileId);
         if (uploadedFile != null)
         {
@@ -915,7 +1048,7 @@ else
                 {
                     _newFileToRequest.Name = renamedFile.Name;
                 }
-               
+
                 await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
                 _newFileToRequest = new(); // Reset form
                 await LoadFileData();
@@ -936,7 +1069,7 @@ else
 
     //  private async void HandleFileUploadOLD(int fileId)
     // {
-        
+
     //     if (_currentDesignRequestId != 0)
     //     {
     //         var uploadedFile = await FileService.GetFileAsync(fileId);
@@ -950,7 +1083,7 @@ else
     //                 _newFileToRequest.DesignRequestId = _currentDesignRequestId;
 
     //                 // Rename the file and get the updated file object
-                   
+
 
     //                     var renamedFile = await RenameFile(fileId, newFileName);
     //                     if (renamedFile == null)
@@ -967,7 +1100,7 @@ else
     //                         _newFileToRequest.Name = renamedFile.Name;
     //                     }
 
-                   
+
 
     //                 var result = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
 
@@ -1055,23 +1188,23 @@ else
 
     private string ReturnUrl()
     {
-        if (!string.IsNullOrEmpty(_returnurl))
-        {
-            if(_returnurl == "c")
-            {
-                return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/ListJobs")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/ListJobs" : NavigateUrl();
-            }
-            else if (_returnurl == "d")
-            {
-                return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List" : NavigateUrl();
-            }
-            else
-            {
-                return NavigateUrl(); 
-            }
-        }
-        
-        else if (ModuleState != null)
+        // if (!string.IsNullOrEmpty(_returnurl))
+        // {
+        //     if(_returnurl == "c")
+        //     {
+        //         return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/ListJobs")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/ListJobs" : NavigateUrl();
+        //     }
+        //     else if (_returnurl == "d")
+        //     {
+        //         return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List" : NavigateUrl();
+        //     }
+        //     else
+        //     {
+        //         return NavigateUrl();
+        //     }
+        // }
+
+        if (ModuleState != null)
         {
             return (!string.IsNullOrEmpty(NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List")) ? NavigateUrl() + "/*/" + ModuleState.ModuleId + "/List" : NavigateUrl();
         }
@@ -1079,6 +1212,6 @@ else
         {
             return NavigateUrl();
         }
-       
+
     }
 }

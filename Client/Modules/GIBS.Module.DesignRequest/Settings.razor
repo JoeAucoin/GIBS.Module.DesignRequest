@@ -15,6 +15,18 @@
 
 <div class="container">
     <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="projectManagerRole" HelpText="Select the project manager role" ResourceKey="ProjectManagerRole" ResourceType="@resourceType">Project Manager Role: </Label>
+        <div class="col-sm-9">
+            <select id="projectManagerRole" class="form-select" @bind="@_projectManagerRole">
+                @foreach (Role role in _roles)
+                {
+                    <option value="@(role.Name)">@(role.Name)</option>
+                }
+            </select>
+        </div>
+    </div>
+    
+    <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="designerRole" HelpText="Select the designer role" ResourceKey="DesignerRole" ResourceType="@resourceType">Designer Role: </Label>
         <div class="col-sm-9">
             <select id="designerRole" class="form-select" @bind="@_designerRole">
@@ -106,6 +118,24 @@
             <textarea id="statusList" class="form-control" @bind="@_statusList" rows="3"></textarea>
         </div>
     </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="doorStyle" HelpText="Enter a list of door styles" ResourceKey="DoorStyle" ResourceType="@resourceType">Door Style: </Label>
+        <div class="col-sm-9">
+            <textarea id="doorStyle" class="form-control" @bind="@_doorStyle" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter a list of countertop thicknesses" ResourceKey="CountertopThickness" ResourceType="@resourceType">Countertop Thickness: </Label>
+        <div class="col-sm-9">
+            <textarea id="countertopThickness" class="form-control" @bind="@_countertopThickness" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="cabinetColor" HelpText="Enter a list of cabinet colors" ResourceKey="CabinetColor" ResourceType="@resourceType">Cabinet Color: </Label>
+        <div class="col-sm-9">
+            <textarea id="cabinetColor" class="form-control" @bind="@_cabinetColor" rows="3"></textarea>
+        </div>
+    </div>
 
     <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="showFields" HelpText="Select which fields to show on the form" ResourceKey="ShowFields" ResourceType="@resourceType">Show Fields: </Label>
@@ -164,6 +194,7 @@
     private string resourceType = "GIBS.Module.DesignRequest.Settings, GIBS.Module.DesignRequest.Client.Oqtane"; // for localization
     public override string Title => "DesignRequest Settings";
     private string _designerRole;
+    private string _projectManagerRole;
     private string _instructions;
     private string _fileUploadInstructions;
     private string _successFeedback;
@@ -187,6 +218,9 @@
     private bool _showConfiguration;
     private bool _showCountertop;
     private string _statusList;
+    private string _doorStyle;
+    private string _countertopThickness;
+    private string _cabinetColor;
 
     private List<Folder> _folders = new List<Folder>();
     private string _fileFolder;
@@ -219,6 +253,9 @@
             _interestList = SettingService.GetSetting(settings, "InterestList", "");
             _configurationShape = SettingService.GetSetting(settings, "ConfigurationShape", "");
             _statusList = SettingService.GetSetting(settings, "StatusList", "");
+            _doorStyle = SettingService.GetSetting(settings, "DoorStyle", "");
+            _countertopThickness = SettingService.GetSetting(settings, "CountertopThickness", "");
+            _cabinetColor = SettingService.GetSetting(settings, "CabinetColor", "");
             _showCompany = bool.Parse(SettingService.GetSetting(settings, "ShowCompany", "true"));
             _showAddress = bool.Parse(SettingService.GetSetting(settings, "ShowAddress", "true"));
             _showPhone = bool.Parse(SettingService.GetSetting(settings, "ShowPhone", "true"));
@@ -232,6 +269,7 @@
             _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
             _fileFolder = SettingService.GetSetting(settings, "FileFolder", "Root");
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "Designer");
+            _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "");
 
         }
         catch (Exception ex)
@@ -254,6 +292,9 @@
             SettingService.SetSetting(settings, "InterestList", _interestList);
             SettingService.SetSetting(settings, "ConfigurationShape", _configurationShape);
             SettingService.SetSetting(settings, "StatusList", _statusList);
+            SettingService.SetSetting(settings, "DoorStyle", _doorStyle);
+            SettingService.SetSetting(settings, "CountertopThickness", _countertopThickness);
+            SettingService.SetSetting(settings, "CabinetColor", _cabinetColor);
             SettingService.SetSetting(settings, "ShowCompany", _showCompany.ToString());
             SettingService.SetSetting(settings, "ShowAddress", _showAddress.ToString());
             SettingService.SetSetting(settings, "ShowPhone", _showPhone.ToString());
@@ -267,6 +308,7 @@
             SettingService.SetSetting(settings, "ShowCountertop", _showCountertop.ToString());
             SettingService.SetSetting(settings, "FileFolder", _fileFolder);
             SettingService.SetSetting(settings, "DesignerRole", _designerRole);
+            SettingService.SetSetting(settings, "ProjectManagerRole", _projectManagerRole);
             await SettingService.UpdateModuleSettingsAsync(settings, ModuleState.ModuleId);
         }
         catch (Exception ex)

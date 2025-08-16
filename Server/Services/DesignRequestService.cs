@@ -26,6 +26,7 @@ namespace GIBS.Module.DesignRequest.Services
         private readonly IDetailToRequestRepository _detailToRequestRepository;
         private readonly INoteToRequestRepository _noteToRequestRepository;
         private readonly IFileToRequestRepository _fileToRequestRepository;
+        private readonly INotificationToRequestRepository _notificationToRequestRepository;
         private readonly IUserPermissions _userPermissions;
         private readonly ILogManager _logger;
         private readonly IHttpContextAccessor _accessor;
@@ -35,7 +36,7 @@ namespace GIBS.Module.DesignRequest.Services
         private readonly IUserRoleRepository _userRoleService;
 
 
-        public ServerDesignRequestService(IDesignRequestRepository DesignRequestRepository, IUserRoleRepository userRoleService, IApplianceRepository applianceRepository, IDetailRepository detailRepository, IApplianceToRequestRepository applianceToRequestRepository, IDetailToRequestRepository detailToRequestRepository, INoteToRequestRepository noteToRequestRepository, IFileToRequestRepository fileToRequestRepository, IUserPermissions userPermissions, ITenantManager tenantManager, ILogManager logger, IHttpContextAccessor accessor, INotificationRepository notifications, IUserRepository userRepository)
+        public ServerDesignRequestService(IDesignRequestRepository DesignRequestRepository, INotificationToRequestRepository notificationToRequestRepository, IUserRoleRepository userRoleService, IApplianceRepository applianceRepository, IDetailRepository detailRepository, IApplianceToRequestRepository applianceToRequestRepository, IDetailToRequestRepository detailToRequestRepository, INoteToRequestRepository noteToRequestRepository, IFileToRequestRepository fileToRequestRepository, IUserPermissions userPermissions, ITenantManager tenantManager, ILogManager logger, IHttpContextAccessor accessor, INotificationRepository notifications, IUserRepository userRepository)
         {
             _DesignRequestRepository = DesignRequestRepository;
             _applianceRepository = applianceRepository;
@@ -44,6 +45,7 @@ namespace GIBS.Module.DesignRequest.Services
             _detailToRequestRepository = detailToRequestRepository;
             _noteToRequestRepository = noteToRequestRepository;
             _fileToRequestRepository = fileToRequestRepository;
+            _notificationToRequestRepository = notificationToRequestRepository;
             _userPermissions = userPermissions;
             _logger = logger;
             _accessor = accessor;
@@ -299,8 +301,25 @@ namespace GIBS.Module.DesignRequest.Services
                 var subject = $"DesignRequest Form Submission - " + recordID.ToString();
 
                 var notification = new Notification(site, sendtoname, sendtoemail, subject, body.ToString(), sendon);
-                _notifications.AddNotification(notification);
+                notification = _notifications.AddNotification(notification);
                 _logger.Log(LogLevel.Information, this, LogFunction.Create, "Notification Added", notification);
+
+                // Log notification to history
+                var notificationToRequest = new NotificationToRequest
+                {
+                    DesignRequestId = savedDesignRequest.DesignRequestId,
+                    NotificationId = notification.NotificationId,
+                    FromUserId = notification.FromUserId ?? -1,
+                    FromDisplayName = notification.FromDisplayName,
+                    FromEmail = notification.FromEmail,
+                    ToUserId = notification.ToUserId ?? -1,
+                    ToDisplayName = notification.ToDisplayName,
+                    ToEmail = notification.ToEmail,
+                    Subject = notification.Subject,
+                    Body = notification.Body
+                };
+                _notificationToRequestRepository.AddNotificationToRequest(notificationToRequest);
+                _logger.Log(LogLevel.Information, this, LogFunction.Create, "Notification To Request History Added {NotificationToRequest}", notificationToRequest);
             }
 
             return await Task.FromResult(savedDesignRequest);
@@ -769,6 +788,90 @@ namespace GIBS.Module.DesignRequest.Services
             else
             {
                 _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized FileToRequest Delete Attempt on non-existent file {FileToRequestId} {ModuleId}", fileToRequestId, moduleId);
+            }
+            return Task.CompletedTask;
+        }
+
+        // NotificationToRequest Methods
+        public Task<List<NotificationToRequest>> GetNotificationToRequestsAsync(int designRequestId, int moduleId)
+        {
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
+            {
+                return Task.FromResult(_notificationToRequestRepository.GetNotificationToRequests(designRequestId).ToList());
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Get Attempt {DesignRequestId} {ModuleId}", designRequestId, moduleId);
+                return null;
+            }
+        }
+
+        public Task<NotificationToRequest> GetNotificationToRequestAsync(int notificationToRequestId, int moduleId)
+        {
+            var notificationToRequest = _notificationToRequestRepository.GetNotificationToRequest(notificationToRequestId, false);
+            if (notificationToRequest != null)
+            {
+                var designRequest = _DesignRequestRepository.GetDesignRequest(notificationToRequest.DesignRequestId);
+                if (designRequest != null && designRequest.ModuleId == moduleId && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
+                {
+                    return Task.FromResult(notificationToRequest);
+                }
+            }
+            _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Get Attempt {NotificationToRequestId} {ModuleId}", notificationToRequestId, moduleId);
+            return Task.FromResult<NotificationToRequest>(null);
+        }
+
+        public Task<NotificationToRequest> AddNotificationToRequestAsync(NotificationToRequest notificationToRequest)
+        {
+            var designRequest = _DesignRequestRepository.GetDesignRequest(notificationToRequest.DesignRequestId);
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.View))
+            {
+                notificationToRequest = _notificationToRequestRepository.AddNotificationToRequest(notificationToRequest);
+                _logger.Log(LogLevel.Information, this, LogFunction.Create, "NotificationToRequest Added {NotificationToRequest}", notificationToRequest);
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Add Attempt {NotificationToRequest}", notificationToRequest);
+                notificationToRequest = null;
+            }
+            return Task.FromResult(notificationToRequest);
+        }
+
+        public Task<NotificationToRequest> UpdateNotificationToRequestAsync(NotificationToRequest notificationToRequest)
+        {
+            var designRequest = _DesignRequestRepository.GetDesignRequest(notificationToRequest.DesignRequestId);
+            if (designRequest != null && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, designRequest.ModuleId, PermissionNames.Edit))
+            {
+                notificationToRequest = _notificationToRequestRepository.UpdateNotificationToRequest(notificationToRequest);
+                _logger.Log(LogLevel.Information, this, LogFunction.Update, "NotificationToRequest Updated {NotificationToRequest}", notificationToRequest);
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Update Attempt {NotificationToRequest}", notificationToRequest);
+                notificationToRequest = null;
+            }
+            return Task.FromResult(notificationToRequest);
+        }
+
+        public Task DeleteNotificationToRequestAsync(int notificationToRequestId, int moduleId)
+        {
+            var notificationToRequest = _notificationToRequestRepository.GetNotificationToRequest(notificationToRequestId, false);
+            if (notificationToRequest != null)
+            {
+                var designRequest = _DesignRequestRepository.GetDesignRequest(notificationToRequest.DesignRequestId);
+                if (designRequest != null && designRequest.ModuleId == moduleId && _userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.Edit))
+                {
+                    _notificationToRequestRepository.DeleteNotificationToRequest(notificationToRequestId);
+                    _logger.Log(LogLevel.Information, this, LogFunction.Delete, "NotificationToRequest Deleted {NotificationToRequestId}", notificationToRequestId);
+                }
+                else
+                {
+                    _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Delete Attempt {NotificationToRequestId} {ModuleId}", notificationToRequestId, moduleId);
+                }
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Delete Attempt on non-existent item {NotificationToRequestId} {ModuleId}", notificationToRequestId, moduleId);
             }
             return Task.CompletedTask;
         }

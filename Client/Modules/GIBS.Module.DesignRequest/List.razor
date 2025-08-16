@@ -55,7 +55,7 @@ else
             </td>
             <td>
                 <ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", context.ProjectName])"
-                              Action="Delete" Security="SecurityAccessLevel.Edit" Class="btn btn-danger btn-sm"
+                              Action="Delete" Security="SecurityAccessLevel.Admin" Class="btn btn-danger btn-sm"
                               OnClick="@(async () => await Delete(context.DesignRequestId))" ResourceKey="Delete"
                               Id="@context.DesignRequestId.ToString()" />
             </td>
@@ -65,7 +65,7 @@ else
 
 
 @code {
-    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
 
     private List<Models.DesignRequest> _designRequests;
     private List<User> _users;

@@ -17,6 +17,7 @@ namespace GIBS.Module.DesignRequest.Repository
         public virtual DbSet<Models.ApplianceToRequest> ApplianceToRequest { get; set; }
         public virtual DbSet<Models.FileToRequest> FileToRequest { get; set; }
         public virtual DbSet<Models.NoteToRequest> NoteToRequest { get; set; }
+        public virtual DbSet<Models.NotificationToRequest> NotificationToRequest { get; set; }
 
 
         public DesignRequestContext(IDBContextDependencies DBContextDependencies) : base(DBContextDependencies)
@@ -35,6 +36,14 @@ namespace GIBS.Module.DesignRequest.Repository
             builder.Entity<Models.ApplianceToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_ApplianceToRequest"));
             builder.Entity<Models.FileToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_FileToRequest"));
             builder.Entity<Models.NoteToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_NoteToRequest"));
+            builder.Entity<Models.NotificationToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_NotificationToRequest"));
+
+            //NotificationToRequest -> DesignRequest (many-to-one)
+            builder.Entity<Models.NotificationToRequest>()
+                .HasOne(n => n.DesignRequest)
+                .WithMany(d => d.Notifications)
+                .HasForeignKey(n => n.DesignRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // NoteToRequest -> DesignRequest (many-to-one)
             builder.Entity<Models.NoteToRequest>()

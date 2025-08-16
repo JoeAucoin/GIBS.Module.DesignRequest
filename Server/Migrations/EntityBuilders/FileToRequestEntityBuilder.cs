@@ -1,28 +1,4 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-
-//namespace GIBS.Module.DesignRequest.Server.Migrations.EntityBuilders
-//{
-//    internal class FileToRequestEntityBuilder
-//    {
-//    }
-//}
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-
-//namespace GIBS.Module.DesignRequest.Server.Migrations.EntityBuilders
-//{
-//    internal class NoteToRequestEntityBuilder
-//    {
-//    }
-//}
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Oqtane.Databases.Interfaces;

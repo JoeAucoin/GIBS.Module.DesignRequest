@@ -116,7 +116,7 @@ namespace GIBS.Module.DesignRequest.Services
 
         public async Task<List<ApplianceToRequest>> GetApplianceToRequestsAsync(int designRequestId, int moduleId)
         {
-            return await GetJsonAsync<List<ApplianceToRequest>>($"{ApplianceToRequestApiurl}?designrequestid={designRequestId}&moduleid={moduleId}");
+            return await GetJsonAsync<List<ApplianceToRequest>>($"{ApplianceToRequestApiurl}/GetByDesignRequest/{designRequestId}?moduleid={moduleId}");
         }
 
         public async Task<ApplianceToRequest> GetApplianceToRequestAsync(int applianceToRequestId, int moduleId)
@@ -146,7 +146,7 @@ namespace GIBS.Module.DesignRequest.Services
 
         public async Task<List<DetailToRequest>> GetDetailToRequestsAsync(int designRequestId, int moduleId)
         {
-            return await GetJsonAsync<List<DetailToRequest>>($"{DetailToRequestApiurl}?designrequestid={designRequestId}&moduleid={moduleId}");
+            return await GetJsonAsync<List<DetailToRequest>>($"{DetailToRequestApiurl}/GetByDesignRequest/{designRequestId}?moduleid={moduleId}");
         }
 
         public async Task<DetailToRequest> GetDetailToRequestAsync(int detailToRequestId, int moduleId)
@@ -176,7 +176,7 @@ namespace GIBS.Module.DesignRequest.Services
 
         public async Task<List<NoteToRequest>> GetNoteToRequestsAsync(int designRequestId, int moduleId)
         {
-            return await GetJsonAsync<List<NoteToRequest>>($"{NoteToRequestApiurl}?designrequestid={designRequestId}&moduleid={moduleId}");
+            return await GetJsonAsync<List<NoteToRequest>>($"{NoteToRequestApiurl}/GetByDesignRequest/{designRequestId}?moduleid={moduleId}");
         }
 
         public async Task<NoteToRequest> GetNoteToRequestAsync(int noteId, int moduleId)
@@ -206,7 +206,7 @@ namespace GIBS.Module.DesignRequest.Services
 
         public async Task<List<FileToRequest>> GetFileToRequestsAsync(int designRequestId, int moduleId)
         {
-            return await GetJsonAsync<List<FileToRequest>>($"{FileToRequestApiurl}?designrequestid={designRequestId}&moduleid={moduleId}");
+            return await GetJsonAsync<List<FileToRequest>>($"{FileToRequestApiurl}/GetByDesignRequest/{designRequestId}?moduleid={moduleId}");
         }
 
         public async Task<FileToRequest> GetFileToRequestAsync(int fileToRequestId, int moduleId)
@@ -231,6 +231,36 @@ namespace GIBS.Module.DesignRequest.Services
         public async Task DeleteFileToRequestAsync(int fileToRequestId, int moduleId)
         {
             await DeleteAsync($"{FileToRequestApiurl}/{fileToRequestId}?moduleid={moduleId}");
+        }
+
+        // NotificationToRequest methods
+        private string NotificationToRequestApiurl => CreateApiUrl("NotificationToRequest");
+
+        public async Task<List<NotificationToRequest>> GetNotificationToRequestsAsync(int designRequestId, int moduleId)
+        {
+            return await GetJsonAsync<List<NotificationToRequest>>($"{NotificationToRequestApiurl}/GetByDesignRequest/{designRequestId}?moduleid={moduleId}");
+        }
+
+        public async Task<NotificationToRequest> GetNotificationToRequestAsync(int notificationToRequestId, int moduleId)
+        {
+            return await GetJsonAsync<NotificationToRequest>($"{NotificationToRequestApiurl}/{notificationToRequestId}?moduleid={moduleId}");
+        }
+
+        public async Task<NotificationToRequest> AddNotificationToRequestAsync(NotificationToRequest notificationToRequest)
+        {
+            var designRequest = await GetDesignRequestAsync(notificationToRequest.DesignRequestId, -1);
+            return await PostJsonAsync<NotificationToRequest>($"{NotificationToRequestApiurl}?moduleid={designRequest.ModuleId}", notificationToRequest);
+        }
+
+        public async Task<NotificationToRequest> UpdateNotificationToRequestAsync(NotificationToRequest notificationToRequest)
+        {
+            var designRequest = await GetDesignRequestAsync(notificationToRequest.DesignRequestId, -1);
+            return await PutJsonAsync<NotificationToRequest>($"{NotificationToRequestApiurl}/{notificationToRequest.NotificationToRequestId}?moduleid={designRequest.ModuleId}", notificationToRequest);
+        }
+
+        public async Task DeleteNotificationToRequestAsync(int notificationToRequestId, int moduleId)
+        {
+            await DeleteAsync($"{NotificationToRequestApiurl}/{notificationToRequestId}?moduleid={moduleId}");
         }
     }
 }

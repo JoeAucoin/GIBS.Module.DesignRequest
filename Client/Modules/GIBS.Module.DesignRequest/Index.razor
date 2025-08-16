@@ -253,22 +253,40 @@ else
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
-                    <Label Class="col-sm-3" For="doorStyle" HelpText="Enter the door style" ResourceKey="DoorStyle">Door Style: </Label>
+                    <Label Class="col-sm-3" For="doorStyle" HelpText="Select the door style" ResourceKey="DoorStyle">Door Style: </Label>
                     <div class="col-sm-9">
-                        <input id="doorStyle" class="form-control" @bind="@_DesignRequest.DoorStyle" />
+                        <select id="doorStyle" class="form-select" @bind="@_DesignRequest.DoorStyle">
+                            <option value="">-- Select Door Style --</option>
+                            @foreach (var style in _doorStyles)
+                            {
+                                <option value="@style">@style</option>
+                            }
+                        </select>
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
-                    <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
+                    <Label Class="col-sm-3" For="color" HelpText="Select the color" ResourceKey="Color">Color: </Label>
                     <div class="col-sm-9">
-                        <input id="color" class="form-control" @bind="@_DesignRequest.Color" />
+                        <select id="color" class="form-select" @bind="@_DesignRequest.Color">
+                            <option value="">-- Select Color --</option>
+                            @foreach (var color in _cabinetColors)
+                            {
+                                <option value="@color">@color</option>
+                            }
+                        </select>
                     </div>
                 </div>
             }       
                 <div class="row mb-1 align-items-center">
-                    <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
+                    <Label Class="col-sm-3" For="countertopThickness" HelpText="Select the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
                     <div class="col-sm-9">
-                        <input id="countertopThickness" class="form-control" @bind="@_DesignRequest.CountertopThickness" />
+                        <select id="countertopThickness" class="form-select" @bind="@_DesignRequest.CountertopThickness" required>
+                            <option value="">-- Select Thickness --</option>
+                            @foreach (var thickness in _countertopThicknesses)
+                            {
+                                <option value="@thickness">@thickness</option>
+                            }
+                        </select>
                     </div>
                 </div>
             @if (_showCountertop)
@@ -426,6 +444,9 @@ else
     private string _designerRole = "DesignRequest"; // Default role for designers
     private bool IsDesigner { get; set; }
     private bool IsLoggedIn => PageState.User != null && PageState.User.UserId > 0;
+    private List<string> _doorStyles = new();
+    private List<string> _cabinetColors = new();
+    private List<string> _countertopThicknesses = new();
 
 
     public override List<Resource> Resources => new List<Resource>()
@@ -476,6 +497,24 @@ else
             {
                 _configurationShapes = configurationShapes.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                 _selectedConfigurationShapes = _configurationShapes.ToDictionary(shape => shape, shape => false);
+            }
+
+            var doorStyleList = SettingService.GetSetting(settings, "DoorStyle", "");
+            if (!string.IsNullOrEmpty(doorStyleList))
+            {
+                _doorStyles = doorStyleList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            var cabinetColorList = SettingService.GetSetting(settings, "CabinetColor", "");
+            if (!string.IsNullOrEmpty(cabinetColorList))
+            {
+                _cabinetColors = cabinetColorList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            var countertopThicknessList = SettingService.GetSetting(settings, "CountertopThickness", "");
+            if (!string.IsNullOrEmpty(countertopThicknessList))
+            {
+                _countertopThicknesses = countertopThicknessList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
 
 
@@ -566,7 +605,7 @@ else
                 try
                 {
                     // Construct the new file name
-                    string newFileName = $"{_currentDesignRequestId}_{uploadedFile.Name}";
+                    string newFileName = $"{_currentDesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
 
                     _newFileToRequest.DesignRequestId = _currentDesignRequestId;
 
@@ -588,6 +627,7 @@ else
                         {
                             _newFileToRequest.Name = renamedFile.Name;
                         }
+                       
                     }
                     else
                     {
