@@ -635,34 +635,9 @@ else
                 NavigationManager.NavigateTo(NavigateUrl());
             }
 
-            // if (_returnurl == "c")
-            // {
 
-            //     // Check if the current user is the owner of the request
-
-            //     if (_designRequest.UserId != PageState.User.UserId)
-            //     {
-            //         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            //         var user = authState.User;
-            //         var currentUser = user.Identity?.Name + " attempting to view record #" + _designRequest.DesignRequestId;
-            //         await logger.LogError("User {User} does not have permission to view this record", currentUser);
-            //         // If the current user is not the owner of the request, redirect to home
-            //         NavigationManager.NavigateTo(ReturnUrl());
-            //         return;
-            //     }
-
-            // }
-            // else if (_returnurl == "d")
-            // {
-
-            // }
-            // else
-            // {
-
-            //     //It must be a manager;
-            // }
-            await GetDesignersListAsync();
-            await CheckUserRoleAsync(_designerRole.ToString());
+            await PopulateDesignerUsersFromUsersListAsync();
+          //  await CheckUserRoleAsync(_designerRole.ToString());
 
         }
         catch (Exception ex)
@@ -689,7 +664,7 @@ else
         // Project Manager Role: can access all records
         if (UserSecurity.IsAuthorized(user, _projectManagerRole) || UserSecurity.IsAuthorized(user, "Administrators"))
             return true;
-            return true;
+           
 
         // Designer Role: can access if assigned
         if (UserSecurity.IsAuthorized(user, _designerRole) && user.UserId == _designRequest.AssignedToUserId)
@@ -768,60 +743,64 @@ else
         }
     }
 
-
-    private User GetRecipientUser()
+    private async Task PopulateDesignerUsersFromUsersListAsync()
     {
-        // Implement logic to retrieve the User object of the recipient
-        // For demonstration, let's create a dummy user
-        return new User { UserId = 1, Username = "testuser", Email = "test@example.com" };
+        // Get all user-role assignments for the designer role
+        var userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
+
+        // Get the UserIds of users in the designer role
+        var designerUserIds = userRoles.Select(ur => ur.UserId).Distinct().ToHashSet();
+
+        // Filter _users to only those in the designer role
+        _designerUsers = _users.Where(u => designerUserIds.Contains(u.UserId)).ToList();
     }
 
-    private async Task GetDesignersListAsync()
-    {
-        try
-        {
-            var roleName = _designerRole;
-            var roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
-            var targetRole = roles.FirstOrDefault(r => r.Name == roleName);
+    // private async Task GetDesignersListAsync()
+    // {
+    //     try
+    //     {
+    //         var roleName = _designerRole;
+    //         var roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
+    //         var targetRole = roles.FirstOrDefault(r => r.Name == roleName);
 
-            if (targetRole != null)
-            {
-                List<UserRole> userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
-                List<User> usersInRole = userRoles
-                    .Where(ur => ur.RoleId == targetRole.RoleId && ur.User != null)
-                    .Select(ur => ur.User)
-                    .ToList();
-                _designerUsers = usersInRole;
-            }
-            else
-            {
-                await logger.LogWarning("The role '{RoleName}' was not found.", roleName);
-                _designerUsers = new List<User>();
-            }
-        }
-        catch (Exception ex)
-        {
-            await logger.LogError(ex, "Error loading designers list: {Error}", ex.Message);
-            AddModuleMessage("Error loading designers list.", MessageType.Error);
-        }
-    }
+    //         if (targetRole != null)
+    //         {
+    //             List<UserRole> userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
+    //             List<User> usersInRole = userRoles
+    //                 .Where(ur => ur.RoleId == targetRole.RoleId && ur.User != null)
+    //                 .Select(ur => ur.User)
+    //                 .ToList();
+    //             _designerUsers = usersInRole;
+    //         }
+    //         else
+    //         {
+    //             await logger.LogWarning("The role '{RoleName}' was not found.", roleName);
+    //             _designerUsers = new List<User>();
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         await logger.LogError(ex, "Error loading designers list: {Error}", ex.Message);
+    //         AddModuleMessage("Error loading designers list.", MessageType.Error);
+    //     }
+    // }
 
-    private async Task CheckUserRoleAsync(string _role)
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
-        if (!IsDesignerRole)
-        {
+    // private async Task CheckUserRoleAsync(string _role)
+    // {
+    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    //     var user = authState.User;
+    //     IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
+    //     if (!IsDesignerRole)
+    //     {
 
-            var currentUser = user.Identity?.Name;
-            await logger.LogError("User {User} does not have permission to view this module", currentUser);
+    //         var currentUser = user.Identity?.Name;
+    //         await logger.LogError("User {User} does not have permission to view this module", currentUser);
 
-            NavigationManager.NavigateTo(NavigateUrl());
-            return; // Stop execution to prevent rendering
-        }
+    //         NavigationManager.NavigateTo(NavigateUrl());
+    //         return; // Stop execution to prevent rendering
+    //     }
 
-    }
+    // }
 
 
     private void DecodeDesignRequestProperties()

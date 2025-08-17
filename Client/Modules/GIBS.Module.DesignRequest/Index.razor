@@ -27,12 +27,11 @@
     {
         <ActionLink Action="ListJobs" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List My Jobs" ResourceKey="List" />
     }
-    @if (IsDesigner)
-    {
-        <ActionLink Action="List" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List Records" ResourceKey="List" />
-    }
-    <ActionLink Action="Appliances" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" Text="Manage Appliances" ResourceKey="Appliances" />
-    <ActionLink Action="Details" Security="SecurityAccessLevel.Edit" Class="btn btn-secondary" Text="Manage Details" ResourceKey="Details" />
+
+        <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" Text="List Records" ResourceKey="List" />
+    
+    <ActionLink Action="Appliances" Security="SecurityAccessLevel.Admin" Style="margin-right:10px;" Class="btn btn-secondary" Text="Manage Appliances" ResourceKey="Appliances" />
+    <ActionLink Action="Details" Security="SecurityAccessLevel.Admin" Class="btn btn-secondary" Text="Manage Details" ResourceKey="Details" />
     </div>
 
 
@@ -442,7 +441,7 @@ else
     private List<FileToRequest> _uploadedFiles = new();
     private int _currentDesignRequestId;
     private string _designerRole = "DesignRequest"; // Default role for designers
-    private bool IsDesigner { get; set; }
+  //  private bool IsDesigner { get; set; }
     private bool IsLoggedIn => PageState.User != null && PageState.User.UserId > 0;
     private List<string> _doorStyles = new();
     private List<string> _cabinetColors = new();
@@ -541,15 +540,15 @@ else
                 _folderId = 1; // Default value or handle error
             }
 
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
+            // var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            // var user = authState.User;
 
-            IsDesigner = false;
+            // IsDesigner = false;
 
-            if (user.IsInRole(_designerRole) || user.IsInRole("Administrators")) // Replace "Administrators" with the desired role name
-            {
-                IsDesigner = true;
-            }
+            // if (user.IsInRole(_designerRole) || user.IsInRole("Administrators")) // Replace "Administrators" with the desired role name
+            // {
+            //     IsDesigner = true;
+            // }
 
 
             if (_showAppliances)

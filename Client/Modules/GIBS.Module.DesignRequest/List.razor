@@ -50,7 +50,7 @@ else
             <td>@context.ModifiedOn.ToShortDateString()</td>
             <td>@context.ModifiedBy</td>
             <td>
-                <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}&r=d")" Class="btn btn-primary btn-sm"
+                <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}")" Class="btn btn-primary btn-sm"
                             Security="SecurityAccessLevel.View" ResourceKey="EditButton" Text="@Localizer["EditButton"]" />
             </td>
             <td>
@@ -72,14 +72,14 @@ else
     private bool IsDesignerRole { get; set; }
     private string _designerRole;
     private int _designerUserId = 0;
-    private int _clientUserId = 0;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
-
+            // used to determine if need to filter the list of design requests based on the user's role
             await CheckUserRoleAsync(_designerRole.ToString());
             // Fetch the complete list of requests for client-side pagination
             var requests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
@@ -88,10 +88,7 @@ else
             {
                 query = query.Where(r => r.AssignedToUserId == _designerUserId);
             }
-            if (_clientUserId > 0)
-            {
-                query = query.Where(r => r.UserId == _clientUserId);
-            }
+
             _designRequests = query.OrderByDescending(r => r.DesignRequestId).ToList();
             _users = await DesignRequestService.GetUsersAsync();
         }
@@ -104,33 +101,18 @@ else
 
     private async Task CheckUserRoleAsync( string _role)
     {
+        // used to determine if need to filter the list of design requests based on the user's role
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
-        // IsDesignerRole = user.IsInRole(_role.ToString()) ;
-        if(!IsDesignerRole)
-        {
-            var currentUser = user.Identity?.Name;
-            await logger.LogError("User {User} does not have permission to view this module", currentUser);
+        IsDesignerRole = user.IsInRole(_role.ToString());
 
-            NavigationManager.NavigateTo(NavigateUrl());
-            return; // Stop execution to prevent rendering
+        var mtest = PageState.User;
+        
+        if(IsDesignerRole)
+        { 
+            // If the user is in the designer role, set the _designerUserId to the current user's ID
+            _designerUserId = PageState.User.UserId;
         }
-        else
-        {
-            // If the user is in the designer role, set the designer user ID to the current user's ID
-            var isDesigner = user.IsInRole(_role.ToString());
-            if (isDesigner)
-            {
-                _designerUserId = PageState.User.UserId;
-            }
-            // else
-            // {
-
-            //     _clientUserId = this.PageState.User.UserId; // Default to current user
-            // }
-        }
-
     }
 
     private string GetUserName(int userId)
@@ -140,6 +122,7 @@ else
             return "Unassigned";
         }
         var user = _users?.FirstOrDefault(u => u.UserId == userId);
+        
         return user?.DisplayName ?? $"Unknown User ({userId})";
     }
 
