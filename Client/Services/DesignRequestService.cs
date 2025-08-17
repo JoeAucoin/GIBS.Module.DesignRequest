@@ -52,7 +52,10 @@ namespace GIBS.Module.DesignRequest.Services
         //GetUsersByRoleAsync
         public async Task<List<User>> GetUsersByRoleAsync(int siteId, string roleName)
         {
-            return await GetJsonAsync<List<User>>($"{Apiurl}/users");
+            // Call the UserRole API to get user-role assignments for the specified role
+            var userRoles = await GetJsonAsync<List<UserRole>>($"/api/UserRole?siteid={siteId}&rolename={roleName}");
+            // Extract the User objects from the UserRole results
+            return userRoles?.Select(ur => ur.User).Where(u => u != null).ToList() ?? new List<User>();
         }
 
         // Appliance Methods

@@ -691,7 +691,7 @@ else
                 AddModuleMessage("Recipient or sender user not found.", MessageType.Error);
                 return;
             }
-            string _messageFooter = "\n\n\nProject Page: " + PageState.Uri.AbsoluteUri + "\n\n\nThis notification was sent from the Design Request module. If you have any questions, please contact the site administrator.";
+            string _messageFooter = "\n\n\nProject Page: " + PageState.Uri.AbsoluteUri + "\n\nThis notification was sent from the Design Request module. If you have any questions, please contact the site administrator.";
             var notification = new Notification
             {
                 SiteId = PageState.Site.SiteId,
@@ -745,14 +745,16 @@ else
 
     private async Task PopulateDesignerUsersFromUsersListAsync()
     {
-        // Get all user-role assignments for the designer role
-        var userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
+        // // Get all user-role assignments for the designer role
+        // var userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
 
-        // Get the UserIds of users in the designer role
-        var designerUserIds = userRoles.Select(ur => ur.UserId).Distinct().ToHashSet();
+        // // Get the UserIds of users in the designer role
+        // var designerUserIds = userRoles.Select(ur => ur.UserId).Distinct().ToHashSet();
 
-        // Filter _users to only those in the designer role
-        _designerUsers = _users.Where(u => designerUserIds.Contains(u.UserId)).ToList();
+        // // Filter _users to only those in the designer role
+        // _designerUsers = _users.Where(u => designerUserIds.Contains(u.UserId)).ToList();
+
+        _designerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _designerRole);
     }
 
     // private async Task GetDesignersListAsync()

@@ -23,10 +23,7 @@
 
 
 <div class="text-center mb-3">
-    @if (IsLoggedIn)
-    {
-        <ActionLink Action="ListJobs" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List My Jobs" ResourceKey="List" />
-    }
+
 
         <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" Text="List Records" ResourceKey="List" />
     
@@ -98,6 +95,12 @@
 }
 else
 {
+<div class="text-center mb-3">
+    @if (IsLoggedIn)
+    {
+        <ActionLink Action="ListJobs" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List My Jobs" ResourceKey="List" />
+    }
+</div>
     <form @ref="form" class="@(validated ? " was-validated" : "needs-validation")" novalidate>
 
         @if (!string.IsNullOrEmpty(_instructions))
@@ -214,7 +217,7 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
                     <div class="col-sm-9">
-                        <input id="overallSpaceDimensions" class="form-control" @bind="@_DesignRequest.OverallSpaceDimensions" />
+                        <input id="overallSpaceDimensions" class="form-control" @bind="@_DesignRequest.OverallSpaceDimensions" required />
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
@@ -441,7 +444,7 @@ else
     private List<FileToRequest> _uploadedFiles = new();
     private int _currentDesignRequestId;
     private string _designerRole = "DesignRequest"; // Default role for designers
-  //  private bool IsDesigner { get; set; }
+    //  private bool IsDesigner { get; set; }
     private bool IsLoggedIn => PageState.User != null && PageState.User.UserId > 0;
     private List<string> _doorStyles = new();
     private List<string> _cabinetColors = new();
@@ -567,6 +570,23 @@ else
                     _selectedDetails = _availableDetails.ToDictionary(d => d.DetailId, d => false);
                 }
             }
+
+            string myStreet = PageState.User.Settings.ContainsKey("Street") ? PageState.User.Settings["Street"] : "";
+            string myCity = PageState.User.Settings.ContainsKey("City") ? PageState.User.Settings["City"] : "";
+            string myPhone = PageState.User.Settings.ContainsKey("Phone") ? PageState.User.Settings["Phone"] : "";
+            string region = PageState.User.Settings.ContainsKey("Region") ? PageState.User.Settings["Region"] : "";
+            string zip = PageState.User.Settings.ContainsKey("PostalCode") ? PageState.User.Settings["PostalCode"] : "";
+            string company = PageState.User.Settings.ContainsKey("Company") ? PageState.User.Settings["Company"] : "";
+            if (!string.IsNullOrEmpty(myStreet))
+            {
+                _DesignRequest.MailingAddress = $"{myStreet}{Environment.NewLine}{myCity}, {region} {zip}";
+            }
+            _DesignRequest.Phone = myPhone;
+            if (string.IsNullOrEmpty(_DesignRequest.Company))
+            {
+                _DesignRequest.Company = company;
+            }
+
         }
         catch (Exception ex)
         {
@@ -626,7 +646,7 @@ else
                         {
                             _newFileToRequest.Name = renamedFile.Name;
                         }
-                       
+
                     }
                     else
                     {
@@ -753,6 +773,10 @@ else
                         await DesignRequestService.AddDetailToRequestAsync(detailToRequest);
                     }
 
+                    await UpdateProfileFields();
+
+
+
                     await logger.LogInformation("Contact Form Submitted {DesignRequest}", _DesignRequest);
                     _isSubmitted = true;
 
@@ -765,7 +789,7 @@ else
                     {
                         AddModuleMessage(Localizer["Message.SubmissionSuccess"], MessageType.Success);
                     }
- 
+
                 }
                 else
                 {
@@ -784,6 +808,58 @@ else
             AddModuleMessage(Localizer["Message.SubmissionError"], MessageType.Error);
         }
 
+    }
+
+    private async Task UpdateProfileFields()
+    {
+        try
+        {
+
+            await UserService.UpdateUserAsync(PageState.User);
+            bool shouldIUpdateProfile = false;
+            // Create a dictionary to hold the settings you want to save
+            var newSettings = new Dictionary<string, string>();
+            
+            if (PageState.User.Settings.ContainsKey("Company"))
+            {
+                var currentCompany = PageState.User.Settings["Company"];
+                if (string.IsNullOrEmpty(currentCompany.ToString()))
+                {
+                    shouldIUpdateProfile = true;
+                    newSettings.Add("Company", _DesignRequest.Company);
+                   
+                }
+            }
+
+
+            if (PageState.User.Settings.ContainsKey("Phone"))
+            {
+                var currentPhone = PageState.User.Settings["Phone"];
+                if (string.IsNullOrEmpty(currentPhone.ToString()))
+                {
+                    shouldIUpdateProfile = true;
+                    newSettings.Add("Phone", _DesignRequest.Phone);
+                   
+                }
+            }
+
+            if(shouldIUpdateProfile)
+            {
+                // Update the user settings
+                await SettingService.UpdateUserSettingsAsync(newSettings, PageState.User.UserId);
+
+                await logger.LogInformation("User Profile Settings Updated", newSettings);
+                
+              //  AddModuleMessage("Your profile information has been updated successfully.", MessageType.Success);
+            }
+            
+
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error updating user profile fields: {Error}", ex.Message);
+            AddModuleMessage("Error updating your profile information.", MessageType.Error);
+        }
     }
 
 
