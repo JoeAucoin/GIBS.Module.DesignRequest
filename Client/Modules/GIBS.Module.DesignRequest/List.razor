@@ -46,8 +46,8 @@ else
             <td>@context.ProjectName</td>
             <td>@context.Status</td>
             <td>@GetUserName(context.AssignedToUserId)</td>
-            <td>@context.CreatedOn.ToShortDateString()</td>
-            <td>@context.ModifiedOn.ToShortDateString()</td>
+            <td>@context.CreatedOn.ToLocalTime().ToShortDateString()</td>
+            <td>@context.ModifiedOn.ToLocalTime().ToShortDateString()</td>
             <td>@context.ModifiedBy</td>
             <td>
                 <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}")" Class="btn btn-primary btn-sm"

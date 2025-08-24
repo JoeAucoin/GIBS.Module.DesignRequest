@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Oqtane.Modules.Controls
 @using GIBS.Module.DesignRequest.Services
 @using GIBS.Module.DesignRequest.Models
@@ -8,6 +8,7 @@
 @using System.Net
 @using Oqtane.Models
 @using Oqtane.Security
+
 
 @namespace GIBS.Module.DesignRequest
 @inherits ModuleBase
@@ -21,6 +22,10 @@
 
 @inject Oqtane.Services.IRoleService RoleService
 @inject Oqtane.Services.IUserRoleService UserRoleService
+
+
+
+<h2>Manage Design Request</h2>
 
 @if (_designRequest == null)
 {
@@ -36,32 +41,41 @@ else
                     <input id="contactName" class="form-control" @bind="@_designRequest.ContactName" required />
                 </div>
             </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="phone" HelpText="Enter the contact phone number" ResourceKey="Phone">Phone: </Label>
-                <div class="col-sm-9">
-                    <input id="phone" class="form-control" @bind="@_designRequest.Phone" />
-                </div>
+            @* Collapsible Contact Info Section *@
+            <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => showContactInfo = !showContactInfo">
+                    @(showContactInfo ? "Hide Contact Information ▲" : "Show Contact Information ▼")
+                </button>
             </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="email" HelpText="Enter the contact email address" ResourceKey="Email">Email: </Label>
-                <div class="col-sm-9">
-                    <input id="email" type="email" class="form-control" @bind="@_designRequest.Email" />
+            @if (showContactInfo)
+            {
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="phone" HelpText="Enter the contact phone number" ResourceKey="Phone">Phone: </Label>
+                        <div class="col-sm-9">
+                            <input id="phone" class="form-control" @bind="@_designRequest.Phone" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="email" HelpText="Enter the contact email address" ResourceKey="Email">Email: </Label>
+                        <div class="col-sm-9">
+                            <input id="email" type="email" class="form-control" @bind="@_designRequest.Email" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="mailingAddress" HelpText="Enter the physical mailing address for samples. No P.O. Boxes!" ResourceKey="MailingAddress">Samples Mailing Address: </Label>
+                        <div class="col-sm-9">
+                            <textarea id="mailingAddress" class="form-control" @bind="@_designRequest.MailingAddress" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="website" HelpText="Enter the project website" ResourceKey="Website">Website: </Label>
+                        <div class="col-sm-9">
+                            <input id="website" class="form-control" @bind="@_designRequest.Website" />
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="mailingAddress" HelpText="Enter the physical mailing address for samples. No P.O. Boxes!" ResourceKey="MailingAddress">Mailing Address: </Label>
-                <div class="col-sm-9">
-                    <textarea id="mailingAddress" class="form-control" @bind="@_designRequest.MailingAddress" rows="3"></textarea>
-                </div>
-            </div>
-
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="website" HelpText="Enter the project website" ResourceKey="Website">Website: </Label>
-                <div class="col-sm-9">
-                    <input id="website" class="form-control" @bind="@_designRequest.Website" />
-                </div>
-            </div>
+            }
             <hr />
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="projectName" HelpText="Enter the project name" ResourceKey="ProjectName">Project Name: </Label>
@@ -76,86 +90,96 @@ else
                 </div>
             </div>
 
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="interest" HelpText="Client interest" ResourceKey="Interest">Interest: </Label>
-                <div class="col-sm-9">
-                    <input id="interest" type="text" class="form-control" @bind="@_designRequest.Interest" />
-                </div>
+            <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => showProjectInfo = !showProjectInfo">
+                    @(showProjectInfo ? "Hide Project Details ▲" : "Show Project Details ▼")
+                </button>
             </div>
+            @if (showProjectInfo)
+            {
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="interest" HelpText="Client interest" ResourceKey="Interest">Interest: </Label>
+                        <div class="col-sm-9">
+                            <input id="interest" type="text" class="form-control" @bind="@_designRequest.Interest" />
+                        </div>
+                    </div>
 
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="questionComments" HelpText="Enter design notes" ResourceKey="DesignNotes">Design/Job Notes: </Label>
-                <div class="col-sm-9">
-                    <textarea id="questionComments" class="form-control" @bind="@_designRequest.QuestionComments" rows="5"></textarea>
-                </div>
-            </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="questionComments" HelpText="Enter design notes" ResourceKey="DesignNotes">Design/Job Notes: </Label>
+                        <div class="col-sm-9">
+                            <textarea id="questionComments" class="form-control" @bind="@_designRequest.QuestionComments" rows="5"></textarea>
+                        </div>
+                    </div>
 
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Estimated Installation Date: </Label>
-                <div class="col-sm-9">
-                    <input id="installationDate" type="date" class="form-control" @bind="@_designRequest.InstallationDate" />
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Estimated Installation Date: </Label>
+                        <div class="col-sm-9">
+                            <input id="installationDate" type="date" class="form-control" @bind="@_designRequest.InstallationDate" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
+                        <div class="col-sm-9">
+                            <input id="overallSpaceDimensions" class="form-control" @bind="@_designRequest.OverallSpaceDimensions" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="ceilingHeight" HelpText="Is any Part of the Kitchen covered by a roof or Overhang?" ResourceKey="CeilingHeight">Ceiling Height: </Label>
+                        <div class="col-sm-9">
+                            <input id="ceilingHeight" class="form-control" @bind="@_designRequest.CeilingHeight" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="lengthOfKitchen" HelpText="Enter the length of the kitchen" ResourceKey="LengthOfKitchen">Length of Kitchen: </Label>
+                        <div class="col-sm-9">
+                            <input id="lengthOfKitchen" class="form-control" @bind="@_designRequest.LengthOfKitchen" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="slopeOfPatio" HelpText="Enter the slope of the patio" ResourceKey="SlopeOfPatio">Slope of Patio: </Label>
+                        <div class="col-sm-9">
+                            <input id="slopeOfPatio" class="form-control" @bind="@_designRequest.SlopeOfPatio" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="shapeConfiguration" HelpText="Enter the shape/configuration" ResourceKey="ShapeConfiguration">Shape/Configuration: </Label>
+                        <div class="col-sm-9">
+                            <input id="shapeConfiguration" class="form-control" @bind="@_designRequest.ShapeConfiguration" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="doorStyle" HelpText="Enter the door style" ResourceKey="DoorStyle">Door Style: </Label>
+                        <div class="col-sm-9">
+                            <input id="doorStyle" class="form-control" @bind="@_designRequest.DoorStyle" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
+                        <div class="col-sm-9">
+                            <input id="color" class="form-control" @bind="@_designRequest.Color" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
+                        <div class="col-sm-9">
+                            <input id="countertopThickness" class="form-control" @bind="@_designRequest.CountertopThickness" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
+                        <div class="col-sm-9">
+                            <input id="counterDepth" class="form-control" @bind="@_designRequest.CounterDepth" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="counterHeight" HelpText="Enter the counter height" ResourceKey="CounterHeight">Counter Height: </Label>
+                        <div class="col-sm-9">
+                            <input id="counterHeight" class="form-control" @bind="@_designRequest.CounterHeight" />
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
-                <div class="col-sm-9">
-                    <input id="overallSpaceDimensions" class="form-control" @bind="@_designRequest.OverallSpaceDimensions" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="ceilingHeight" HelpText="Is any Part of the Kitchen covered by a roof or Overhang?" ResourceKey="CeilingHeight">Ceiling Height: </Label>
-                <div class="col-sm-9">
-                    <input id="ceilingHeight" class="form-control" @bind="@_designRequest.CeilingHeight" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="lengthOfKitchen" HelpText="Enter the length of the kitchen" ResourceKey="LengthOfKitchen">Length of Kitchen: </Label>
-                <div class="col-sm-9">
-                    <input id="lengthOfKitchen" class="form-control" @bind="@_designRequest.LengthOfKitchen" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="slopeOfPatio" HelpText="Enter the slope of the patio" ResourceKey="SlopeOfPatio">Slope of Patio: </Label>
-                <div class="col-sm-9">
-                    <input id="slopeOfPatio" class="form-control" @bind="@_designRequest.SlopeOfPatio" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="shapeConfiguration" HelpText="Enter the shape/configuration" ResourceKey="ShapeConfiguration">Shape/Configuration: </Label>
-                <div class="col-sm-9">
-                    <input id="shapeConfiguration" class="form-control" @bind="@_designRequest.ShapeConfiguration" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="doorStyle" HelpText="Enter the door style" ResourceKey="DoorStyle">Door Style: </Label>
-                <div class="col-sm-9">
-                    <input id="doorStyle" class="form-control" @bind="@_designRequest.DoorStyle" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
-                <div class="col-sm-9">
-                    <input id="color" class="form-control" @bind="@_designRequest.Color" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
-                <div class="col-sm-9">
-                    <input id="countertopThickness" class="form-control" @bind="@_designRequest.CountertopThickness" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
-                <div class="col-sm-9">
-                    <input id="counterDepth" class="form-control" @bind="@_designRequest.CounterDepth" />
-                </div>
-            </div>
-            <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="counterHeight" HelpText="Enter the counter height" ResourceKey="CounterHeight">Counter Height: </Label>
-                <div class="col-sm-9">
-                    <input id="counterHeight" class="form-control" @bind="@_designRequest.CounterHeight" />
-                </div>
-            </div>
+            }
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="assignedTo" HelpText="Assign this request to a user" ResourceKey="AssignedTo">Assigned To: </Label>
                 <div class="col-sm-9">
@@ -191,7 +215,7 @@ else
             </div>
         </div>
 
-        <TabStrip>
+        <TabStrip ActiveTab="@_activeTab">
             <TabPanel Name="Appliances">
                 <h4 class="mt-4">Appliances for this Design</h4>
                 @if (_applianceToRequests != null && _applianceToRequests.Any())
@@ -354,6 +378,20 @@ else
                     </div>
                 </div>
             </TabPanel>
+            <TabPanel Name="Location" Heading="Project Map">
+
+                <h4 class="mt-4">Project Property Map</h4>
+                <div class="mt-3">
+                    <iframe height="500"
+                            style="border:0;width:100%;"
+                            loading="lazy"
+                            allowfullscreen
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src="https://www.google.com/maps/embed/v1/place?key=@_apiKey&q=@_designRequest.Address&zoom=@_zoomLevel&maptype=satellite">
+                    </iframe>
+                </div>
+
+                </TabPanel>
             <TabPanel Name="Files">
                 <h4 class="mt-4">Files</h4>
                 @if (_fileToRequests != null && _fileToRequests.Any())
@@ -363,6 +401,8 @@ else
                             <tr>
                                 <th>Name</th>
                                 <th>Notes</th>
+                                <th>Added By</th>
+                                <th>Date</th>
                                 <th style="width:1px;"></th>
                                 <th style="width:1px;"></th>
                             </tr>
@@ -373,7 +413,8 @@ else
                                 <tr>
                                     <td>@file.Name</td>
                                     <td>@file.Description</td>
-
+                                    <td class="text-end">@file.CreatedBy</td>
+                                    <td class="text-end">@file.CreatedOn.ToLocalTime().ToString("g")</td>
                                     <td class="text-end">
                                         <a href="@file.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
                                     </td>
@@ -430,7 +471,7 @@ else
                             <div class="list-group-item list-group-item-action flex-column align-items-start">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">@note.CreatedBy</h5>
-                                    <small>@note.CreatedOn.ToString("g")</small>
+                                    <small>@note.CreatedOn.ToLocalTime().ToString("g")</small>
                                 </div>
                                 <p class="mb-1">@note.Note</p>
                                 <small class="d-block text-end">
@@ -502,7 +543,7 @@ else
                             <div class="list-group-item list-group-item-action flex-column align-items-start">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">@notification.Subject</h5>
-                                    <small>@notification.CreatedOn.ToString("g")</small>
+                                    <small>@notification.CreatedOn.ToLocalTime().ToString("g")</small>
                                 </div>
                                 <p class="mb-1"><strong>From:</strong> @notification.FromDisplayName</p>
                                 <p class="mb-1"><strong>To:</strong> @notification.ToDisplayName</p>
@@ -536,7 +577,8 @@ else
     private Oqtane.Models.User UserDetails;
 
     public override string Actions => "Edit";
-    public override string Title => "Manage Design Request";
+    private string _title = "Manage Design Request";
+    public override string Title => _title;
 
     private ElementReference form;
     private bool validated = false;
@@ -569,6 +611,12 @@ else
 
     // private string _returnurl = string.Empty;
     private bool IsDesignerRole { get; set; }
+    private string _apiKey = "";
+    private string _zoomLevel = "19"; // default zoom level
+
+    private string _activeTab = "Files";
+    private bool showContactInfo = false;
+    private bool showProjectInfo = false;
 
     //  private readonly IRoleService _RoleService;
     //  private readonly UserRoleService userRoleService;
@@ -577,6 +625,9 @@ else
     {
         try
         {
+          
+          //  SetCustomModuleTitle("Hello World"); 
+            
             _users = await DesignRequestService.GetUsersAsync();
             // if (PageState.QueryString.ContainsKey("r") && PageState.QueryString.TryGetValue("r", out var returnurl))
             // {
@@ -587,7 +638,9 @@ else
             _folderId = int.Parse(SettingService.GetSetting(settings, "FileFolder", "1"));
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
             _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "Administrators");
-
+            _apiKey = SettingService.GetSetting(ModuleState.Settings, "GoogleApiKey", "");
+            _zoomLevel = SettingService.GetSetting(settings, "ZoomLevel", "19");
+            _activeTab = SettingService.GetSetting(settings, "ActiveTab", "Files");
            
             var statusList = SettingService.GetSetting(settings, "StatusList", "");
             if (!string.IsNullOrEmpty(statusList))
@@ -646,6 +699,13 @@ else
             AddModuleMessage(Localizer["Message.LoadError"], MessageType.Error);
         }
     }
+
+    protected void SetCustomModuleTitle(string title)
+    {
+        _title = title;
+        StateHasChanged();
+    }
+
     private string GetUserName(int userId)
     {
         if (userId == 0)
@@ -708,6 +768,9 @@ else
             };
 
             var mynotification = await NotificationService.AddNotificationAsync(notification);
+
+            // Switch to Notifications tab after insert/update
+            _activeTab = "Notifications";
 
             if (mynotification != null)
             {
@@ -981,6 +1044,9 @@ else
             _newNoteToRequest = new(); // Reset form
             await Save(); // Save to update ModifiedOn and ModifiedBy
             await LoadNoteData();
+
+            // Switch to Notes tab after insert/update
+            _activeTab = "Notes";
         }
         else
         {
@@ -994,6 +1060,9 @@ else
         {
             await DesignRequestService.DeleteNoteToRequestAsync(note.NoteId, ModuleState.ModuleId);
             await LoadNoteData();
+
+            // Switch to Notes tab after insert/update
+            _activeTab = "Notes";
         }
         catch (Exception ex)
         {
@@ -1014,7 +1083,7 @@ else
 
             try
             {
-                string newFileName = $"{_designRequest.DesignRequestId}_{uploadedFile.Name}";
+                string newFileName = $"{_designRequest.DesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
                 var renamedFile = await RenameFile(fileId, newFileName);
                 if (renamedFile == null)
                 {
@@ -1034,6 +1103,9 @@ else
                 _newFileToRequest = new(); // Reset form
                 await LoadFileData();
                 AddModuleMessage("File added successfully.", MessageType.Success);
+
+                // Switch to Files tab after insert/update
+                _activeTab = "Files";
             }
             catch (Exception ex)
             {

@@ -15,6 +15,33 @@
 
 <div class="container">
     <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="googleApiKey" HelpText="Enter a Google ApiKey" ResourceKey="GoogleApiKey" ResourceType="@resourceType">Google ApiKey: </Label>
+        <div class="col-sm-9">
+            <input id="googleApiKey" type="text" class="form-control" @bind="@_googleApiKey" />
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="zoomLevel" HelpText="Enter a value for the map zoom level. 1-20. I suggest 18 or 19." ResourceKey="SettingZoomLevel" ResourceType="@resourceType">Map Zoom Level: </Label>
+        <div class="col-sm-9">
+            <input id="zoomLevel" type="text" class="form-control" @bind="@_zoomLevel" />
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="activeTab" HelpText="Select the default active tab" ResourceKey="ActiveTab" ResourceType="@resourceType">Default/Active Tab: </Label>
+        <div class="col-sm-9">
+            <select id="activeTab" class="form-select" @bind="_activeTab">
+                <option value="Appliances">Appliances</option>
+                <option value="Details">Details</option>
+                <option value="Notifications">Notifications</option>
+                <option value="Notes">Notes</option>
+                <option value="Files">Files</option>
+                <option value="Location">Location</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="projectManagerRole" HelpText="Select the project manager role" ResourceKey="ProjectManagerRole" ResourceType="@resourceType">Project Manager Role: </Label>
         <div class="col-sm-9">
             <select id="projectManagerRole" class="form-select" @bind="@_projectManagerRole">
@@ -191,6 +218,8 @@
 
 @code {
 
+
+
     private string resourceType = "GIBS.Module.DesignRequest.Settings, GIBS.Module.DesignRequest.Client.Oqtane"; // for localization
     public override string Title => "DesignRequest Settings";
     private string _designerRole;
@@ -221,6 +250,10 @@
     private string _doorStyle;
     private string _countertopThickness;
     private string _cabinetColor;
+    private string _googleApiKey;
+    string _zoomLevel = "19"; // default zoom level
+
+    private string _activeTab;
 
     private List<Folder> _folders = new List<Folder>();
     private string _fileFolder;
@@ -244,6 +277,8 @@
             //_roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
             _users = await DesignRequestService.GetUsersAsync();
             Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _googleApiKey = SettingService.GetSetting(settings, "GoogleApiKey", "");
+            _zoomLevel = SettingService.GetSetting(settings, "ZoomLevel", "19");
             _instructions = SettingService.GetSetting(settings, "Instructions", "");
             _fileUploadInstructions = SettingService.GetSetting(settings, "FileUploadInstructions", "");
             _successFeedback = SettingService.GetSetting(settings, "SuccessFeedback", "");
@@ -270,6 +305,7 @@
             _fileFolder = SettingService.GetSetting(settings, "FileFolder", "Root");
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "Designer");
             _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "");
+            _activeTab = SettingService.GetSetting(settings, "ActiveTab", "Files");
 
         }
         catch (Exception ex)
@@ -283,6 +319,8 @@
         try
         {
             Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            SettingService.SetSetting(settings, "GoogleApiKey", _googleApiKey);
+            SettingService.SetSetting(settings, "ZoomLevel", _zoomLevel);
             SettingService.SetSetting(settings, "Instructions", _instructions);
             SettingService.SetSetting(settings, "FileUploadInstructions", _fileUploadInstructions);
             SettingService.SetSetting(settings, "SuccessFeedback", _successFeedback);
@@ -309,6 +347,7 @@
             SettingService.SetSetting(settings, "FileFolder", _fileFolder);
             SettingService.SetSetting(settings, "DesignerRole", _designerRole);
             SettingService.SetSetting(settings, "ProjectManagerRole", _projectManagerRole);
+            SettingService.SetSetting(settings, "ActiveTab", _activeTab);
             await SettingService.UpdateModuleSettingsAsync(settings, ModuleState.ModuleId);
         }
         catch (Exception ex)
