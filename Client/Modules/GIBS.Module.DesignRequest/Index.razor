@@ -127,7 +127,7 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="company" HelpText="Enter your company" ResourceKey="Company">Company: </Label>
                     <div class="col-sm-9">
-                        <input id="company" class="form-control" @bind="@_DesignRequest.Company" />
+                        <input id="company" class="form-control" @bind="@_DesignRequest.Company" maxlength="100" />
                     </div>
                 </div>
             }
@@ -144,14 +144,14 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="phone" HelpText="Enter your phone" ResourceKey="Phone">Phone: </Label>
                     <div class="col-sm-9">
-                        <input id="phone" class="form-control" @bind="@_DesignRequest.Phone" />
+                        <input id="phone" class="form-control" @bind="@_DesignRequest.Phone" maxlength="50" />
                     </div>
                 </div>
             }
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="email" HelpText="Enter your email" ResourceKey="Email">Email: </Label>
                 <div class="col-sm-9">
-                    <input id="email" type="email" class="form-control" @bind="@_DesignRequest.Email" required />
+                    <input id="email" type="email" class="form-control" @bind="@_DesignRequest.Email" maxlength="50" required />
                 </div>
             </div>
             @if (_showWebsite)
@@ -159,7 +159,7 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="website" HelpText="Enter your website" ResourceKey="Website">Website: </Label>
                     <div class="col-sm-9">
-                        <input id="website" class="form-control" @bind="@_DesignRequest.Website" />
+                        <input id="website" class="form-control" @bind="@_DesignRequest.Website" maxlength="100" />
                     </div>
                 </div>
             }
@@ -188,7 +188,7 @@ else
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="clientProjectName" HelpText="Enter the Client/Project Name" ResourceKey="ClientProjectName">Client/Project Name: </Label>
                 <div class="col-sm-9">
-                    <input id="clientProjectName" class="form-control" @bind="@_DesignRequest.ProjectName" required />
+                    <input id="clientProjectName" class="form-control" @bind="@_DesignRequest.ProjectName" maxlength="100"  required />
                 </div>
             </div>
 
@@ -217,25 +217,25 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
                     <div class="col-sm-9">
-                        <input id="overallSpaceDimensions" class="form-control" @bind="@_DesignRequest.OverallSpaceDimensions" required />
+                        <input id="overallSpaceDimensions" class="form-control" @bind="@_DesignRequest.OverallSpaceDimensions" maxlength="50" required />
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="ceilingHeight" HelpText="Enter the ceiling height" ResourceKey="CeilingHeight">Ceiling Height: </Label>
                     <div class="col-sm-9">
-                        <input id="ceilingHeight" class="form-control" @bind="@_DesignRequest.CeilingHeight" />
+                        <input id="ceilingHeight" class="form-control" @bind="@_DesignRequest.CeilingHeight" maxlength="50" />
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="lengthOfKitchen" HelpText="Enter the length of the kitchen" ResourceKey="LengthOfKitchen">Length of Kitchen: </Label>
                     <div class="col-sm-9">
-                        <input id="lengthOfKitchen" class="form-control" @bind="@_DesignRequest.LengthOfKitchen" />
+                        <input id="lengthOfKitchen" class="form-control" @bind="@_DesignRequest.LengthOfKitchen" maxlength="50" />
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="slopeOfPatio" HelpText="Enter the slope of the patio" ResourceKey="SlopeOfPatio">Slope of Patio: </Label>
                     <div class="col-sm-9">
-                        <input id="slopeOfPatio" class="form-control" @bind="@_DesignRequest.SlopeOfPatio" />
+                        <input id="slopeOfPatio" class="form-control" @bind="@_DesignRequest.SlopeOfPatio" maxlength="50" />
                     </div>
                 </div>
             }
@@ -296,13 +296,13 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
                     <div class="col-sm-9">
-                        <input id="counterDepth" class="form-control" @bind="@_DesignRequest.CounterDepth" />
+                        <input id="counterDepth" class="form-control" @bind="@_DesignRequest.CounterDepth" maxlength="50" />
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="counterHeight" HelpText="Enter the counter height" ResourceKey="CounterHeight">Counter Height: </Label>
                     <div class="col-sm-9">
-                        <input id="counterHeight" class="form-control" @bind="@_DesignRequest.CounterHeight" />
+                        <input id="counterHeight" class="form-control" @bind="@_DesignRequest.CounterHeight" maxlength="50" />
                     </div>
                 </div>
             }

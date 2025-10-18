@@ -8,7 +8,7 @@ using Oqtane.Migrations;
 namespace GIBS.Module.DesignRequest.Migrations
 {
     [DbContext(typeof(DesignRequestContext))]
-    [Migration("DesignRequest.01.00.03.00")]
+    [Migration("GIBS.Module.DesignRequest.01.00.03.00")]
     public class AddNotificationToRequest : MultiDatabaseMigration
     {
         public AddNotificationToRequest(IDatabase database) : base(database)

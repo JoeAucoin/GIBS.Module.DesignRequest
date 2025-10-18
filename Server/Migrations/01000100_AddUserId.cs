@@ -7,7 +7,7 @@ using GIBS.Module.DesignRequest.Repository;
 namespace GIBS.Module.DesignRequest.Migrations
 {
     [DbContext(typeof(DesignRequestContext))]
-    [Migration("DesignRequest.01.00.01.00")]
+    [Migration("GIBS.Module.DesignRequest.01.00.01.00")]
     public class AddUserId : MultiDatabaseMigration
     {
         public AddUserId(IDatabase database) : base(database)
@@ -19,7 +19,7 @@ namespace GIBS.Module.DesignRequest.Migrations
             migrationBuilder.AddColumn<int>(
                 name: "UserId",
                 table: "GIBSDesignRequest",
-                nullable: true, 
+                nullable: true,
                 defaultValue: 0);
 
             migrationBuilder.AddColumn<string>(

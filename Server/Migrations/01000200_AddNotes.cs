@@ -7,7 +7,7 @@ using GIBS.Module.DesignRequest.Repository;
 namespace GIBS.Module.DesignRequest.Migrations
 {
     [DbContext(typeof(DesignRequestContext))]
-    [Migration("DesignRequest.01.00.02.00")]
+    [Migration("GIBS.Module.DesignRequest.01.00.02.00")]
     public class AddNotes : MultiDatabaseMigration
     {
         public AddNotes(IDatabase database) : base(database)
