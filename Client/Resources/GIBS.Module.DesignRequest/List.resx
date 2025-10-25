@@ -147,4 +147,13 @@
   <data name="Message.Delete" xml:space="preserve">
     <value>Are you sure you want to delete this record?</value>
   </data>
+  <data name="AssignedTo" xml:space="preserve">
+    <value>Assigned</value>
+  </data>
+  <data name="FileUploadedRecently" xml:space="preserve">
+    <value>New File</value>
+  </data>
+  <data name="ProjectManager" xml:space="preserve">
+    <value>Project Manager</value>
+  </data>
 </root>

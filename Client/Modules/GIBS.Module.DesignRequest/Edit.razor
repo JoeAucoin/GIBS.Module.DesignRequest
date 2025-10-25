@@ -166,6 +166,8 @@ else
                             <input id="countertopThickness" class="form-control" @bind="@_designRequest.CountertopThickness" />
                         </div>
                     </div>
+                    @if (_showCountertop)
+                    {
                     <div class="row mb-1 align-items-center">
                         <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
                         <div class="col-sm-9">
@@ -178,8 +180,29 @@ else
                             <input id="counterHeight" class="form-control" @bind="@_designRequest.CounterHeight" />
                         </div>
                     </div>
+                    }
                 </div>
             }
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="projectManager" HelpText="Assign a Project Manager" ResourceKey="ProjectManager">Project Manager: </Label>
+                <div class="col-sm-9">
+
+                    @if (_projectManagers != null)
+                    {
+                        <select id="projectManager" class="form-select" @bind="@_designRequest.ProjectManagerUserId">
+                            <option value="0">-- Unassigned --</option>
+
+
+                            @foreach (var user in _projectManagers)
+                            {
+                                <option value="@user.UserId">@user.DisplayName</option>
+                            }
+
+                        </select>
+                    }
+                </div>
+            </div>
+
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="assignedTo" HelpText="Assign this request to a user" ResourceKey="AssignedTo">Assigned To: </Label>
                 <div class="col-sm-9">
@@ -408,7 +431,7 @@ else
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var file in _fileToRequests)
+                            @foreach (var file in _fileToRequests.OrderByDescending(f => f.CreatedOn))
                             {
                                 <tr>
                                     <td>@file.Name</td>
@@ -574,6 +597,8 @@ else
 
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
 
+    public override bool UseAdminContainer => false;
+
     private Oqtane.Models.User UserDetails;
 
     public override string Actions => "Edit";
@@ -586,6 +611,7 @@ else
     private DesignRequest _designRequest;
     private List<User> _users;
     private List<User> _designerUsers;
+    private List<User> _projectManagers;
     private List<string> _status = new();
 
     private List<ApplianceToRequest> _applianceToRequests;
@@ -618,6 +644,8 @@ else
     private bool showContactInfo = false;
     private bool showProjectInfo = false;
 
+    private bool _showCountertop;
+
     //  private readonly IRoleService _RoleService;
     //  private readonly UserRoleService userRoleService;
 
@@ -641,6 +669,7 @@ else
             _apiKey = SettingService.GetSetting(ModuleState.Settings, "GoogleApiKey", "");
             _zoomLevel = SettingService.GetSetting(settings, "ZoomLevel", "19");
             _activeTab = SettingService.GetSetting(settings, "ActiveTab", "Files");
+            _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
            
             var statusList = SettingService.GetSetting(settings, "StatusList", "");
             if (!string.IsNullOrEmpty(statusList))
@@ -818,54 +847,9 @@ else
         // _designerUsers = _users.Where(u => designerUserIds.Contains(u.UserId)).ToList();
 
         _designerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _designerRole);
+        _projectManagers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _projectManagerRole);
     }
 
-    // private async Task GetDesignersListAsync()
-    // {
-    //     try
-    //     {
-    //         var roleName = _designerRole;
-    //         var roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
-    //         var targetRole = roles.FirstOrDefault(r => r.Name == roleName);
-
-    //         if (targetRole != null)
-    //         {
-    //             List<UserRole> userRoles = await UserRoleService.GetUserRolesAsync(PageState.Site.SiteId, _designerRole);
-    //             List<User> usersInRole = userRoles
-    //                 .Where(ur => ur.RoleId == targetRole.RoleId && ur.User != null)
-    //                 .Select(ur => ur.User)
-    //                 .ToList();
-    //             _designerUsers = usersInRole;
-    //         }
-    //         else
-    //         {
-    //             await logger.LogWarning("The role '{RoleName}' was not found.", roleName);
-    //             _designerUsers = new List<User>();
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         await logger.LogError(ex, "Error loading designers list: {Error}", ex.Message);
-    //         AddModuleMessage("Error loading designers list.", MessageType.Error);
-    //     }
-    // }
-
-    // private async Task CheckUserRoleAsync(string _role)
-    // {
-    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-    //     var user = authState.User;
-    //     IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
-    //     if (!IsDesignerRole)
-    //     {
-
-    //         var currentUser = user.Identity?.Name;
-    //         await logger.LogError("User {User} does not have permission to view this module", currentUser);
-
-    //         NavigationManager.NavigateTo(NavigateUrl());
-    //         return; // Stop execution to prevent rendering
-    //     }
-
-    // }
 
 
     private void DecodeDesignRequestProperties()

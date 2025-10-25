@@ -27,35 +27,90 @@
 }
 else
 {
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label for="projectManagerFilter">Project Manager:</label>
+            <select id="projectManagerFilter" class="form-select" @bind="SelectedProjectManagerId">
+                <option value="0">All</option>
+                @if (_projectManagerUsers != null)
+                {
+                    @foreach (var user in _projectManagerUsers)
+                    {
+                        <option value="@user.UserId">@user.DisplayName</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="assignedToFilter">Assigned To:</label>
+            <select id="assignedToFilter" class="form-select" @bind="SelectedAssignedToId">
+                <option value="0">All</option>
+                @if (_designerUsers != null)
+                {
+                    @foreach (var user in _designerUsers)
+                    {
+                        <option value="@user.UserId">@user.DisplayName</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="statusFilter">Status:</label>
+            <select id="statusFilter" class="form-select" @bind="SelectedStatus">
+                <option value="">All</option>
+                @if (_statusOptions != null)
+                {
+                    @foreach (var status in _statusOptions)
+                    {
+                        <option value="@status">@status</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-3 align-self-end">
+            <button class="btn btn-secondary" @onclick="ClearFilters">Clear Filters</button>
+        </div>
+    </div>
+
     <Pager Items="@_designRequests" PageSize="10" Class="table table-striped">
         <Header>
         <th>@Localizer["ID"]</th>
         <th>@Localizer["Contact Name"]</th>
-        <th>@Localizer["Project Name"]</th>
+        <th>@Localizer["Project Address"]</th>
         <th>@Localizer["Status"]</th>
-        <th>@Localizer["Assigned To"]</th>
+        <th>@Localizer["ProjectManager"]</th>
+        <th>@Localizer["AssignedTo"]</th>
         <th>@Localizer["Created On"]</th>
         <th>@Localizer["Updated On"]</th>
         <th>@Localizer["Updated By"]</th>
+        <th>@Localizer["FileUploadedRecently"]</th>
         <th style="width: 1px;">&nbsp;</th>
         <th style="width: 1px;">&nbsp;</th>
         </Header>
         <Row>
             <td>@context.DesignRequestId</td>
             <td>@context.ContactName</td>
-            <td>@context.ProjectName</td>
+            <td>@context.Address</td>
             <td>@context.Status</td>
+            <td>@GetUserName(context.ProjectManagerUserId ?? 0)</td>
             <td>@GetUserName(context.AssignedToUserId)</td>
             <td>@context.CreatedOn.ToLocalTime().ToShortDateString()</td>
             <td>@context.ModifiedOn.ToLocalTime().ToShortDateString()</td>
             <td>@context.ModifiedBy</td>
             <td>
+
+                @if (context.FileUploadedRecently)
+                {
+                    <span class="oi oi-file" title="File uploaded recently" style="color: green;font-size: 24px;"></span>
+                }
+            </td>
+            <td>
                 <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}")" Class="btn btn-primary btn-sm"
-                            Security="SecurityAccessLevel.View" ResourceKey="EditButton" Text="@Localizer["EditButton"]" />
+                            Security="SecurityAccessLevel.View" ResourceKey="EditButton" Text="@Localizer["EditButton"]" IconName="pencil" IconOnly="true" />
             </td>
             <td>
                 <ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", context.ProjectName])"
-                              Action="Delete" Security="SecurityAccessLevel.Admin" Class="btn btn-danger btn-sm"
+                              Action="Delete" Security="SecurityAccessLevel.Admin" Class="btn btn-danger btn-sm" IconName="delete" IconOnly="true"
                               OnClick="@(async () => await Delete(context.DesignRequestId))" ResourceKey="Delete"
                               Id="@context.DesignRequestId.ToString()" />
             </td>
@@ -66,12 +121,53 @@ else
 
 @code {
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+    public override bool UseAdminContainer => false;
 
+    private List<Models.DesignRequest> _allDesignRequests;
     private List<Models.DesignRequest> _designRequests;
     private List<User> _users;
+    private List<User> _designerUsers;
+    private List<User> _projectManagerUsers;
+    private List<string> _statusOptions = new();
+
     private bool IsDesignerRole { get; set; }
     private string _designerRole;
+    private string _projectManagerRole;
     private int _designerUserId = 0;
+
+    private int _selectedProjectManagerId = 0;
+    private int _selectedAssignedToId = 0;
+    private string _selectedStatus = "";
+
+    private int SelectedProjectManagerId
+    {
+        get => _selectedProjectManagerId;
+        set
+        {
+            _selectedProjectManagerId = value;
+            ApplyFilters();
+        }
+    }
+
+    private int SelectedAssignedToId
+    {
+        get => _selectedAssignedToId;
+        set
+        {
+            _selectedAssignedToId = value;
+            ApplyFilters();
+        }
+    }
+
+    private string SelectedStatus
+    {
+        get => _selectedStatus;
+        set
+        {
+            _selectedStatus = value;
+            ApplyFilters();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -79,18 +175,26 @@ else
         {
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
-            // used to determine if need to filter the list of design requests based on the user's role
-            await CheckUserRoleAsync(_designerRole.ToString());
-            // Fetch the complete list of requests for client-side pagination
-            var requests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
-            IEnumerable<Models.DesignRequest> query = requests;
-            if (_designerUserId > 0)
+            _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "Administrators");
+
+            var statusList = SettingService.GetSetting(settings, "StatusList", "");
+            if (!string.IsNullOrEmpty(statusList))
             {
-                query = query.Where(r => r.AssignedToUserId == _designerUserId);
+                _statusOptions = statusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            else
+            {
+                _statusOptions = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
             }
 
-            _designRequests = query.OrderByDescending(r => r.DesignRequestId).ToList();
+            await CheckUserRoleAsync(_designerRole);
+
+            _allDesignRequests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
             _users = await DesignRequestService.GetUsersAsync();
+            _designerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _designerRole);
+            _projectManagerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _projectManagerRole);
+
+            ApplyFilters();
         }
         catch (Exception ex)
         {
@@ -99,18 +203,50 @@ else
         }
     }
 
-    private async Task CheckUserRoleAsync( string _role)
+    private void ApplyFilters()
     {
-        // used to determine if need to filter the list of design requests based on the user's role
+        IEnumerable<Models.DesignRequest> query = _allDesignRequests;
+
+        if (_designerUserId > 0)
+        {
+            query = query.Where(r => r.AssignedToUserId == _designerUserId);
+        }
+
+        if (_selectedProjectManagerId != 0)
+        {
+            query = query.Where(r => r.ProjectManagerUserId == _selectedProjectManagerId);
+        }
+
+        if (_selectedAssignedToId != 0)
+        {
+            query = query.Where(r => r.AssignedToUserId == _selectedAssignedToId);
+        }
+
+        if (!string.IsNullOrEmpty(_selectedStatus))
+        {
+            query = query.Where(r => r.Status == _selectedStatus);
+        }
+
+        _designRequests = query.OrderByDescending(r => r.DesignRequestId).ToList();
+        StateHasChanged();
+    }
+
+    private void ClearFilters()
+    {
+        // Use the properties to ensure filtering is re-applied
+        SelectedProjectManagerId = 0;
+        SelectedAssignedToId = 0;
+        SelectedStatus = "";
+    }
+
+    private async Task CheckUserRoleAsync(string _role)
+    {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        IsDesignerRole = user.IsInRole(_role.ToString());
+        IsDesignerRole = user.IsInRole(_role);
 
-        var mtest = PageState.User;
-        
-        if(IsDesignerRole)
-        { 
-            // If the user is in the designer role, set the _designerUserId to the current user's ID
+        if (IsDesignerRole && !user.IsInRole(SecurityAccessLevel.Admin.ToString()))
+        {
             _designerUserId = PageState.User.UserId;
         }
     }
@@ -122,7 +258,7 @@ else
             return "Unassigned";
         }
         var user = _users?.FirstOrDefault(u => u.UserId == userId);
-        
+
         return user?.DisplayName ?? $"Unknown User ({userId})";
     }
 
@@ -137,7 +273,11 @@ else
         {
             await DesignRequestService.DeleteDesignRequestAsync(designRequestId, ModuleState.ModuleId);
             await logger.LogInformation("Design Request Deleted {DesignRequestId}", designRequestId);
-            await OnInitializedAsync(); // Refresh the entire list
+
+            // Reload all data and re-apply filters
+            _allDesignRequests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
+            ApplyFilters();
+
             AddModuleMessage(Localizer["Design Request Deleted Successfully"], MessageType.Success);
         }
         catch (Exception ex)

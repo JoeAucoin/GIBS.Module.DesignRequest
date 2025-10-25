@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace GIBS.Module.DesignRequest.Models
 {
@@ -37,6 +38,10 @@ namespace GIBS.Module.DesignRequest.Models
         public string Status { get; set; }
         public string IP_Address { get; set; }
         public int AssignedToUserId { get; set; } // User ID of the person assigned to this request
+        public int? ProjectManagerUserId { get; set; } // New field for Project Manager User ID
+        public string ProjectStatus { get; set; } // New field for Project Status
+        public string HandlePull { get; set; } // New field for Handle/Pull preference
+
 
         [NotMapped]
         public string Fax { get; set; } // Honeypot field
@@ -51,6 +56,8 @@ namespace GIBS.Module.DesignRequest.Models
         public string ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
 
+        [NotMapped]
+        public bool FileUploadedRecently => Files != null && Files.Any(f => f.CreatedOn >= DateTime.UtcNow.AddDays(-3));
 
         public virtual ICollection<NoteToRequest> Notes { get; set; }
         public virtual ICollection<ApplianceToRequest> Appliances { get; set; }

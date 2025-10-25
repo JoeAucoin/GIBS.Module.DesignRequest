@@ -63,6 +63,8 @@ else
 @code {
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
 
+    public override bool UseAdminContainer => false;
+
     private List<Models.DesignRequest> _designRequests;
     private List<User> _users;
     private bool IsDesignerRole { get; set; }

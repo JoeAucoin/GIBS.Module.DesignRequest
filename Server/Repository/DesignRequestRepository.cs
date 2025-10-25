@@ -16,8 +16,10 @@ namespace GIBS.Module.DesignRequest.Repository
 
         public IEnumerable<Models.DesignRequest> GetDesignRequests(int ModuleId)
         {
+            //using var db = _factory.CreateDbContext();
+            //return db.DesignRequest.Where(item => item.ModuleId == ModuleId).ToList();
             using var db = _factory.CreateDbContext();
-            return db.DesignRequest.Where(item => item.ModuleId == ModuleId).ToList();
+            return db.DesignRequest.Include(item => item.Files).Where(item => item.ModuleId == ModuleId).ToList();
         }
 
         public Models.DesignRequest GetDesignRequest(int DesignRequestId)
@@ -85,8 +87,10 @@ namespace GIBS.Module.DesignRequest.Repository
         // FileToRequest methods
         public IEnumerable<Models.FileToRequest> GetFileToRequests(int DesignRequestId)
         {
+            //using var db = _factory.CreateDbContext();
+            //return db.FileToRequest.Where(item => item.DesignRequestId == DesignRequestId).ToList();
             using var db = _factory.CreateDbContext();
-            return db.FileToRequest.Where(item => item.DesignRequestId == DesignRequestId).ToList();
+            return db.FileToRequest.Where(item => item.DesignRequestId == DesignRequestId).OrderByDescending(f => f.CreatedOn).ToList();
         }
 
         public Models.FileToRequest GetFileToRequest(int FileToRequestId)
