@@ -47,11 +47,11 @@ else
             <td>@context.ModifiedOn.ToShortDateString()</td>
             <td>
                 <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}&r=c")" Class="btn btn-primary btn-sm"
-                            Security="SecurityAccessLevel.View" ResourceKey="EditButton" Text="@Localizer["EditButton"]" />
+                            Security="SecurityAccessLevel.Admin" ResourceKey="EditButton" Text="@Localizer["EditButton"]" />
             </td>
             <td>
                 <ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", context.ProjectName])"
-                              Action="Delete" Security="SecurityAccessLevel.Edit" Class="btn btn-danger btn-sm"
+                              Action="Delete" Security="SecurityAccessLevel.Admin" Class="btn btn-danger btn-sm"
                               OnClick="@(async () => await Delete(context.DesignRequestId))" ResourceKey="Delete"
                               Id="@context.DesignRequestId.ToString()" />
             </td>
