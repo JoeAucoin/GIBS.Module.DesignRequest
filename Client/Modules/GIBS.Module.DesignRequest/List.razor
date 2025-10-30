@@ -73,19 +73,41 @@ else
     </div>
 
     <Pager Items="@_designRequests" PageSize="10" Class="table table-striped">
-        <Header>
-        <th>@Localizer["ID"]</th>
-        <th>@Localizer["Contact Name"]</th>
-        <th>@Localizer["Project Address"]</th>
-        <th>@Localizer["Status"]</th>
-        <th>@Localizer["ProjectManager"]</th>
-        <th>@Localizer["AssignedTo"]</th>
-        <th>@Localizer["Created On"]</th>
-        <th>@Localizer["Updated On"]</th>
-        <th>@Localizer["Updated By"]</th>
-        <th>@Localizer["FileUploadedRecently"]</th>
-        <th style="width: 1px;">&nbsp;</th>
-        <th style="width: 1px;">&nbsp;</th>
+          <Header>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("DesignRequestId"))">
+                @Localizer["ID"]
+                @GetSortIcon("DesignRequestId")
+            </th>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("ContactName"))">
+                @Localizer["Contact Name"]
+                @GetSortIcon("ContactName")
+            </th>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("Address"))">
+                @Localizer["Project Address"]
+                @GetSortIcon("Address")
+            </th>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("Status"))">
+                @Localizer["Status"]
+                @GetSortIcon("Status")
+            </th>
+            <th>@Localizer["ProjectManager"]</th>
+            <th>@Localizer["AssignedTo"]</th>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("CreatedOn"))">
+                @Localizer["Created On"]
+                @GetSortIcon("CreatedOn")
+            </th>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("ModifiedOn"))">
+                @Localizer["Updated On"]
+                @GetSortIcon("ModifiedOn")
+            </th>
+            <th style="cursor: pointer;" @onclick="@(() => SortTable("ModifiedBy"))">
+                @Localizer["Updated By"]
+                @GetSortIcon("ModifiedBy")
+            </th>
+            <th>@Localizer["NewNoteAddedRecently"]</th>
+            <th>@Localizer["FileUploadedRecently"]</th>
+            <th style="width: 1px;">&nbsp;</th>
+            <th style="width: 1px;">&nbsp;</th>
         </Header>
         <Row>
             <td>@context.DesignRequestId</td>
@@ -95,8 +117,14 @@ else
             <td>@GetUserName(context.ProjectManagerUserId ?? 0)</td>
             <td>@GetUserName(context.AssignedToUserId)</td>
             <td>@context.CreatedOn.ToLocalTime().ToShortDateString()</td>
-            <td>@context.ModifiedOn.ToLocalTime().ToShortDateString()</td>
+            <td>@context.ModifiedOn.ToLocalTime().ToShortDateString()<br />@context.ModifiedOn.ToLocalTime().ToShortTimeString()</td>
             <td>@context.ModifiedBy</td>
+            <td>
+                @if (context.NoteAddedRecently)
+                {
+                    <span class="oi oi-comment-square" title="Internal Note added recently" style="color: dodgerblue;font-size: 24px;"></span>
+                }
+            </td>
             <td>
 
                 @if (context.FileUploadedRecently)
@@ -139,6 +167,9 @@ else
     private int _selectedAssignedToId = 0;
     private string _selectedStatus = "";
 
+     private string _sortColumn = "DesignRequestId";
+    private bool _sortAscending = false;
+
     private int SelectedProjectManagerId
     {
         get => _selectedProjectManagerId;
@@ -166,6 +197,33 @@ else
         {
             _selectedStatus = value;
             ApplyFilters();
+        }
+    }
+
+     private void SortTable(string columnName)
+    {
+        if (_sortColumn == columnName)
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortColumn = columnName;
+            _sortAscending = true;
+        }
+        ApplyFilters();
+    }
+
+    private RenderFragment GetSortIcon(string columnName)
+    {
+        if (_sortColumn != columnName) return null;
+        if (_sortAscending)
+        {
+            return @<span class="oi oi-caret-top"></span>;
+        }
+        else
+        {
+            return @<span class="oi oi-caret-bottom"></span>;
         }
     }
 
@@ -227,9 +285,50 @@ else
             query = query.Where(r => r.Status == _selectedStatus);
         }
 
-        _designRequests = query.OrderByDescending(r => r.DesignRequestId).ToList();
+        // Sorting logic
+        query = _sortColumn switch
+        {
+            "DesignRequestId" => _sortAscending ? query.OrderBy(r => r.DesignRequestId) : query.OrderByDescending(r => r.DesignRequestId),
+            "ContactName" => _sortAscending ? query.OrderBy(r => r.ContactName) : query.OrderByDescending(r => r.ContactName),
+            "Address" => _sortAscending ? query.OrderBy(r => r.Address) : query.OrderByDescending(r => r.Address),
+            "Status" => _sortAscending ? query.OrderBy(r => r.Status) : query.OrderByDescending(r => r.Status),
+            "CreatedOn" => _sortAscending ? query.OrderBy(r => r.CreatedOn) : query.OrderByDescending(r => r.CreatedOn),
+            "ModifiedOn" => _sortAscending ? query.OrderBy(r => r.ModifiedOn) : query.OrderByDescending(r => r.ModifiedOn),
+            "ModifiedBy" => _sortAscending ? query.OrderBy(r => r.ModifiedBy) : query.OrderByDescending(r => r.ModifiedBy),
+            _ => query.OrderByDescending(r => r.DesignRequestId),
+        };
+
+        _designRequests = query.ToList();
         StateHasChanged();
     }
+
+    // private void ApplyFilters()
+    // {
+    //     IEnumerable<Models.DesignRequest> query = _allDesignRequests;
+
+    //     if (_designerUserId > 0)
+    //     {
+    //         query = query.Where(r => r.AssignedToUserId == _designerUserId);
+    //     }
+
+    //     if (_selectedProjectManagerId != 0)
+    //     {
+    //         query = query.Where(r => r.ProjectManagerUserId == _selectedProjectManagerId);
+    //     }
+
+    //     if (_selectedAssignedToId != 0)
+    //     {
+    //         query = query.Where(r => r.AssignedToUserId == _selectedAssignedToId);
+    //     }
+
+    //     if (!string.IsNullOrEmpty(_selectedStatus))
+    //     {
+    //         query = query.Where(r => r.Status == _selectedStatus);
+    //     }
+
+    //     _designRequests = query.OrderByDescending(r => r.DesignRequestId).ToList();
+    //     StateHasChanged();
+    // }
 
     private void ClearFilters()
     {

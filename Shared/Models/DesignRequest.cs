@@ -59,6 +59,9 @@ namespace GIBS.Module.DesignRequest.Models
         [NotMapped]
         public bool FileUploadedRecently => Files != null && Files.Any(f => f.CreatedOn >= DateTime.UtcNow.AddDays(-3));
 
+        [NotMapped]
+        public bool NoteAddedRecently => Notes != null && Notes.Any(n => n.CreatedOn >= DateTime.UtcNow.AddDays(-3));
+
         public virtual ICollection<NoteToRequest> Notes { get; set; }
         public virtual ICollection<ApplianceToRequest> Appliances { get; set; }
 
@@ -73,8 +76,9 @@ namespace GIBS.Module.DesignRequest.Models
             Appliances = new HashSet<ApplianceToRequest>();
             Files = new HashSet<FileToRequest>();
             Details = new HashSet<DetailToRequest>();
+            Notifications = new HashSet<NotificationToRequest>();
         }
 
-    }   
-       
+    }
+
 }

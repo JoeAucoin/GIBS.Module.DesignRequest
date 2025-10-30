@@ -19,7 +19,10 @@ namespace GIBS.Module.DesignRequest.Repository
             //using var db = _factory.CreateDbContext();
             //return db.DesignRequest.Where(item => item.ModuleId == ModuleId).ToList();
             using var db = _factory.CreateDbContext();
-            return db.DesignRequest.Include(item => item.Files).Where(item => item.ModuleId == ModuleId).ToList();
+            return db.DesignRequest
+                .Include(item => item.Files)
+                .Include(item => item.Notes) // <-- Add this line
+                .Where(item => item.ModuleId == ModuleId).ToList();
         }
 
         public Models.DesignRequest GetDesignRequest(int DesignRequestId)

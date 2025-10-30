@@ -156,4 +156,7 @@
   <data name="ProjectManager" xml:space="preserve">
     <value>Project Manager</value>
   </data>
+  <data name="NewNoteAddedRecently" xml:space="preserve">
+    <value>New Note</value>
+  </data>
 </root>
