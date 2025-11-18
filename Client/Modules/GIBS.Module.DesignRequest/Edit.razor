@@ -155,6 +155,12 @@ else
                         </div>
                     </div>
                     <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="handlePull" HelpText="Door Handle/Pull style" ResourceKey="DoorStyle">Handle/Pull Style: </Label>
+                        <div class="col-sm-9">
+                            <input id="handlePull" class="form-control" @bind="@_designRequest.HandlePull" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
                         <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
                         <div class="col-sm-9">
                             <input id="color" class="form-control" @bind="@_designRequest.Color" />
@@ -225,10 +231,24 @@ else
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="status" HelpText="Select the status" ResourceKey="Status">Status: </Label>
                 <div class="col-sm-9">
-                    <select id="status" class="form-select" @bind="@_designRequest.Status">
+                    <select id="status" class="form-select" @bind="@Status">
                         @if (_status != null)
                         {
                             @foreach (var statusValue in _status)
+                            {
+                                <option value="@statusValue">@statusValue</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="projectStatus" HelpText="Select the status" ResourceKey="ProjectStatus">Project Status: </Label>
+                <div class="col-sm-9">
+                    <select id="projectStatus" class="form-select" @bind="@ProjectStatus">
+                        @if (_projectStatus != null)
+                        {
+                            @foreach (var statusValue in _projectStatus)
                             {
                                 <option value="@statusValue">@statusValue</option>
                             }
@@ -624,7 +644,7 @@ else
     private List<User> _designerUsers;
     private List<User> _projectManagers;
     private List<string> _status = new();
-
+    private List<string> _projectStatus = new();
     private List<ApplianceToRequest> _applianceToRequests;
     private List<Appliance> _availableAppliances;
     private ApplianceToRequest _newApplianceToRequest = new();
@@ -661,6 +681,7 @@ else
 
     private bool _showCountertop;
     private bool _notifyProjectManagerOnUpload = true;
+//    private DateTime modifiedon;
 
     //  private readonly IRoleService _RoleService;
     //  private readonly UserRoleService userRoleService;
@@ -697,12 +718,23 @@ else
                 _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
             }
 
+             var projectStatusList = SettingService.GetSetting(settings, "ProjectStatusList", "");
+            if (!string.IsNullOrEmpty(projectStatusList))
+            {
+                _projectStatus = projectStatusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            else
+            {
+                _projectStatus = new List<string> { "Active", "On Hold", "InActive", "Sold" };
+            }
+
 
             if (int.TryParse(PageState.QueryString["id"], out int designRequestId))
             {
                 _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
                 if (_designRequest != null)
                 {
+                   // modifiedon = _designRequest.ModifiedOn.ToLocalTime();
                     // Now that _designRequest is loaded, check access
                     if (!HasAccess())
                     {
@@ -777,6 +809,32 @@ else
             if (_designRequest != null && _designRequest.AssignedToUserId != value)
             {
                 _designRequest.AssignedToUserId = value;
+                InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    private string Status
+    {
+        get => _designRequest?.Status;
+        set
+        {
+            if (_designRequest != null && _designRequest.Status != value)
+            {
+                _designRequest.Status = value;
+                InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    private string ProjectStatus
+    {
+        get => _designRequest?.ProjectStatus;
+        set
+        {
+            if (_designRequest != null && _designRequest.ProjectStatus != value)
+            {
+                _designRequest.ProjectStatus = value;
                 InvokeAsync(() => Save());
             }
         }
@@ -957,6 +1015,7 @@ else
 
                 _newNotificationToRequest = new(); // Reset form
                 await LoadNotificationData(); // Refresh history
+                await Save(); // Save to update ModifiedOn and ModifiedBy
 
                 AddModuleMessage("Notification sent successfully.", MessageType.Success);
             }
@@ -1220,7 +1279,10 @@ else
                 
                 _newFileToRequest = new(); // Reset form
                 await LoadFileData();
+                
                 AddModuleMessage("File added successfully.", MessageType.Success);
+
+                await Save(); // Save to update ModifiedOn and ModifiedBy
 
                 // Switch to Files tab after insert/update
                 _activeTab = "Files";

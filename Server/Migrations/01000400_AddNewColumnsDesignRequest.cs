@@ -25,11 +25,11 @@ namespace GIBS.Module.DesignRequest.Server.Migrations
 
             migrationBuilder.AddColumn<string>(
                name: "ProjectStatus",
-               table: "GIBSDesignRequest",
-               nullable: true);
+               table: "GIBSDesignRequest", maxLength: 100,
+               nullable: true, defaultValue: "Active");
 
             migrationBuilder.AddColumn<string>(
-               name: "HandlePull",
+               name: "HandlePull", 
                table: "GIBSDesignRequest", maxLength: 100,
                nullable: true);
         }

@@ -257,7 +257,7 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="doorStyle" HelpText="Select the door style" ResourceKey="DoorStyle">Door Style: </Label>
                     <div class="col-sm-7">
-                        <input id="doorStyle" class="form-control" @bind="@_DesignRequest.DoorStyle" />
+                        <input id="doorStyle" class="form-control" @bind="@_DesignRequest.DoorStyle" maxlength="100" />
                     </div>
                     <div class="col-sm-2">
                         <a href="@_doorStyleLink" target="_blank">View Door Styles</a>
@@ -266,12 +266,22 @@ else
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="color" HelpText="Select the color" ResourceKey="Color">Color: </Label>
                     <div class="col-sm-7">
-                        <input id="color" class="form-control" @bind="@_DesignRequest.Color" />
+                        <input id="color" class="form-control" @bind="@_DesignRequest.Color" maxlength="50" />
                     </div>
                     <div class="col-sm-2">
                         <a href="@_colorsLink" target="_blank">View Colors</a>
                     </div>
                 </div>
+                <div class="row mb-1 align-items-center">
+                    <Label Class="col-sm-3" For="handlePull" HelpText="Select the door Handle/Pull" ResourceKey="HandlePull">Door Handle/Pull: </Label>
+                    <div class="col-sm-7">
+                        <input id="handlePull" class="form-control" @bind="@_DesignRequest.HandlePull" maxlength="100" />
+                    </div>
+                    <div class="col-sm-2">
+                        <a href="@_handlePullLink" target="_blank">View Handles/Pulls</a>
+                    </div>
+                </div>
+
             }       
                 <div class="row mb-1 align-items-center">
                     <Label Class="col-sm-3" For="countertopThickness" HelpText="Select the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
@@ -443,6 +453,7 @@ else
    // private List<string> _doorStyles = new();
     private string _doorStyleLink = "";
     private string _colorsLink = "";
+    private string _handlePullLink = "";
    // private List<string> _cabinetColors = new();
     private List<string> _countertopThicknesses = new();
 
@@ -529,6 +540,7 @@ else
             _showConfiguration = bool.Parse(SettingService.GetSetting(settings, "ShowConfiguration", "true"));
             _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
+            _handlePullLink = SettingService.GetSetting(settings, "HandlePullLink", "");
             // Correctly parse the setting as an integer
             if (int.TryParse(SettingService.GetSetting(ModuleState.Settings, "FileFolder", "1"), out int folderId))
             {
@@ -711,6 +723,7 @@ else
                 //_DesignRequest.Fax = "";
                 _DesignRequest.UserId = PageState.User?.UserId ?? 0;
                 _DesignRequest.Status = _status.FirstOrDefault();
+                _DesignRequest.ProjectStatus = "Active";
                 _DesignRequest.ContactName = _DesignRequest.ContactName?.Trim();
                 _DesignRequest.Company = _DesignRequest.Company?.Trim();
                 _DesignRequest.ProjectName = _DesignRequest.ProjectName?.Trim();

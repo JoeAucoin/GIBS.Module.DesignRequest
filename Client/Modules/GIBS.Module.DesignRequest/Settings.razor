@@ -146,9 +146,27 @@
         </div>
     </div>
     <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="doorStyle" HelpText="Enter a list of door styles" ResourceKey="DoorStyle" ResourceType="@resourceType">Door Style: </Label>
+        <Label Class="col-sm-3" For="projectStatusList" HelpText="Enter available status types" ResourceKey="ProjectStatusList" ResourceType="@resourceType">Project Status List: </Label>
         <div class="col-sm-9">
-            <textarea id="doorStyle" class="form-control" @bind="@_doorStyle" rows="3"></textarea>
+            <textarea id="projectStatusList" class="form-control" @bind="@_projectStatusList" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="doorStyle" HelpText="Enter a link for door styles" ResourceKey="DoorStyle" ResourceType="@resourceType">Door Style Link: </Label>
+        <div class="col-sm-9">
+            <input id="doorStyle" type="text" class="form-control" @bind="@_doorStyle" />
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="handlePullLink" HelpText="Enter a link for Handle/Pull styles" ResourceKey="HandlePull" ResourceType="@resourceType">Handle/Pull Link: </Label>
+        <div class="col-sm-9">
+            <input id="handlePullLink" type="text" class="form-control" @bind="@_handlePullLink" />
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="cabinetColor" HelpText="Enter a link for cabinet colors" ResourceKey="CabinetColor" ResourceType="@resourceType">Cabinet Color Link: </Label>
+        <div class="col-sm-9">
+            <input id="cabinetColor" class="form-control" type="text" @bind="@_cabinetColor" />
         </div>
     </div>
     <div class="row mb-1 align-items-center">
@@ -157,12 +175,7 @@
             <textarea id="countertopThickness" class="form-control" @bind="@_countertopThickness" rows="3"></textarea>
         </div>
     </div>
-    <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="cabinetColor" HelpText="Enter a list of cabinet colors" ResourceKey="CabinetColor" ResourceType="@resourceType">Cabinet Color: </Label>
-        <div class="col-sm-9">
-            <textarea id="cabinetColor" class="form-control" @bind="@_cabinetColor" rows="3"></textarea>
-        </div>
-    </div>
+
 
     <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="showFields" HelpText="Select which fields to show on the form" ResourceKey="ShowFields" ResourceType="@resourceType">Show Fields: </Label>
@@ -247,7 +260,9 @@
     private bool _showConfiguration;
     private bool _showCountertop;
     private string _statusList;
+    private string _projectStatusList;
     private string _doorStyle;
+    private string _handlePullLink;
     private string _countertopThickness;
     private string _cabinetColor;
     private string _googleApiKey;
@@ -288,6 +303,7 @@
             _interestList = SettingService.GetSetting(settings, "InterestList", "");
             _configurationShape = SettingService.GetSetting(settings, "ConfigurationShape", "");
             _statusList = SettingService.GetSetting(settings, "StatusList", "");
+            _projectStatusList = SettingService.GetSetting(settings, "ProjectStatusList", "");
             _doorStyle = SettingService.GetSetting(settings, "DoorStyle", "");
             _countertopThickness = SettingService.GetSetting(settings, "CountertopThickness", "");
             _cabinetColor = SettingService.GetSetting(settings, "CabinetColor", "");
@@ -306,6 +322,7 @@
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "Designer");
             _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "");
             _activeTab = SettingService.GetSetting(settings, "ActiveTab", "Files");
+            _handlePullLink = SettingService.GetSetting(settings, "HandlePullLink", "");
 
         }
         catch (Exception ex)
@@ -330,6 +347,7 @@
             SettingService.SetSetting(settings, "InterestList", _interestList);
             SettingService.SetSetting(settings, "ConfigurationShape", _configurationShape);
             SettingService.SetSetting(settings, "StatusList", _statusList);
+            SettingService.SetSetting(settings, "ProjectStatusList", _projectStatusList);
             SettingService.SetSetting(settings, "DoorStyle", _doorStyle);
             SettingService.SetSetting(settings, "CountertopThickness", _countertopThickness);
             SettingService.SetSetting(settings, "CabinetColor", _cabinetColor);
@@ -348,6 +366,7 @@
             SettingService.SetSetting(settings, "DesignerRole", _designerRole);
             SettingService.SetSetting(settings, "ProjectManagerRole", _projectManagerRole);
             SettingService.SetSetting(settings, "ActiveTab", _activeTab);
+            SettingService.SetSetting(settings, "HandlePullLink", _handlePullLink);
             await SettingService.UpdateModuleSettingsAsync(settings, ModuleState.ModuleId);
         }
         catch (Exception ex)
