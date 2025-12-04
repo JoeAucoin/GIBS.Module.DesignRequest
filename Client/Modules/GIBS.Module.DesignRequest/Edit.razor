@@ -681,7 +681,7 @@ else
 
     private bool _showCountertop;
     private bool _notifyProjectManagerOnUpload = true;
-//    private DateTime modifiedon;
+    //    private DateTime modifiedon;
 
     //  private readonly IRoleService _RoleService;
     //  private readonly UserRoleService userRoleService;
@@ -718,7 +718,7 @@ else
                 _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
             }
 
-             var projectStatusList = SettingService.GetSetting(settings, "ProjectStatusList", "");
+            var projectStatusList = SettingService.GetSetting(settings, "ProjectStatusList", "");
             if (!string.IsNullOrEmpty(projectStatusList))
             {
                 _projectStatus = projectStatusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -734,7 +734,7 @@ else
                 _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
                 if (_designRequest != null)
                 {
-                   // modifiedon = _designRequest.ModifiedOn.ToLocalTime();
+                    // modifiedon = _designRequest.ModifiedOn.ToLocalTime();
                     // Now that _designRequest is loaded, check access
                     if (!HasAccess())
                     {
@@ -788,7 +788,7 @@ else
         }
     }
 
-     private int? ProjectManagerUserId
+    private int? ProjectManagerUserId
     {
         get => _designRequest?.ProjectManagerUserId;
         set
@@ -809,8 +809,88 @@ else
             if (_designRequest != null && _designRequest.AssignedToUserId != value)
             {
                 _designRequest.AssignedToUserId = value;
+                // Send notification to newly assigned designer
+                
                 InvokeAsync(() => Save());
+                InvokeAsync(() => SendNotificationToAssignedDesignerAsync(_designRequest.AssignedToUserId));
             }
+        }
+    }
+
+    private async Task SendNotificationToAssignedDesignerAsync(int newDesignerUserId)
+    {
+        if (newDesignerUserId == 0)
+        {
+            AddModuleMessage("No designer assigned. Notification not sent.", MessageType.Warning);
+            return;
+        }
+
+        try
+        {
+            var toUser = _users?.FirstOrDefault(u => u.UserId == newDesignerUserId);
+            var fromUser = _users?.FirstOrDefault(u => u.UserId == PageState.User.UserId);
+
+            if (toUser == null || fromUser == null)
+            {
+                AddModuleMessage("Recipient or sender user not found.", MessageType.Error);
+                return;
+            }
+
+            string subject = $"You have been assigned to Project: {_designRequest.ProjectName}";
+            string body = $"Hello {toUser.DisplayName},<br /><br />" +
+                          $"You have been assigned as the designer for the project '<b>{_designRequest.ProjectName}</b>'.<br /><br />" +
+                          $"Project Address: {_designRequest.Address}<br />" +
+                          $"Contact: {_designRequest.ContactName} ({_designRequest.Phone}, {_designRequest.Email})<br /><br />" +
+                          $"Please review the project details and proceed as needed.<br /><br />" +
+                          $"<a href=\"{PageState.Uri.AbsoluteUri}\">View Project</a>";
+
+            string messageFooter = "<br /><br />This notification was sent from the Design Request module.";
+
+            var notification = new Notification
+            {
+                SiteId = PageState.Site.SiteId,
+                FromUserId = fromUser.UserId,
+                FromDisplayName = fromUser.DisplayName,
+                FromEmail = fromUser.Email,
+                ToUserId = toUser.UserId,
+                ToDisplayName = toUser.DisplayName,
+                ToEmail = toUser.Email,
+                Subject = subject,
+                Body = body + messageFooter,
+                CreatedOn = DateTime.UtcNow,
+                SendOn = DateTime.UtcNow
+            };
+
+            var mynotification = await NotificationService.AddNotificationAsync(notification);
+
+            if (mynotification != null)
+            {
+                var notificationToRequest = new NotificationToRequest
+                {
+                    DesignRequestId = _designRequest.DesignRequestId,
+                    NotificationId = mynotification.NotificationId,
+                    FromUserId = fromUser.UserId,
+                    FromDisplayName = fromUser.DisplayName,
+                    FromEmail = fromUser.Email,
+                    ToUserId = toUser.UserId,
+                    ToDisplayName = toUser.DisplayName,
+                    ToEmail = toUser.Email,
+                    Subject = subject,
+                    Body = body + messageFooter
+                };
+                await DesignRequestService.AddNotificationToRequestAsync(notificationToRequest);
+                await LoadNotificationData();
+                AddModuleMessage("Designer notified successfully.", MessageType.Success);
+            }
+            else
+            {
+                AddModuleMessage("Failed to send notification to designer.", MessageType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Sending Designer Notification: {Error}", ex.Message);
+            AddModuleMessage("Error sending notification to designer.", MessageType.Error);
         }
     }
 

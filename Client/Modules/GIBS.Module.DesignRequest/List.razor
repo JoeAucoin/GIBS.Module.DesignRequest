@@ -29,7 +29,7 @@
 else
 {
     <div class="row mb-3">
-        <div class="col-md-8">
+        <div class="col-md-8 offset-md-1">
             <label for="searchaddress">Project Address:</label>
             <input id="searchaddress" class="form-control" @bind="SearchAddressInput" placeholder="Search Project Address" />
         </div>
@@ -38,7 +38,7 @@ else
         </div>
     </div>
     <div class="row mb-3">
-        <div class="col-md-2">
+        <div class="col-md-2 offset-md-1">
             <label for="statusFilter">Project Status:</label>
             <select id="statusFilter" class="form-select" @bind="SelectedProjectStatus">
                 <option value="">All</option>
