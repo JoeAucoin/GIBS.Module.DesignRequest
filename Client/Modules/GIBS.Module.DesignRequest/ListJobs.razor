@@ -32,7 +32,7 @@ else
         <th>@Localizer["Contact Name"]</th>
         <th>@Localizer["Project Name"]</th>
         <th>@Localizer["Status"]</th>
-        <th>@Localizer["Assigned To"]</th>
+        <th>@Localizer["ProjectManager"]</th>
         <th>@Localizer["Created On"]</th>
         <th>@Localizer["Updated On"]</th>
         <th style="width: 1px;">&nbsp;</th>
@@ -42,7 +42,7 @@ else
             <td>@context.ContactName</td>
             <td>@context.ProjectName</td>
             <td>@context.Status</td>
-            <td>@GetUserName(context.AssignedToUserId)</td>
+            <td>@GetUserName(context.ProjectManagerUserId ?? 0)</td>
             <td>@context.CreatedOn.ToShortDateString()</td>
             <td>@context.ModifiedOn.ToShortDateString()</td>
             <td>
@@ -98,36 +98,7 @@ else
         }
     }
 
-    // private async Task CheckUserRoleAsync(string _role)
-    // {
-    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-    //     var user = authState.User;
-    //     IsDesignerRole = user.IsInRole(_role.ToString()) || user.IsInRole("Administrators");
-    //     // IsDesignerRole = user.IsInRole(_role.ToString()) ;
-    //     if (!IsDesignerRole)
-    //     {
-    //         var currentUser = user.Identity?.Name;
-    //         await logger.LogError("User {User} does not have permission to view this module", currentUser);
 
-    //         NavigationManager.NavigateTo(NavigateUrl());
-    //         return; // Stop execution to prevent rendering
-    //     }
-    //     else
-    //     {
-    //         // If the user is in the designer role, set the designer user ID to the current user's ID
-    //         var isDesigner = user.IsInRole(_role.ToString());
-    //         if (isDesigner)
-    //         {
-    //             _designerUserId = PageState.User.UserId;
-    //         }
-    //         // else
-    //         // {
-
-    //         //     
-    //         // }
-    //     }
-
-    // }
 
     private string GetUserName(int userId)
     {

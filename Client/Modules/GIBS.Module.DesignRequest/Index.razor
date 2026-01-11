@@ -450,11 +450,11 @@ else
     private string _designerRole = "DesignRequest"; // Default role for designers
     //  private bool IsDesigner { get; set; }
     private bool IsLoggedIn => PageState.User != null && PageState.User.UserId > 0;
-   // private List<string> _doorStyles = new();
+    // private List<string> _doorStyles = new();
     private string _doorStyleLink = "";
     private string _colorsLink = "";
     private string _handlePullLink = "";
-   // private List<string> _cabinetColors = new();
+    // private List<string> _cabinetColors = new();
     private List<string> _countertopThicknesses = new();
 
 
@@ -579,23 +579,24 @@ else
                     _selectedDetails = _availableDetails.ToDictionary(d => d.DetailId, d => false);
                 }
             }
-
-            string myStreet = PageState.User.Settings.ContainsKey("Street") ? PageState.User.Settings["Street"] : "";
-            string myCity = PageState.User.Settings.ContainsKey("City") ? PageState.User.Settings["City"] : "";
-            string myPhone = PageState.User.Settings.ContainsKey("Phone") ? PageState.User.Settings["Phone"] : "";
-            string region = PageState.User.Settings.ContainsKey("Region") ? PageState.User.Settings["Region"] : "";
-            string zip = PageState.User.Settings.ContainsKey("PostalCode") ? PageState.User.Settings["PostalCode"] : "";
-            string company = PageState.User.Settings.ContainsKey("Company") ? PageState.User.Settings["Company"] : "";
-            if (!string.IsNullOrEmpty(myStreet))
+            if (PageState.User != null)
             {
-                _DesignRequest.MailingAddress = $"{myStreet}{Environment.NewLine}{myCity}, {region} {zip}";
+                string myStreet = PageState.User.Settings.ContainsKey("Street") ? PageState.User.Settings["Street"] : "";
+                string myCity = PageState.User.Settings.ContainsKey("City") ? PageState.User.Settings["City"] : "";
+                string myPhone = PageState.User.Settings.ContainsKey("Phone") ? PageState.User.Settings["Phone"] : "";
+                string region = PageState.User.Settings.ContainsKey("Region") ? PageState.User.Settings["Region"] : "";
+                string zip = PageState.User.Settings.ContainsKey("PostalCode") ? PageState.User.Settings["PostalCode"] : "";
+                string company = PageState.User.Settings.ContainsKey("Company") ? PageState.User.Settings["Company"] : "";
+                if (!string.IsNullOrEmpty(myStreet))
+                {
+                    _DesignRequest.MailingAddress = $"{myStreet}{Environment.NewLine}{myCity}, {region} {zip}";
+                }
+                _DesignRequest.Phone = myPhone;
+                if (string.IsNullOrEmpty(_DesignRequest.Company))
+                {
+                    _DesignRequest.Company = company;
+                }
             }
-            _DesignRequest.Phone = myPhone;
-            if (string.IsNullOrEmpty(_DesignRequest.Company))
-            {
-                _DesignRequest.Company = company;
-            }
-
         }
         catch (Exception ex)
         {
