@@ -1,0 +1,230 @@
+﻿@using System.Net
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using Oqtane.Models
+@using System.Text
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<ManageCreditPackages> Localizer
+
+<div class="container-fluid">
+    <div class="row mb-3 align-items-center">
+        <div class="col">
+            <h3>@Localizer["ManagePackages"]</h3>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="AddPackage">
+                <span class="oi oi-plus"></span> @Localizer["AddPackage"]
+            </button>
+        </div>
+    </div>
+
+    @if (_packages == null)
+    {
+        <p><em>@Localizer["Loading..."]</em></p>
+    }
+    else
+    {
+        <Pager Items="@_packages" PageSize="10" Class="table table-striped table-hover align-middle mb-0">
+            <Header>
+            <th class="fw-bold">@Localizer["Name"]</th>
+            <th>@Localizer["Credits"]</th>
+            <th>@Localizer["Price"]</th>
+            <th>@Localizer["Description"]</th>
+            <th>@Localizer["Active"]</th>
+            <th>@Localizer["Action"]</th>
+            </Header>
+            <Row>
+                <td>@context.Name</td>
+                <td>@context.Credits</td>
+                <td>@context.Price.ToString("C")</td>
+                <td>@context.Description</td>
+                <td>
+                    @if (context.IsActive)
+                    {
+                        <span class="badge bg-success">@Localizer["Yes"]</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@Localizer["No"]</span>
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-dark me-2" @onclick="() => EditPackage(context)" title="@Localizer["Edit"]">
+                        <span class="oi oi-pencil"></span>
+                    </button>
+                    <ActionDialog Header="@Localizer["DeletePackage.Header"]"
+                                  Message="@Localizer["DeletePackage.Message", context.Name]"
+                                  Action="Delete"
+                                  Security="SecurityAccessLevel.Admin"
+                                  Class="btn btn-sm btn-outline-danger"
+                                  OnClick="@(async () => await DeletePackage(context.CreditPackageId))" />
+                </td>
+            </Row>
+        </Pager>
+
+        <div class="text-center mt-3 mb-3">
+            <ActionLink Action="BackOffice" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" IconName="menu" Text="Return to BackOffice" ResourceKey="BackOffice" />
+        </div>
+    }
+</div>
+
+
+@* MODAL FOR EDITING/ADDING *@
+@if (_showModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_isEdit? Localizer["EditPackage"] : Localizer["AddPackage"])</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@_currentPackage" OnValidSubmit="SavePackage">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">@Localizer["Name"]</label>
+                            <InputText id="name" class="form-control" @bind-Value="_currentPackage.Name" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="credits" class="form-label">@Localizer["Credits"]</label>
+                                <InputNumber id="credits" class="form-control" @bind-Value="_currentPackage.Credits" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="price" class="form-label">@Localizer["Price"]</label>
+                                <InputNumber id="price" class="form-control" @bind-Value="_currentPackage.Price" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">@Localizer["Description"]</label>
+                            <InputTextArea id="description" class="form-control" @bind-Value="_currentPackage.Description" rows="3" />
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <InputCheckbox id="isActive" class="form-check-input" @bind-Value="_currentPackage.IsActive" />
+                            <label class="form-check-label" for="isActive">@Localizer["IsActive"]</label>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary me-2" @onclick="CloseModal">@Localizer["Cancel"]</button>
+                            <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Admin;
+    public override bool UseAdminContainer => false;
+
+    private List<CreditPackage> _packages;
+    private CreditPackage _currentPackage = new();
+    private bool _showModal = false;
+    private bool _isEdit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPackages();
+    }
+
+    private async Task LoadPackages()
+    {
+        try
+        {
+            _packages = await DesignRequestService.GetCreditPackagesAsync(ModuleState.ModuleId);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Packages");
+            AddModuleMessage(Localizer["Error.Load"], MessageType.Error);
+        }
+    }
+
+    private void AddPackage()
+    {
+        _currentPackage = new CreditPackage { ModuleId = ModuleState.ModuleId, IsActive = true };
+        _isEdit = false;
+        _showModal = true;
+    }
+
+    private void EditPackage(CreditPackage package)
+    {
+        // Clone to prevent direct edit on grid list until saved
+        _currentPackage = new CreditPackage
+        {
+            CreditPackageId = package.CreditPackageId,
+            ModuleId = package.ModuleId,
+            Name = package.Name,
+            Credits = package.Credits,
+            Price = package.Price,
+            Description = package.Description,
+            IsActive = package.IsActive,
+            CreatedBy = package.CreatedBy,
+            CreatedOn = package.CreatedOn,
+            ModifiedBy = package.ModifiedBy,
+            ModifiedOn = package.ModifiedOn
+        };
+        _isEdit = true;
+        _showModal = true;
+    }
+
+    private async Task SavePackage()
+    {
+        try
+        {
+            if (_isEdit)
+            {
+                await DesignRequestService.UpdateCreditPackageAsync(_currentPackage);
+            }
+            else
+            {
+                await DesignRequestService.AddCreditPackageAsync(_currentPackage);
+            }
+
+            _showModal = false;
+            await LoadPackages();
+            AddModuleMessage(Localizer["Success.Save"], MessageType.Success);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving Package");
+            AddModuleMessage(Localizer["Error.Save"], MessageType.Error);
+        }
+    }
+
+    private async Task DeletePackage(int id)
+    {
+        try
+        {
+            await DesignRequestService.DeleteCreditPackageAsync(id, ModuleState.ModuleId);
+            await LoadPackages();
+            AddModuleMessage(Localizer["Success.Delete"], MessageType.Success);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Package");
+            AddModuleMessage(Localizer["Error.Delete"], MessageType.Error);
+        }
+    }
+
+    private void CloseModal()
+    {
+        _showModal = false;
+    }
+}

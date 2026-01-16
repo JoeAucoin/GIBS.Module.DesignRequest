@@ -1,0 +1,225 @@
+﻿@using System.Net
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using Oqtane.Models
+@using System.Text
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<ManageUserCredits> Localizer
+@inject IUserService UserService
+
+<h3>Manage User Credits</h3>
+
+@if (_isEditing)
+{
+    @* --- EDIT / ADD FORM VIEW --- *@
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">Manage Credits for @_editingDisplayName</h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@_editingUserCredit" OnValidSubmit="@SaveUserCredit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Current Balance</label>
+                    <InputNumber class="form-control" @bind-Value="@_editingUserCredit.CreditBalance" />
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    @* --- LIST GRID VIEW --- *@
+    @if (_userCreditList == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="row mb-3">
+            <div class="col-md-6 offset-md-6 text-end">
+                <button class="btn btn-secondary btn-sm" @onclick="RefreshData"><span class="oi oi-reload"></span> Refresh</button>
+            </div>
+        </div>
+
+        <Pager Items="@_userCreditList" PageSize="10" Class="table table-striped table-hover align-middle mb-0">
+            <Header>
+            <th class="fw-bold">@Localizer["DisplayName"]</th>
+            <th>@Localizer["Username"]</th>
+            <th class="text-center">@Localizer["CreditBalance"]</th>
+            <th>@Localizer["CreatedOn"]</th>
+            <th>@Localizer["Action"]</th>
+            </Header>
+            <Row>
+                <td>@context.DisplayName</td>
+                <td>@context.Username</td>
+                <td class="text-center">
+                    <span class="badge @(context.CreditBalance > 0 ? "bg-success" : "bg-secondary")">
+                        @context.CreditBalance
+                    </span>
+                </td>
+                <td>@context.CreatedOn.ToShortDateString()</td>
+                <td>
+                    @if (context.UserCreditId > 0)
+                    {
+                        // Edit existing
+                        <button class="btn btn-sm btn-outline-dark" @onclick="@(() => Edit(context.UserCreditId, 0, context.DisplayName))">Edit</button>
+                    }
+                    else
+                    {
+                        // Add new
+                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => Edit(0, context.UserId, context.DisplayName))">Add Credits</button>
+                    }
+                </td>
+            </Row>
+        </Pager>
+    }
+}
+
+<div class="text-center mt-3 mb-3">  
+    <ActionLink Action="BackOffice" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" IconName="menu" Text="Return to BackOffice" ResourceKey="BackOffice" />
+</div>
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Admin;
+    public override bool UseAdminContainer => false;
+
+    // View Model
+    public class UserCreditViewModel
+    {
+        public int UserId { get; set; }
+        public int UserCreditId { get; set; } // 0 if no record exists
+        public string DisplayName { get; set; }
+        public string Username { get; set; }
+        public int CreditBalance { get; set; }
+        public DateTime CreatedOn { get; set; }
+    }
+
+    private List<UserCreditViewModel> _userCreditList;
+
+    // Edit State
+    private bool _isEditing = false;
+    private UserCredit _editingUserCredit = new();
+    private string _editingDisplayName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading User Credits {Error}", ex.Message);
+            AddModuleMessage(Localizer["Error Loading User Credits"], MessageType.Error);
+        }
+    }
+
+    private async Task LoadData()
+    {
+        var users = await DesignRequestService.GetUsersAsync();
+        var userCredits = await DesignRequestService.GetUserCreditsAsync(ModuleState.ModuleId);
+
+        _userCreditList = new List<UserCreditViewModel>();
+
+        foreach (var user in users)
+        {
+            var credit = userCredits.FirstOrDefault(c => c.UserId == user.UserId);
+            _userCreditList.Add(new UserCreditViewModel
+            {
+                UserId = user.UserId,
+                UserCreditId = credit?.UserCreditId ?? 0,
+                DisplayName = user.DisplayName,
+                Username = user.Username,
+                CreditBalance = credit?.CreditBalance ?? 0,
+                CreatedOn = user.CreatedOn
+            });
+        }
+        _userCreditList = _userCreditList.OrderBy(u => u.DisplayName).ToList();
+        StateHasChanged();
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+    }
+
+    // Switch to Edit Mode
+    private async Task Edit(int creditId, int userId, string displayName)
+    {
+        try
+        {
+            _editingDisplayName = displayName;
+
+            if (creditId > 0)
+            {
+                // Existing Record
+                _editingUserCredit = await DesignRequestService.GetUserCreditAsync(creditId, ModuleState.ModuleId);
+            }
+            else
+            {
+                // New Record (Initialize with UserId)
+                _editingUserCredit = new UserCredit
+                {
+                    ModuleId = ModuleState.ModuleId,
+                    UserId = userId,
+                    CreditBalance = 0
+                };
+            }
+            _isEditing = true;
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error preparing edit");
+            AddModuleMessage("Error loading record", MessageType.Error);
+        }
+    }
+
+    // Save Logic
+    private async Task SaveUserCredit()
+    {
+        try
+        {
+            if (_editingUserCredit.UserCreditId == 0)
+            {
+                await DesignRequestService.AddUserCreditAsync(_editingUserCredit);
+            }
+            else
+            {
+                await DesignRequestService.UpdateUserCreditAsync(_editingUserCredit);
+            }
+
+            AddModuleMessage("Credits Saved Successfully", MessageType.Success);
+            _isEditing = false; // Return to grid
+            await LoadData();   // Refresh grid
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving User Credit");
+            AddModuleMessage("Error Saving Data", MessageType.Error);
+        }
+    }
+
+    // Cancel Edit
+    private void CancelEdit()
+    {
+        _isEditing = false;
+        _editingUserCredit = new();
+    }
+}

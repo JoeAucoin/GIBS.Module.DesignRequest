@@ -19,6 +19,12 @@ namespace GIBS.Module.DesignRequest.Repository
         public virtual DbSet<Models.NoteToRequest> NoteToRequest { get; set; }
         public virtual DbSet<Models.NotificationToRequest> NotificationToRequest { get; set; }
 
+        // Start new DbSets
+        public virtual DbSet<Models.UserCredit> UserCredit { get; set; }
+        public virtual DbSet<Models.CreditPackage> CreditPackage { get; set; }
+        public virtual DbSet<Models.CreditTransaction> CreditTransaction { get; set; }
+        public virtual DbSet<Models.PaymentRecord> PaymentRecord { get; set; }
+        // End new DbSets
 
         public DesignRequestContext(IDBContextDependencies DBContextDependencies) : base(DBContextDependencies)
         {
@@ -37,6 +43,13 @@ namespace GIBS.Module.DesignRequest.Repository
             builder.Entity<Models.FileToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_FileToRequest"));
             builder.Entity<Models.NoteToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_NoteToRequest"));
             builder.Entity<Models.NotificationToRequest>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_NotificationToRequest"));
+
+            // Start new Table Mappings
+            builder.Entity<Models.UserCredit>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_UserCredit"));
+            builder.Entity<Models.CreditPackage>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_CreditPackage"));
+            builder.Entity<Models.CreditTransaction>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_CreditTransaction"));
+            builder.Entity<Models.PaymentRecord>().ToTable(ActiveDatabase.RewriteName("GIBSDesignRequest_PaymentRecord"));
+            // End new Table Mappings
 
             //NotificationToRequest -> DesignRequest (many-to-one)
             builder.Entity<Models.NotificationToRequest>()

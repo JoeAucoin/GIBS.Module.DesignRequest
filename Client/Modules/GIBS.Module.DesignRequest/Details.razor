@@ -70,39 +70,37 @@ else
         </div>
     </div>
 
-    <table class="table table-striped mt-3">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Code</th>
-                <th>Sort Order</th>
-                <th>Active</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var detail in _details.OrderBy(d => d.SortOrder))
-            {
-                <tr>
-                    <td>@detail.DetailName</td>
-                    <td>@detail.DetailDescription</td>
-                    <td>@detail.DetailCode</td>
-                    <td>@detail.SortOrder</td>
-                    <td>@detail.IsActive</td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetail(detail)">@Localizer["Edit"]</button>
-                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteDetail(detail)">@Localizer["Delete"]</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <Pager Items="@_details" PageSize="10" Class="table table-striped mt-3">
+        <Header>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Code</th>
+        <th>Sort Order</th>
+        <th>Active</th>
+        <th></th>
+        </Header>
+        <Row>
+            <td>@context.DetailName</td>
+            <td>@context.DetailDescription</td>
+            <td>@context.DetailCode</td>
+            <td>@context.SortOrder</td>
+            <td>@context.IsActive</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetail(context)">@Localizer["Edit"]</button>
+                <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteDetail(context)">@Localizer["Delete"]</button>
+            </td>
+        </Row>
+    </Pager>
+
+    <div class="text-center mt-3 mb-3">
+        <ActionLink Action="BackOffice" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" IconName="menu" Text="Return to BackOffice" ResourceKey="BackOffice" />
+    </div>
 }
 
 @code {
     
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+    public override bool UseAdminContainer => false;
 
     private List<Detail> _details;
     private Detail _newDetail = new Detail();

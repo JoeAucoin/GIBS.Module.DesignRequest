@@ -1,0 +1,1455 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using System.Linq
+@using System.Globalization
+@using System.Net
+@using Oqtane.Models
+@using Oqtane.Security
+
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<DesignRequestUpdate> Localizer
+@inject ISettingService SettingService
+@inject IFileService FileService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Oqtane.Services.INotificationService NotificationService
+
+@inject Oqtane.Services.IRoleService RoleService
+@inject Oqtane.Services.IUserRoleService UserRoleService
+
+
+
+<h2>Design Request Update</h2>
+
+@if (_designRequest == null)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else
+{
+    <form @ref="form" class="@(validated ? " was-validated" : "needs-validation")" novalidate>
+        <div class="container">
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="contactName" HelpText="Enter a ContactName" ResourceKey="ContactName">ContactName: </Label>
+                <div class="col-sm-9">
+                    <input id="contactName" class="form-control" @bind="@_designRequest.ContactName" required />
+                </div>
+            </div>
+            @* Collapsible Contact Info Section *@
+            <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => showContactInfo = !showContactInfo">
+                    @(showContactInfo ? "Hide Contact Information ▲" : "Show Contact Information ▼")
+                </button>
+            </div>
+            @if (showContactInfo)
+            {
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="phone" HelpText="Enter the contact phone number" ResourceKey="Phone">Phone: </Label>
+                        <div class="col-sm-9">
+                            <input id="phone" class="form-control" @bind="@_designRequest.Phone" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="email" HelpText="Enter the contact email address" ResourceKey="Email">Email: </Label>
+                        <div class="col-sm-9">
+                            <input id="email" type="email" class="form-control" @bind="@_designRequest.Email" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="mailingAddress" HelpText="Enter the physical mailing address for samples. No P.O. Boxes!" ResourceKey="MailingAddress">Samples Mailing Address: </Label>
+                        <div class="col-sm-9">
+                            <textarea id="mailingAddress" class="form-control" @bind="@_designRequest.MailingAddress" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="website" HelpText="Enter the project website" ResourceKey="Website">Website: </Label>
+                        <div class="col-sm-9">
+                            <input id="website" class="form-control" @bind="@_designRequest.Website" />
+                        </div>
+                    </div>
+                </div>
+            }
+            <hr />
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="projectName" HelpText="Enter the project name" ResourceKey="ProjectName">Project Name: </Label>
+                <div class="col-sm-9">
+                    <input id="projectName" class="form-control" @bind="@_designRequest.ProjectName" />
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="address" HelpText="Enter the project address" ResourceKey="Address">Project Address: </Label>
+                <div class="col-sm-9">
+                    <textarea id="address" class="form-control" @bind="@_designRequest.Address" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => showProjectInfo = !showProjectInfo">
+                    @(showProjectInfo ? "Hide Project Details ▲" : "Show Project Details ▼")
+                </button>
+            </div>
+            @if (showProjectInfo)
+            {
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="interest" HelpText="Client interest" ResourceKey="Interest">Interest: </Label>
+                        <div class="col-sm-9">
+                            <input id="interest" type="text" class="form-control" @bind="@_designRequest.Interest" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="questionComments" HelpText="Enter design notes" ResourceKey="DesignNotes">Design/Job Notes: </Label>
+                        <div class="col-sm-9">
+                            <textarea id="questionComments" class="form-control" @bind="@_designRequest.QuestionComments" rows="5" readonly></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="installationDate" HelpText="Enter the estimated installation date" ResourceKey="InstallationDate">Estimated Installation Date: </Label>
+                        <div class="col-sm-9">
+                            <input id="installationDate" type="date" class="form-control" @bind="@_designRequest.InstallationDate" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="overallSpaceDimensions" HelpText="Enter the overall space dimensions" ResourceKey="OverallSpaceDimensions">Overall Maximum Dimensions: </Label>
+                        <div class="col-sm-9">
+                            <input id="overallSpaceDimensions" class="form-control" @bind="@_designRequest.OverallSpaceDimensions" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="ceilingHeight" HelpText="Is any Part of the Kitchen covered by a roof or Overhang?" ResourceKey="CeilingHeight">Ceiling Height: </Label>
+                        <div class="col-sm-9">
+                            <input id="ceilingHeight" class="form-control" @bind="@_designRequest.CeilingHeight" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="lengthOfKitchen" HelpText="Enter the length of the kitchen" ResourceKey="LengthOfKitchen">Length of Kitchen: </Label>
+                        <div class="col-sm-9">
+                            <input id="lengthOfKitchen" class="form-control" @bind="@_designRequest.LengthOfKitchen" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="slopeOfPatio" HelpText="Enter the slope of the patio" ResourceKey="SlopeOfPatio">Slope of Patio: </Label>
+                        <div class="col-sm-9">
+                            <input id="slopeOfPatio" class="form-control" @bind="@_designRequest.SlopeOfPatio" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="shapeConfiguration" HelpText="Enter the shape/configuration" ResourceKey="ShapeConfiguration">Shape/Configuration: </Label>
+                        <div class="col-sm-9">
+                            <input id="shapeConfiguration" class="form-control" @bind="@_designRequest.ShapeConfiguration" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="doorStyle" HelpText="Enter the door style" ResourceKey="DoorStyle">Door Style: </Label>
+                        <div class="col-sm-9">
+                            <input id="doorStyle" class="form-control" @bind="@_designRequest.DoorStyle" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="handlePull" HelpText="Door Handle/Pull style" ResourceKey="DoorStyle">Handle/Pull Style: </Label>
+                        <div class="col-sm-9">
+                            <input id="handlePull" class="form-control" @bind="@_designRequest.HandlePull" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="color" HelpText="Enter the color" ResourceKey="Color">Color: </Label>
+                        <div class="col-sm-9">
+                            <input id="color" class="form-control" @bind="@_designRequest.Color" />
+                        </div>
+                    </div>
+                    <div class="row mb-1 align-items-center">
+                        <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter the countertop thickness" ResourceKey="CountertopThickness">Countertop Thickness: </Label>
+                        <div class="col-sm-9">
+                            <input id="countertopThickness" class="form-control" @bind="@_designRequest.CountertopThickness" />
+                        </div>
+                    </div>
+                    @if (_showCountertop)
+                    {
+                        <div class="row mb-1 align-items-center">
+                            <Label Class="col-sm-3" For="counterDepth" HelpText="Enter the counter depth" ResourceKey="CounterDepth">Counter Depth: </Label>
+                            <div class="col-sm-9">
+                                <input id="counterDepth" class="form-control" @bind="@_designRequest.CounterDepth" />
+                            </div>
+                        </div>
+                        <div class="row mb-1 align-items-center">
+                            <Label Class="col-sm-3" For="counterHeight" HelpText="Enter the counter height" ResourceKey="CounterHeight">Counter Height: </Label>
+                            <div class="col-sm-9">
+                                <input id="counterHeight" class="form-control" @bind="@_designRequest.CounterHeight" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="projectManager" HelpText="Assign a Project Manager" ResourceKey="ProjectManager">Project Manager: </Label>
+                <div class="col-sm-9">
+
+                    @if (_projectManagers != null)
+                    {
+                        <select id="projectManager" class="form-select" @bind="@ProjectManagerUserId">
+                            <option value="0">-- Unassigned --</option>
+
+
+                            @foreach (var user in _projectManagers)
+                            {
+                                <option value="@user.UserId">@user.DisplayName</option>
+                            }
+
+                        </select>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="assignedTo" HelpText="Assign this request to a user" ResourceKey="AssignedTo">Assigned To: </Label>
+                <div class="col-sm-9">
+
+                    @if (_designerUsers != null)
+                    {
+                        <select id="assignedTo" class="form-select" @bind="@AssignedToUserId">
+                            <option value="0">-- Unassigned --</option>
+
+
+                            @foreach (var user in _designerUsers)
+                            {
+                                <option value="@user.UserId">@user.DisplayName</option>
+                            }
+
+                        </select>
+                    }
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="status" HelpText="Select the status" ResourceKey="Status">Status: </Label>
+                <div class="col-sm-9">
+                    <select id="status" class="form-select" @bind="@Status">
+                        @if (_status != null)
+                        {
+                            @foreach (var statusValue in _status)
+                            {
+                                <option value="@statusValue">@statusValue</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="row mb-1 align-items-center">
+                <Label Class="col-sm-3" For="projectStatus" HelpText="Select the status" ResourceKey="ProjectStatus">Project Status: </Label>
+                <div class="col-sm-9">
+                    <select id="projectStatus" class="form-select" @bind="@ProjectStatus">
+                        @if (_projectStatus != null)
+                        {
+                            @foreach (var statusValue in _projectStatus)
+                            {
+                                <option value="@statusValue">@statusValue</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <TabStrip ActiveTab="@_activeTab">
+            <TabPanel Name="Appliances">
+                <h4 class="mt-4">Appliances for this Design</h4>
+                @if (_applianceToRequests != null && _applianceToRequests.Any())
+                {
+                    <table class="table table-striped mt-3">
+                        <thead>
+                            <tr>
+                                <th>Appliance</th>
+                                <th>Brand/Model</th>
+                                <th>Size</th>
+                                <th>Fuel Type</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _applianceToRequests)
+                            {
+                                <tr>
+                                    <td>@item.Appliance?.ApplianceName</td>
+                                    <td>@item.BrandModel</td>
+                                    <td>@item.Size</td>
+                                    <td>@item.FuelType</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditApplianceToRequest(item)">Edit</button>
+                                        <ActionDialog Header="Confirm Delete" Security="SecurityAccessLevel.Admin" Message="@($"Are you sure you want to delete the appliance '{item.Appliance?.ApplianceName}'?")" Action="Delete" OnClick="@(async () => await DeleteApplianceToRequest(item))" Class="btn btn-sm btn-danger" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No appliances have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-header">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add New" : "Edit") Appliance</div>
+                    <div class="card-body">
+                        <div class="row mb-2 align-items-end">
+                            <div class="col-md-3">
+                                <Label For="applianceSelect">Select Appliance:</Label>
+                                <select id="applianceSelect" class="form-select" @bind="@_newApplianceToRequest.ApplianceId">
+                                    <option value="0">-- Select --</option>
+                                    @if (_availableAppliances != null)
+                                    {
+                                        @foreach (var appliance in _availableAppliances)
+                                        {
+                                            <option value="@appliance.ApplianceId">@appliance.ApplianceName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <Label For="brandModel">Brand/Model:</Label>
+                                <input id="brandModel" class="form-control" @bind="@_newApplianceToRequest.BrandModel" />
+                            </div>
+                            <div class="col-md-2">
+                                <Label For="applianceSize">Size:</Label>
+                                <input id="applianceSize" class="form-control" @bind="@_newApplianceToRequest.Size" />
+                            </div>
+                            <div class="col-md-2">
+                                <Label For="fuelType">Fuel Type:</Label>
+                                <select id="fuelType" class="form-select" @bind="@_newApplianceToRequest.FuelType">
+                                    <option value="">-- Select --</option>
+                                    <option value="Electric">Electric</option>
+                                    <option value="Natural Gas">Natural Gas</option>
+                                    <option value="Propane">Propane</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-success" @onclick="SaveApplianceToRequest">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add" : "Update")</button>
+                                @if (_newApplianceToRequest.ApplianceToRequestId != 0)
+                                {
+                                    <button type="button" class="btn btn-secondary" @onclick="CancelEditAppliance">Cancel</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </TabPanel>
+            <TabPanel Name="Details">
+                <h4 class="mt-4">Details for this Design</h4>
+                @if (_detailToRequests != null && _detailToRequests.Any())
+                {
+                    <table class="table table-striped mt-3">
+                        <thead>
+                            <tr>
+                                <th>Detail</th>
+                                <th>Notes</th>
+                                @*  <th>Model</th>
+                                <th>Size</th>
+                                <th>Color</th> *@
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detailToRequests)
+                            {
+                                <tr>
+                                    <td>@item.Detail?.DetailName</td>
+                                    <td>@item.DetailNote</td>
+                                    @*   <td>@item.DetailModel</td>
+                                    <td>@item.DetailSize</td>
+                                    <td>@item.DetailColor</td> *@
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetailToRequest(item)">Edit</button>
+                                        <ActionDialog Header="Confirm Delete" Message="@($"Are you sure you want to delete the detail '{item.Detail?.DetailName}'?")" Action="Delete" OnClick="@(async () => await DeleteDetailToRequest(item))" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No details have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-header">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add New" : "Edit") Detail</div>
+                    <div class="card-body">
+                        <div class="row mb-2 align-items-start">
+                            <div class="col-md-3">
+                                <Label For="detailSelect">Select Detail:</Label>
+                                <select id="detailSelect" class="form-select" @bind="@_newDetailToRequest.DetailId">
+                                    <option value="0">-- Select --</option>
+                                    @if (_availableDetails != null)
+                                    {
+                                        @foreach (var detail in _availableDetails)
+                                        {
+                                            <option value="@detail.DetailId">@detail.DetailName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <Label For="detailNote">Notes:</Label>
+                                <textarea id="detailNote" class="form-control" @bind="@_newDetailToRequest.DetailNote" rows="3"></textarea>
+                            </div>
+                            @*                             <div class="col-md-2">
+                                <Label For="detailModel">Model:</Label>
+                                <input id="detailModel" class="form-control" @bind="@_newDetailToRequest.DetailModel" />
+                            </div>
+                            <div class="col-md-1">
+                                <Label For="detailSize">Size:</Label>
+                                <input id="detailSize" class="form-control" @bind="@_newDetailToRequest.DetailSize" />
+                            </div>
+                            <div class="col-md-1">
+                                <Label For="detailColor">Color:</Label>
+                                <input id="detailColor" class="form-control" @bind="@_newDetailToRequest.DetailColor" />
+                            </div> *@
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-success" @onclick="SaveDetailToRequest">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add" : "Update")</button>
+                                @if (_newDetailToRequest.DetailToRequestId != 0)
+                                {
+                                    <button type="button" class="btn btn-secondary" @onclick="CancelEditDetail">Cancel</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </TabPanel>
+            <TabPanel Name="Location" Heading="Project Map">
+
+                <h4 class="mt-4">Project Property Map</h4>
+                <div class="mt-3">
+                    <iframe height="500"
+                            style="border:0;width:100%;"
+                            loading="lazy"
+                            allowfullscreen
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src="https://www.google.com/maps/embed/v1/place?key=@_apiKey&q=@_designRequest.Address&zoom=@_zoomLevel&maptype=satellite">
+                    </iframe>
+                </div>
+
+            </TabPanel>
+            <TabPanel Name="Files">
+                <h4 class="mt-4">Files</h4>
+                @if (_fileToRequests != null && _fileToRequests.Any())
+                {
+                    <table class="table table-striped mt-3">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Notes</th>
+                                <th class="text-end">Added By</th>
+                                <th class="text-end">Date</th>
+                                <th style="width:1px;"></th>
+                                <th style="width:1px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var file in _fileToRequests.OrderByDescending(f => f.CreatedOn))
+                            {
+                                <tr>
+                                    <td>@file.Name</td>
+                                    <td>@file.Description</td>
+                                    <td class="text-end">@file.CreatedBy</td>
+                                    <td class="text-end">@file.CreatedOn.ToLocalTime().ToString("g")</td>
+                                    <td class="text-end">
+                                        <a href="@file.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
+                                    </td>
+                                    <td class="text-end">
+                                        <ActionDialog Header="Confirm Delete" Message="@($"Are you sure you want to delete the file '{file.Name}'?")" Action="Delete" OnClick="@(async () => await DeleteFileToRequest(file))" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
+
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No files have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Add New File
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="fileName">File Name:</Label>
+                            <div class="col-sm-9">
+                                <input id="fileName" class="form-control" placeholder="Custom/Friendly File Name" @bind="@_newFileToRequest.Name" maxlength="100" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="fileDescription">Notes:</Label>
+                            <div class="col-sm-9">
+                                <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3" maxlength="254"></textarea>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="fileName">Send Notification Email:</Label>
+                            <div class="col-sm-9">
+                                <div class="form-check">
+                                    <input id="notifyProjectManager" type="checkbox" class="form-check-input" @bind="@_notifyProjectManagerOnUpload" />
+                                    <label class="form-check-label" for="notifyProjectManager">Send a notification email to the @_whoAmI_Emailing.</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <Label Class="col-sm-3" For="upload">File:</Label>
+                            <div class="col-sm-9">
+                                <FileManager UploadMultiple="false" Filter="jpg,png,gif,jpeg,pdf"
+                                             FolderId="@_folderId"
+                                             ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"
+                                             OnUpload="@HandleFileUpload" />
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+            </TabPanel>
+            <TabPanel Name="Notes" Heading="Internal Notes">
+                <h4 class="mt-4">Project Notes</h4>
+                @if (_noteToRequests != null && _noteToRequests.Any())
+                {
+                    <div class="list-group mt-3">
+                        @foreach (var note in _noteToRequests.OrderByDescending(n => n.CreatedOn))
+                        {
+                            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@note.CreatedBy</h5>
+                                    <small>@note.CreatedOn.ToLocalTime().ToString("g")</small>
+                                </div>
+                                <p class="mb-1">@note.Note</p>
+                                <small class="d-block text-end">
+                                    <ActionDialog Header="Confirm Delete" Message="Are you sure you want to delete this note?" Action="Delete" OnClick="@(async () => await DeleteNoteToRequest(note))" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
+                                </small>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No designer notes have been added to this request.</em></p>
+                }
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <textarea class="form-control" @bind="@_newNoteToRequest.Note" rows="3" placeholder="Add a new note..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="button" class="btn btn-success" @onclick="AddNoteToRequest">Add Note</button>
+                    </div>
+                </div>
+            </TabPanel>
+            <TabPanel Name="Notifications" Heading="Notifications">
+                <h4 class="mt-4">Notification History</h4>
+                <div class="card mt-3">
+                    <div class="card-header">Send New Notification</div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col">
+                                <Label For="sendToUser">Recipient:</Label>
+                                <select id="sendToUser" class="form-select" @bind="@_newNotificationToRequest.ToUserId">
+                                    <option value="0">-- Select Recipient --</option>
+                                    @if (_users != null)
+                                    {
+                                        @foreach (var user in _users)
+                                        {
+                                            <option value="@user.UserId">@user.DisplayName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col">
+                                <Label For="subject">Subject:</Label>
+                                <input id="subject" class="form-control" placeholder="Notification Subject" @bind="@_newNotificationToRequest.Subject" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <Label For="notificationBody">Body:</Label>
+                                <textarea id="notificationBody" class="form-control" @bind="@_newNotificationToRequest.Body" rows="3" placeholder="Add your message ..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="button" class="btn btn-success" @onclick="SendNotification">Send Notification</button>
+                    </div>
+                </div>
+                @if (_notificationToRequests != null && _notificationToRequests.Any())
+                {
+                    <div class="list-group mt-3">
+                        @foreach (var notification in _notificationToRequests.OrderByDescending(n => n.CreatedOn))
+                        {
+                            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@notification.Subject</h5>
+                                    <small>@notification.CreatedOn.ToLocalTime().ToString("g")</small>
+                                </div>
+                                <p class="mb-1"><strong>From:</strong> @notification.FromDisplayName</p>
+                                <p class="mb-1"><strong>To:</strong> @notification.ToDisplayName</p>
+                                <div class="mb-1" style="white-space: pre-line;">@((MarkupString)notification.Body)</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="mt-3"><em>No notifications have been sent for this request.</em></p>
+                }
+            </TabPanel>
+        </TabStrip>
+
+        <div class="mt-3">
+            <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
+            <NavLink class="btn btn-secondary" href="@NavigateUrl(ModuleState.ModuleId, "List")">@Localizer["Cancel"]</NavLink>
+
+
+        </div>
+        <br /><br />
+        <AuditInfo CreatedBy="@_designRequest.CreatedBy" CreatedOn="@_designRequest.CreatedOn" ModifiedBy="@_designRequest.ModifiedBy" ModifiedOn="@_designRequest.ModifiedOn"></AuditInfo>
+    </form>
+}
+
+@code {
+
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+
+    public override bool UseAdminContainer => false;
+
+    // private Oqtane.Models.User UserDetails;
+
+    public override string Actions => "Edit";
+    private string _title = "Manage Design Request";
+    public override string Title => _title;
+
+    private ElementReference form;
+    private bool validated = false;
+
+    private DesignRequest _designRequest;
+    private List<User> _users;
+    private List<User> _designerUsers;
+    private List<User> _projectManagers;
+    private List<string> _status = new();
+    private List<string> _projectStatus = new();
+    private List<ApplianceToRequest> _applianceToRequests;
+    private List<Appliance> _availableAppliances;
+    private ApplianceToRequest _newApplianceToRequest = new();
+
+    private List<DetailToRequest> _detailToRequests;
+    private List<Detail> _availableDetails;
+    private DetailToRequest _newDetailToRequest = new();
+
+    private List<NoteToRequest> _noteToRequests;
+    private NoteToRequest _newNoteToRequest = new();
+
+    private List<FileToRequest> _fileToRequests;
+    private FileToRequest _newFileToRequest = new();
+
+    private List<NotificationToRequest> _notificationToRequests;
+    private NotificationToRequest _newNotificationToRequest = new();
+
+    private int _folderId = 1;
+    public string _designerRole;
+    private string _projectManagerRole;
+
+    // private string _returnurl = string.Empty;
+    private bool IsDesignerRole { get; set; }
+    private bool isDesignerLoggedIn = false;
+    private int _emailToUserId = 0;
+    private string _whoAmI_Emailing = "Project Manager";
+
+    private string _apiKey = "";
+    private string _zoomLevel = "19"; // default zoom level
+
+    private string _activeTab = "Files";
+    private bool showContactInfo = false;
+    private bool showProjectInfo = false;
+
+    private bool _showCountertop;
+    private bool _notifyProjectManagerOnUpload = true;
+    //    private DateTime modifiedon;
+
+    //  private readonly IRoleService _RoleService;
+    //  private readonly UserRoleService userRoleService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            //  SetCustomModuleTitle("Hello World");
+
+            _users = await DesignRequestService.GetUsersAsync();
+
+
+            var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _folderId = int.Parse(SettingService.GetSetting(settings, "FileFolder", "1"));
+            _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
+            _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "Administrators");
+            _apiKey = SettingService.GetSetting(ModuleState.Settings, "GoogleApiKey", "");
+            _zoomLevel = SettingService.GetSetting(settings, "ZoomLevel", "19");
+            _activeTab = SettingService.GetSetting(settings, "ActiveTab", "Files");
+            _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
+
+            var statusList = SettingService.GetSetting(settings, "StatusList", "");
+            if (!string.IsNullOrEmpty(statusList))
+            {
+                _status = statusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            else
+            {
+                _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
+            }
+
+            var projectStatusList = SettingService.GetSetting(settings, "ProjectStatusList", "");
+            if (!string.IsNullOrEmpty(projectStatusList))
+            {
+                _projectStatus = projectStatusList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            else
+            {
+                _projectStatus = new List<string> { "Active", "On Hold", "InActive", "Sold" };
+            }
+
+
+            if (int.TryParse(PageState.QueryString["id"], out int designRequestId))
+            {
+                _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
+                if (_designRequest != null)
+                {
+                    // modifiedon = _designRequest.ModifiedOn.ToLocalTime();
+                    // Now that _designRequest is loaded, check access
+                    if (!HasAccess())
+                    {
+                        AddModuleMessage("You do not have permission to view this record.", MessageType.Error);
+                        NavigationManager.NavigateTo(NavigateUrl());
+                        return;
+                    }
+
+                    if (isDesignerLoggedIn)
+                    {
+                        _emailToUserId = _designRequest.ProjectManagerUserId ?? 0;
+                        _whoAmI_Emailing = "Project Manager";
+                    }
+                    else
+                    {
+                        _emailToUserId = _designRequest.AssignedToUserId;
+                        _whoAmI_Emailing = "Designer";
+                    }
+
+                    //_users = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId,_designerRole);
+                    DecodeDesignRequestProperties();
+                    await LoadApplianceData();
+                    await LoadDetailData();
+                    await LoadNoteData();
+                    await LoadFileData();
+                    await LoadNotificationData();
+
+                    _newNotificationToRequest.Subject = $"Project: {_designRequest.ProjectName}";
+                }
+                else
+                {
+                    AddModuleMessage("Design Request not found.", MessageType.Warning);
+                    NavigationManager.NavigateTo(NavigateUrl());
+                }
+            }
+            else
+            {
+                AddModuleMessage("Invalid Design Request Id.", MessageType.Error);
+                NavigationManager.NavigateTo(NavigateUrl());
+            }
+
+
+            await PopulateDesignerUsersFromUsersListAsync();
+            //  await CheckUserRoleAsync(_designerRole.ToString());
+
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Design Request {Error}", ex.Message);
+            AddModuleMessage(Localizer["Message.LoadError"], MessageType.Error);
+        }
+    }
+
+    private int? ProjectManagerUserId
+    {
+        get => _designRequest?.ProjectManagerUserId;
+        set
+        {
+            if (_designRequest != null && _designRequest.ProjectManagerUserId != value)
+            {
+                _designRequest.ProjectManagerUserId = value == 0 ? null : value;
+                InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    private int AssignedToUserId
+    {
+        get => _designRequest?.AssignedToUserId ?? 0;
+        set
+        {
+            if (_designRequest != null && _designRequest.AssignedToUserId != value)
+            {
+                _designRequest.AssignedToUserId = value;
+                // Send notification to newly assigned designer
+
+                InvokeAsync(() => Save());
+                InvokeAsync(() => SendNotificationToAssignedDesignerAsync(_designRequest.AssignedToUserId));
+            }
+        }
+    }
+
+    private async Task SendNotificationToAssignedDesignerAsync(int newDesignerUserId)
+    {
+        if (newDesignerUserId == 0)
+        {
+            AddModuleMessage("No designer assigned. Notification not sent.", MessageType.Warning);
+            return;
+        }
+
+        try
+        {
+            var toUser = _users?.FirstOrDefault(u => u.UserId == newDesignerUserId);
+            var fromUser = _users?.FirstOrDefault(u => u.UserId == PageState.User.UserId);
+
+            if (toUser == null || fromUser == null)
+            {
+                AddModuleMessage("Recipient or sender user not found.", MessageType.Error);
+                return;
+            }
+
+            string subject = $"You have been assigned to Project: {_designRequest.ProjectName}";
+            string body = $"Hello {toUser.DisplayName},<br /><br />" +
+                          $"You have been assigned as the designer for the project '<b>{_designRequest.ProjectName}</b>'.<br /><br />" +
+                          $"Project Address: {_designRequest.Address}<br />" +
+                          $"Contact: {_designRequest.ContactName} ({_designRequest.Phone}, {_designRequest.Email})<br /><br />" +
+                          $"Please review the project details and proceed as needed.<br /><br />" +
+                          $"<a href=\"{PageState.Uri.AbsoluteUri}\">View Project</a>";
+
+            string messageFooter = "<br /><br />This notification was sent from the Design Request module.";
+
+            var notification = new Notification
+            {
+                SiteId = PageState.Site.SiteId,
+                FromUserId = fromUser.UserId,
+                FromDisplayName = fromUser.DisplayName,
+                FromEmail = fromUser.Email,
+                ToUserId = toUser.UserId,
+                ToDisplayName = toUser.DisplayName,
+                ToEmail = toUser.Email,
+                Subject = subject,
+                Body = body + messageFooter,
+                CreatedOn = DateTime.UtcNow,
+                SendOn = DateTime.UtcNow
+            };
+
+            var mynotification = await NotificationService.AddNotificationAsync(notification);
+
+            if (mynotification != null)
+            {
+                var notificationToRequest = new NotificationToRequest
+                {
+                    DesignRequestId = _designRequest.DesignRequestId,
+                    NotificationId = mynotification.NotificationId,
+                    FromUserId = fromUser.UserId,
+                    FromDisplayName = fromUser.DisplayName,
+                    FromEmail = fromUser.Email,
+                    ToUserId = toUser.UserId,
+                    ToDisplayName = toUser.DisplayName,
+                    ToEmail = toUser.Email,
+                    Subject = subject,
+                    Body = body + messageFooter
+                };
+                await DesignRequestService.AddNotificationToRequestAsync(notificationToRequest);
+                await LoadNotificationData();
+                AddModuleMessage("Designer notified successfully.", MessageType.Success);
+            }
+            else
+            {
+                AddModuleMessage("Failed to send notification to designer.", MessageType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Sending Designer Notification: {Error}", ex.Message);
+            AddModuleMessage("Error sending notification to designer.", MessageType.Error);
+        }
+    }
+
+    private string Status
+    {
+        get => _designRequest?.Status;
+        set
+        {
+            if (_designRequest != null && _designRequest.Status != value)
+            {
+                _designRequest.Status = value;
+                InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    private string ProjectStatus
+    {
+        get => _designRequest?.ProjectStatus;
+        set
+        {
+            if (_designRequest != null && _designRequest.ProjectStatus != value)
+            {
+                _designRequest.ProjectStatus = value;
+                InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    protected void SetCustomModuleTitle(string title)
+    {
+        _title = title;
+        StateHasChanged();
+    }
+
+    private string GetUserName(int userId)
+    {
+        if (userId == 0)
+        {
+            return "Unassigned";
+        }
+        var user = _users?.FirstOrDefault(u => u.UserId == userId);
+        return user?.DisplayName ?? $"Unknown User ({userId})";
+    }
+
+    private bool HasAccess()
+    {
+        var user = PageState.User;
+        if (user == null) return false;
+
+        if(user.UserId == _designRequest.UserId)
+        {
+            // Request Owner: can access their own records
+            return true;
+        }   
+
+        // Project Manager Role: can access all records
+        if (UserSecurity.IsAuthorized(user, _projectManagerRole) || UserSecurity.IsAuthorized(user, "Administrators"))
+            return true;
+
+
+        // Designer Role: can access if assigned
+        if (UserSecurity.IsAuthorized(user, _designerRole) && user.UserId == _designRequest.AssignedToUserId)
+        {
+            isDesignerLoggedIn = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task SendFileNotificationToProjectManagerAsync(FileToRequest fileToRequest)
+    {
+        if (_designRequest.ProjectManagerUserId == null || _designRequest.ProjectManagerUserId == 0)
+        {
+            AddModuleMessage("No Project Manager assigned to this request. Notification not sent.", MessageType.Warning);
+            return;
+        }
+
+        try
+        {
+            var toUser = _users.FirstOrDefault(u => u.UserId == _emailToUserId);
+            // var toUser = _users.FirstOrDefault(u => u.UserId == _designRequest.ProjectManagerUserId);
+
+            var fromUser = _users.FirstOrDefault(u => u.UserId == PageState.User.UserId);
+
+
+            if (toUser == null || fromUser == null)
+            {
+                AddModuleMessage("Recipient or sender user not found.", MessageType.Error);
+                return;
+            }
+
+            string subject = $"New File Uploaded for Project: {_designRequest.ProjectName}";
+            string fileUrl = NavigationManager.ToAbsoluteUri(fileToRequest.FilePath).ToString();
+            string body = $"A new file has been uploaded to the project '{_designRequest.ProjectName}' by {fromUser.DisplayName}.<br /><br />" +
+                          $"<b>File Name:</b> {fileToRequest.Name}<br />" +
+                          $"<b>Notes:</b> {fileToRequest.Description}<br /><br />" +
+                          $"You can view the file here: <a href=\"{fileUrl}\">{fileToRequest.Name}</a>";
+
+            string messageFooter = "<br /><br /><br />Project Page: " + PageState.Uri.AbsoluteUri + "<br /><br />This notification was sent from the Design Request module.";
+
+            var notification = new Notification
+            {
+                SiteId = PageState.Site.SiteId,
+                FromUserId = fromUser.UserId,
+                FromDisplayName = fromUser.DisplayName,
+                FromEmail = fromUser.Email,
+                ToUserId = toUser.UserId,
+                ToDisplayName = toUser.DisplayName,
+                ToEmail = toUser.Email,
+                Subject = subject,
+                Body = body + messageFooter,
+                CreatedOn = DateTime.UtcNow,
+                SendOn = DateTime.UtcNow
+            };
+
+            var mynotification = await NotificationService.AddNotificationAsync(notification);
+
+            if (mynotification != null)
+            {
+                var notificationToRequest = new NotificationToRequest
+                {
+                    DesignRequestId = _designRequest.DesignRequestId,
+                    NotificationId = mynotification.NotificationId,
+                    FromUserId = fromUser.UserId,
+                    FromDisplayName = fromUser.DisplayName,
+                    FromEmail = fromUser.Email,
+                    ToUserId = toUser.UserId,
+                    ToDisplayName = toUser.DisplayName,
+                    ToEmail = toUser.Email,
+                    Subject = subject,
+                    Body = body + messageFooter
+                };
+                await DesignRequestService.AddNotificationToRequestAsync(notificationToRequest);
+                await LoadNotificationData();
+                AddModuleMessage("Project Manager notified successfully.", MessageType.Success);
+            }
+            else
+            {
+                AddModuleMessage("Failed to send notification to Project Manager.", MessageType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Sending File Notification: {Error}", ex.Message);
+            AddModuleMessage("Error sending file notification.", MessageType.Error);
+        }
+    }
+
+
+
+    private async Task SendNotification()
+    {
+        if (_newNotificationToRequest.ToUserId == 0 || string.IsNullOrWhiteSpace(_newNotificationToRequest.Subject) || string.IsNullOrWhiteSpace(_newNotificationToRequest.Body))
+        {
+            AddModuleMessage("Recipient, subject, and body are required.", MessageType.Warning);
+            return;
+        }
+
+        try
+        {
+            var toUser = _users.FirstOrDefault(u => u.UserId == _newNotificationToRequest.ToUserId);
+            var fromUser = _users.FirstOrDefault(u => u.UserId == PageState.User.UserId);
+
+            if (toUser == null || fromUser == null)
+            {
+                AddModuleMessage("Recipient or sender user not found.", MessageType.Error);
+                return;
+            }
+            string _messageFooter = "\n\n\nProject Page: " + PageState.Uri.AbsoluteUri + "\n\nThis notification was sent from the Design Request module. If you have any questions, please contact the site administrator.";
+            var notification = new Notification
+            {
+                SiteId = PageState.Site.SiteId,
+                FromUserId = fromUser.UserId,
+                FromDisplayName = fromUser.DisplayName,
+                FromEmail = fromUser.Email,
+                ToUserId = toUser.UserId,
+                ToDisplayName = toUser.DisplayName,
+                ToEmail = toUser.Email,
+                Subject = _newNotificationToRequest.Subject,
+                Body = _newNotificationToRequest.Body + _messageFooter,
+                CreatedOn = DateTime.UtcNow,
+                SendOn = DateTime.UtcNow
+            };
+
+            var mynotification = await NotificationService.AddNotificationAsync(notification);
+
+            // Switch to Notifications tab after insert/update
+            _activeTab = "Notifications";
+
+            if (mynotification != null)
+            {
+                var notificationToRequest = new NotificationToRequest
+                {
+                    DesignRequestId = _designRequest.DesignRequestId,
+                    NotificationId = mynotification.NotificationId,
+                    FromUserId = fromUser.UserId,
+                    FromDisplayName = fromUser.DisplayName,
+                    FromEmail = fromUser.Email,
+                    ToUserId = toUser.UserId,
+                    ToDisplayName = toUser.DisplayName,
+                    ToEmail = toUser.Email,
+                    Subject = _newNotificationToRequest.Subject,
+                    Body = _newNotificationToRequest.Body + _messageFooter
+                };
+                await DesignRequestService.AddNotificationToRequestAsync(notificationToRequest);
+
+                _newNotificationToRequest = new(); // Reset form
+                await LoadNotificationData(); // Refresh history
+                await Save(); // Save to update ModifiedOn and ModifiedBy
+
+                AddModuleMessage("Notification sent successfully.", MessageType.Success);
+            }
+            else
+            {
+                AddModuleMessage("Failed to send notification.", MessageType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Sending Notification: {Error}", ex.Message);
+            AddModuleMessage("Error sending notification.", MessageType.Error);
+        }
+    }
+
+    private async Task PopulateDesignerUsersFromUsersListAsync()
+    {
+        _designerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _designerRole);
+        _projectManagers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _projectManagerRole);
+    }
+
+
+
+    private void DecodeDesignRequestProperties()
+    {
+        if (_designRequest == null) return;
+
+        _designRequest.ContactName = WebUtility.HtmlDecode(_designRequest.ContactName);
+        _designRequest.Company = WebUtility.HtmlDecode(_designRequest.Company);
+        _designRequest.ProjectName = WebUtility.HtmlDecode(_designRequest.ProjectName);
+        _designRequest.Address = WebUtility.HtmlDecode(_designRequest.Address);
+        _designRequest.Phone = WebUtility.HtmlDecode(_designRequest.Phone);
+        _designRequest.Email = WebUtility.HtmlDecode(_designRequest.Email);
+        _designRequest.Website = WebUtility.HtmlDecode(_designRequest.Website);
+        _designRequest.QuestionComments = WebUtility.HtmlDecode(_designRequest.QuestionComments);
+        _designRequest.Interest = WebUtility.HtmlDecode(_designRequest.Interest);
+        _designRequest.OverallSpaceDimensions = WebUtility.HtmlDecode(_designRequest.OverallSpaceDimensions);
+        _designRequest.CeilingHeight = WebUtility.HtmlDecode(_designRequest.CeilingHeight);
+        _designRequest.LengthOfKitchen = WebUtility.HtmlDecode(_designRequest.LengthOfKitchen);
+        _designRequest.SlopeOfPatio = WebUtility.HtmlDecode(_designRequest.SlopeOfPatio);
+        _designRequest.ShapeConfiguration = WebUtility.HtmlDecode(_designRequest.ShapeConfiguration);
+        _designRequest.DoorStyle = WebUtility.HtmlDecode(_designRequest.DoorStyle);
+        _designRequest.Color = WebUtility.HtmlDecode(_designRequest.Color);
+        _designRequest.CountertopThickness = WebUtility.HtmlDecode(_designRequest.CountertopThickness);
+        _designRequest.CounterDepth = WebUtility.HtmlDecode(_designRequest.CounterDepth);
+        _designRequest.CounterHeight = WebUtility.HtmlDecode(_designRequest.CounterHeight);
+        _designRequest.Status = WebUtility.HtmlDecode(_designRequest.Status);
+    }
+
+    private async Task LoadApplianceData()
+    {
+        _availableAppliances = await DesignRequestService.GetAppliancesAsync(ModuleState.ModuleId);
+        _applianceToRequests = await DesignRequestService.GetApplianceToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadDetailData()
+    {
+        _availableDetails = await DesignRequestService.GetDetailsAsync(ModuleState.ModuleId);
+        _detailToRequests = await DesignRequestService.GetDetailToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadNoteData()
+    {
+        _noteToRequests = await DesignRequestService.GetNoteToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadFileData()
+    {
+        _fileToRequests = await DesignRequestService.GetFileToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private async Task LoadNotificationData()
+    {
+        _notificationToRequests = await DesignRequestService.GetNotificationToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        StateHasChanged();
+    }
+
+    private void EditApplianceToRequest(ApplianceToRequest item)
+    {
+        _newApplianceToRequest = new ApplianceToRequest
+        {
+            ApplianceToRequestId = item.ApplianceToRequestId,
+            DesignRequestId = item.DesignRequestId,
+            ApplianceId = item.ApplianceId,
+            BrandModel = item.BrandModel,
+            Size = item.Size,
+            FuelType = item.FuelType
+        };
+    }
+
+    private void CancelEditAppliance()
+    {
+        _newApplianceToRequest = new();
+    }
+
+    private async Task SaveApplianceToRequest()
+    {
+        if (_newApplianceToRequest.ApplianceId != 0)
+        {
+            if (_newApplianceToRequest.ApplianceToRequestId == 0)
+            {
+                _newApplianceToRequest.DesignRequestId = _designRequest.DesignRequestId;
+                await DesignRequestService.AddApplianceToRequestAsync(_newApplianceToRequest);
+            }
+            else
+            {
+                await DesignRequestService.UpdateApplianceToRequestAsync(_newApplianceToRequest);
+            }
+            _newApplianceToRequest = new(); // Reset form
+            await LoadApplianceData();
+        }
+        else
+        {
+            AddModuleMessage("Please select an appliance.", MessageType.Warning);
+        }
+    }
+
+    private async Task DeleteApplianceToRequest(ApplianceToRequest item)
+    {
+        try
+        {
+            await DesignRequestService.DeleteApplianceToRequestAsync(item.ApplianceToRequestId, ModuleState.ModuleId);
+            await LoadApplianceData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Appliance From Request: {Error}", ex.Message);
+            AddModuleMessage("Error removing appliance.", MessageType.Error);
+        }
+    }
+
+    private void EditDetailToRequest(DetailToRequest item)
+    {
+        _newDetailToRequest = new DetailToRequest
+        {
+            DetailToRequestId = item.DetailToRequestId,
+            DesignRequestId = item.DesignRequestId,
+            DetailId = item.DetailId,
+            DetailNote = item.DetailNote,
+            DetailModel = item.DetailModel,
+            DetailSize = item.DetailSize,
+            DetailColor = item.DetailColor
+        };
+    }
+
+    private void CancelEditDetail()
+    {
+        _newDetailToRequest = new();
+    }
+
+    private async Task SaveDetailToRequest()
+    {
+        if (_newDetailToRequest.DetailId != 0)
+        {
+            if (_newDetailToRequest.DetailToRequestId == 0)
+            {
+                _newDetailToRequest.DesignRequestId = _designRequest.DesignRequestId;
+                await DesignRequestService.AddDetailToRequestAsync(_newDetailToRequest);
+            }
+            else
+            {
+                await DesignRequestService.UpdateDetailToRequestAsync(_newDetailToRequest);
+            }
+            _newDetailToRequest = new(); // Reset form
+            await LoadDetailData();
+        }
+        else
+        {
+            AddModuleMessage("Please select a detail.", MessageType.Warning);
+        }
+    }
+
+    private async Task DeleteDetailToRequest(DetailToRequest item)
+    {
+        try
+        {
+            await DesignRequestService.DeleteDetailToRequestAsync(item.DetailToRequestId, ModuleState.ModuleId);
+            await LoadDetailData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Detail From Request: {Error}", ex.Message);
+            AddModuleMessage("Error removing detail.", MessageType.Error);
+        }
+    }
+
+    private async Task AddNoteToRequest()
+    {
+        if (!string.IsNullOrWhiteSpace(_newNoteToRequest.Note))
+        {
+            _newNoteToRequest.DesignRequestId = _designRequest.DesignRequestId;
+            await DesignRequestService.AddNoteToRequestAsync(_newNoteToRequest);
+            _newNoteToRequest = new(); // Reset form
+            await Save(); // Save to update ModifiedOn and ModifiedBy
+            await LoadNoteData();
+
+            // Switch to Notes tab after insert/update
+            _activeTab = "Notes";
+        }
+        else
+        {
+            AddModuleMessage("Please enter a note.", MessageType.Warning);
+        }
+    }
+
+    private async Task DeleteNoteToRequest(NoteToRequest note)
+    {
+        try
+        {
+            await DesignRequestService.DeleteNoteToRequestAsync(note.NoteId, ModuleState.ModuleId);
+            await LoadNoteData();
+
+            // Switch to Notes tab after insert/update
+            _activeTab = "Notes";
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Note: {Error}", ex.Message);
+            AddModuleMessage("Error deleting note.", MessageType.Error);
+        }
+    }
+
+    private async void HandleFileUpload(int fileId)
+    {
+
+        var uploadedFile = await FileService.GetFileAsync(fileId);
+        if (uploadedFile != null)
+        {
+            _newFileToRequest.DesignRequestId = _designRequest.DesignRequestId;
+            _newFileToRequest.FileId = uploadedFile.FileId;
+            _newFileToRequest.FilePath = uploadedFile.Url;
+
+            try
+            {
+                string newFileName = $"{_designRequest.DesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
+                newFileName = newFileName.Replace(" ", "_"); // Replace spaces with underscores
+                var renamedFile = await RenameFile(fileId, newFileName);
+                if (renamedFile == null)
+                {
+                    //    AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
+                    return;
+                }
+
+                // Use the custom friendly name if provided, otherwise use the new (renamed) file name
+                _newFileToRequest.FileId = renamedFile.FileId;
+                _newFileToRequest.FilePath = renamedFile.Url;
+                if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+                {
+                    _newFileToRequest.Name = renamedFile.Name;
+                }
+
+                var newFileToRequest = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+                if (_notifyProjectManagerOnUpload)
+                {
+                    await SendFileNotificationToProjectManagerAsync(newFileToRequest);
+                }
+
+                _newFileToRequest = new(); // Reset form
+                await LoadFileData();
+
+                AddModuleMessage("File added successfully.", MessageType.Success);
+
+                await Save(); // Save to update ModifiedOn and ModifiedBy
+
+                // Switch to Files tab after insert/update
+                _activeTab = "Files";
+            }
+            catch (Exception ex)
+            {
+                await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
+                AddModuleMessage("There was an error saving the file information.", MessageType.Error);
+            }
+        }
+        else
+        {
+            AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+        }
+        StateHasChanged();
+    }
+
+
+
+    public async Task<Oqtane.Models.File> RenameFile(int fileId, string newFileName)
+    {
+        try
+        {
+            // Retrieve the existing file from the database
+            var uploadedFile = await FileService.GetFileAsync(fileId);
+
+            if (uploadedFile != null)
+            {
+                // Update the file name
+                uploadedFile.Name = newFileName;
+                // Save the changes back to the database and potentially trigger physical file renaming
+                return await FileService.UpdateFileAsync(uploadedFile);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions (e.g., file not found, permission issues)
+            await logger.LogError(ex, "Error renaming file {FileId}: {Error}", fileId, ex.Message);
+        }
+        return null;
+    }
+
+    private async Task DeleteFileToRequest(FileToRequest file)
+    {
+        try
+        {
+            await DesignRequestService.DeleteFileToRequestAsync(file.FileToRequestId, ModuleState.ModuleId);
+
+            await FileService.DeleteFileAsync(file.FileId);
+            await LoadFileData();
+            AddModuleMessage("File removed successfully.", MessageType.Success);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting File From Request: {Error}", ex.Message);
+            AddModuleMessage("Error removing file.", MessageType.Error);
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            validated = true;
+            var interop = new Oqtane.UI.Interop(JSRuntime);
+            if (await interop.FormValid(form))
+            {
+                await DesignRequestService.UpdateDesignRequestAsync(_designRequest);
+                await logger.LogInformation("DesignRequest Updated {DesignRequest}", _designRequest);
+                AddModuleMessage("Record successfully updated.", MessageType.Success);
+                validated = false;
+                StateHasChanged();
+            }
+            else
+            {
+                AddModuleMessage(Localizer["Message.SaveValidation"], MessageType.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving DesignRequest {Error}", ex.Message);
+            AddModuleMessage(Localizer["Message.SaveError"], MessageType.Error);
+        }
+    }
+
+
+}

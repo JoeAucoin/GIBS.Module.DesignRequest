@@ -8,6 +8,7 @@
 @using System.Globalization
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using System.Text.Json
 
 
 @namespace GIBS.Module.DesignRequest
@@ -19,6 +20,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IUserService UserService
 @inject IProfileService ProfileService
+@inject IJSRuntime JS
 
 
 
@@ -90,9 +92,14 @@ else
                 }
             </select>
         </div>
-        <div class="col-md-2 align-self-end">
-            <button class="btn btn-secondary" @onclick="ClearFilters">Clear Filters</button>
+        <div class="col-md-3 align-self-end">
+            <button class="btn btn-secondary" @onclick="ClearFilters">Clear Filters</button> 
+            @if (FiltersActive)
+            {
+                <span class="badge bg-warning text-dark ms-2">Filters Applied</span>
+            }
         </div>
+
     </div>
 
     <Pager Items="@_designRequests" PageSize="10" Class="table table-striped">
@@ -172,6 +179,11 @@ else
             </td>
         </Row>
     </Pager>
+
+    <div class="text-center mt-3 mb-3">
+        <ActionLink Action="BackOffice" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" IconName="menu" Text="Return to BackOffice" ResourceKey="BackOffice" />
+
+    </div>
 }
 
 
@@ -204,6 +216,27 @@ else
     private string SearchAddressInput { get; set; } = string.Empty;
     // active search term used when filtering
     private string _searchAddress = string.Empty;
+
+    // Filter Persistence
+    private string _storageKey => $"GIBS_DesignRequest_List_{ModuleState.ModuleId}_FilterState";
+    private bool FiltersActive =>
+        _selectedProjectManagerId != 0 ||
+        _selectedAssignedToId != 0 ||
+        !string.IsNullOrEmpty(_selectedStatus) ||
+        !string.IsNullOrEmpty(_selectedProjectStatus) ||
+        !string.IsNullOrWhiteSpace(_searchAddress) ||
+        !string.IsNullOrWhiteSpace(SearchAddressInput);
+
+    private class FilterState
+    {
+        public string SearchAddressInput { get; set; }
+        public int SelectedProjectManagerId { get; set; }
+        public int SelectedAssignedToId { get; set; }
+        public string SelectedStatus { get; set; }
+        public string SelectedProjectStatus { get; set; }
+        public string SortColumn { get; set; }
+        public bool SortAscending { get; set; }
+    }
 
     private int SelectedProjectManagerId
     {
@@ -307,6 +340,7 @@ else
             _designerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _designerRole);
             _projectManagerUsers = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId, _projectManagerRole);
 
+            await LoadFiltersAsync();
             ApplyFilters();
         }
         catch (Exception ex)
@@ -368,6 +402,10 @@ else
         };
 
         _designRequests = query.ToList();
+
+        // Save state to local storage (fire and forget)
+        _ = SaveFiltersAsync();
+
         StateHasChanged();
     }
 
@@ -380,13 +418,65 @@ else
     private void ClearFilters()
     {
         // Use the properties to ensure filtering is re-applied
-        SelectedProjectManagerId = 0;
-        SelectedAssignedToId = 0;
-        SelectedStatus = "";
-        SelectedProjectStatus = "";
+        _selectedProjectManagerId = 0; // Set backing fields to avoid multiple ApplyFilters calls
+        _selectedAssignedToId = 0;
+        _selectedStatus = "";
+        _selectedProjectStatus = "";
         SearchAddressInput = string.Empty;
         _searchAddress = string.Empty;
         ApplyFilters();
+    }
+
+    private async Task SaveFiltersAsync()
+    {
+        try
+        {
+            var filterState = new FilterState
+            {
+                SearchAddressInput = SearchAddressInput,
+                SelectedProjectManagerId = _selectedProjectManagerId,
+                SelectedAssignedToId = _selectedAssignedToId,
+                SelectedStatus = _selectedStatus,
+                SelectedProjectStatus = _selectedProjectStatus,
+                SortColumn = _sortColumn,
+                SortAscending = _sortAscending
+            };
+
+            var json = JsonSerializer.Serialize(filterState);
+            await JS.InvokeVoidAsync("localStorage.setItem", _storageKey, json);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving Filter State");
+        }
+    }
+
+    private async Task LoadFiltersAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", _storageKey);
+            if (!string.IsNullOrEmpty(json))
+            {
+                var filterState = JsonSerializer.Deserialize<FilterState>(json);
+                if (filterState != null)
+                {
+                    SearchAddressInput = filterState.SearchAddressInput;
+                    _searchAddress = filterState.SearchAddressInput; // Apply search
+                    _selectedProjectManagerId = filterState.SelectedProjectManagerId;
+                    _selectedAssignedToId = filterState.SelectedAssignedToId;
+                    _selectedStatus = filterState.SelectedStatus;
+                    _selectedProjectStatus = filterState.SelectedProjectStatus;
+                    _sortColumn = filterState.SortColumn;
+                    _sortAscending = filterState.SortAscending;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Ignore error or log it - filtering fails over to default
+            await logger.LogError(ex, "Error Loading Filter State");
+        }
     }
 
     private async Task CheckUserRoleAsync(string _role)

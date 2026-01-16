@@ -125,5 +125,175 @@ namespace GIBS.Module.DesignRequest.Repository
             db.FileToRequest.Remove(FileToRequest);
             db.SaveChanges();
         }
+
+
+        public IEnumerable<Models.UserCredit> GetUserCredits(int ModuleId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.UserCredit.Where(item => item.ModuleId == ModuleId).ToList();
+        }
+
+        public Models.UserCredit GetUserCredit(int UserCreditId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.UserCredit.Find(UserCreditId);
+        }
+
+        public Models.UserCredit GetUserCreditByUser(int ModuleId, int UserId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.UserCredit.FirstOrDefault(item => item.ModuleId == ModuleId && item.UserId == UserId);
+        }
+
+        public Models.UserCredit AddUserCredit(Models.UserCredit UserCredit)
+        {
+            using var db = _factory.CreateDbContext();
+            db.UserCredit.Add(UserCredit);
+            db.SaveChanges();
+            return UserCredit;
+        }
+
+        public Models.UserCredit UpdateUserCredit(Models.UserCredit UserCredit)
+        {
+            using var db = _factory.CreateDbContext();
+            db.Entry(UserCredit).State = EntityState.Modified;
+            db.SaveChanges();
+            return UserCredit;
+        }
+
+        public void DeleteUserCredit(int UserCreditId)
+        {
+            using var db = _factory.CreateDbContext();
+            var userCredit = db.UserCredit.Find(UserCreditId);
+            db.UserCredit.Remove(userCredit);
+            db.SaveChanges();
+        }
+
+        // CreditPackage Methods
+        public IEnumerable<Models.CreditPackage> GetCreditPackages(int ModuleId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.CreditPackage.Where(item => item.ModuleId == ModuleId).ToList();
+        }
+
+        public Models.CreditPackage GetCreditPackage(int CreditPackageId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.CreditPackage.Find(CreditPackageId);
+        }
+
+        public Models.CreditPackage AddCreditPackage(Models.CreditPackage CreditPackage)
+        {
+            using var db = _factory.CreateDbContext();
+            db.CreditPackage.Add(CreditPackage);
+            db.SaveChanges();
+            return CreditPackage;
+        }
+
+        public Models.CreditPackage UpdateCreditPackage(Models.CreditPackage CreditPackage)
+        {
+            using var db = _factory.CreateDbContext();
+            db.Entry(CreditPackage).State = EntityState.Modified;
+            db.SaveChanges();
+            return CreditPackage;
+        }
+
+        public void DeleteCreditPackage(int CreditPackageId)
+        {
+            using var db = _factory.CreateDbContext();
+            var creditPackage = db.CreditPackage.Find(CreditPackageId);
+            db.CreditPackage.Remove(creditPackage);
+            db.SaveChanges();
+        }
+
+        // CreditTransaction Methods
+        public IEnumerable<Models.CreditTransaction> GetCreditTransactions(int ModuleId)
+        {
+            using var db = _factory.CreateDbContext();
+            // Best Practice: Add ModuleId to CreditTransaction model and filtering here: .Where(t => t.ModuleId == ModuleId)
+            return db.CreditTransaction.OrderByDescending(t => t.TransactionDate).ToList();
+        }
+
+        public IEnumerable<Models.CreditTransaction> GetCreditTransactionsByUser(int ModuleId, int UserId)
+        {
+            using var db = _factory.CreateDbContext();
+            // Best Practice: Add ModuleId to filtering: .Where(t => t.ModuleId == ModuleId && t.UserId == UserId)
+            return db.CreditTransaction.Where(t => t.UserId == UserId).OrderByDescending(t => t.TransactionDate).ToList();
+        }
+
+        public Models.CreditTransaction GetCreditTransaction(int TransactionId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.CreditTransaction.Find(TransactionId);
+        }
+
+        public Models.CreditTransaction AddCreditTransaction(Models.CreditTransaction CreditTransaction)
+        {
+            using var db = _factory.CreateDbContext();
+            db.CreditTransaction.Add(CreditTransaction);
+            db.SaveChanges();
+            return CreditTransaction;
+        }
+
+        public Models.CreditTransaction UpdateCreditTransaction(Models.CreditTransaction CreditTransaction)
+        {
+            using var db = _factory.CreateDbContext();
+            db.Entry(CreditTransaction).State = EntityState.Modified;
+            db.SaveChanges();
+            return CreditTransaction;
+        }
+
+        public void DeleteCreditTransaction(int TransactionId)
+        {
+            using var db = _factory.CreateDbContext();
+            var transaction = db.CreditTransaction.Find(TransactionId);
+            db.CreditTransaction.Remove(transaction);
+            db.SaveChanges();
+        }
+
+        // PaymentRecord Methods
+        public IEnumerable<Models.PaymentRecord> GetPaymentRecords(int ModuleId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.PaymentRecord.Where(item => item.ModuleId == ModuleId).ToList();
+        }
+
+        public IEnumerable<Models.PaymentRecord> GetPaymentRecordsByUser(int ModuleId, int UserId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.PaymentRecord.Where(item => item.ModuleId == ModuleId && item.UserId == UserId).ToList();
+        }
+
+        public Models.PaymentRecord GetPaymentRecord(int PaymentId)
+        {
+            using var db = _factory.CreateDbContext();
+            return db.PaymentRecord.Find(PaymentId);
+        }
+
+        public Models.PaymentRecord AddPaymentRecord(Models.PaymentRecord PaymentRecord)
+        {
+            using var db = _factory.CreateDbContext();
+            db.PaymentRecord.Add(PaymentRecord);
+            db.SaveChanges();
+            return PaymentRecord;
+        }
+
+        public Models.PaymentRecord UpdatePaymentRecord(Models.PaymentRecord PaymentRecord)
+        {
+            using var db = _factory.CreateDbContext();
+            db.Entry(PaymentRecord).State = EntityState.Modified;
+            db.SaveChanges();
+            return PaymentRecord;
+        }
+
+        public void DeletePaymentRecord(int PaymentId)
+        {
+            using var db = _factory.CreateDbContext();
+            var PaymentRecord = db.PaymentRecord.Find(PaymentId);
+            db.PaymentRecord.Remove(PaymentRecord);
+            db.SaveChanges();
+        }
+
+
     }
 }

@@ -70,39 +70,37 @@ else
         </div>
     </div>
 
-    <table class="table table-striped mt-3">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Code</th>
-                <th>Sort Order</th>
-                <th>Active</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var appliance in _appliances.OrderBy(a => a.SortOrder))
-            {
-                <tr>
-                    <td>@appliance.ApplianceName</td>
-                    <td>@appliance.ApplianceDescription</td>
-                    <td>@appliance.ApplianceCode</td>
-                    <td>@appliance.SortOrder</td>
-                    <td>@appliance.IsActive</td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditAppliance(appliance)">@Localizer["Edit"]</button>
-                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteAppliance(appliance)">@Localizer["Delete"]</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <Pager Items="@_appliances" PageSize="10" Class="table table-striped mt-3">
+        <Header>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Code</th>
+        <th>Sort Order</th>
+        <th>Active</th>
+        <th></th>
+        </Header>
+        <Row>
+            <td>@context.ApplianceName</td>
+            <td>@context.ApplianceDescription</td>
+            <td>@context.ApplianceCode</td>
+            <td>@context.SortOrder</td>
+            <td>@context.IsActive</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditAppliance(context)">@Localizer["Edit"]</button>
+                <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteAppliance(context)">@Localizer["Delete"]</button>
+            </td>
+        </Row>
+    </Pager>
+
+    <div class="text-center mt-3 mb-3">
+        <ActionLink Action="BackOffice" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" IconName="menu" Text="Return to BackOffice" ResourceKey="BackOffice" />
+    </div>
 }
 
 @code {
 
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+    public override bool UseAdminContainer => false;
 
     private List<Appliance> _appliances;
     private Appliance _newAppliance = new Appliance();

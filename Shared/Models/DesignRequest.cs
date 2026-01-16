@@ -42,6 +42,9 @@ namespace GIBS.Module.DesignRequest.Models
         public string ProjectStatus { get; set; } // New field for Project Status
         public string HandlePull { get; set; } // New field for Handle/Pull preference
 
+        public int? RevisionsUsed { get; set; }
+        public int? CreditsSpent { get; set; }
+
 
         [NotMapped]
         public string Fax { get; set; } // Honeypot field

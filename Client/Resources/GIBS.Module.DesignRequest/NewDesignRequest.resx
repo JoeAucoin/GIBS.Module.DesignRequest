@@ -153,16 +153,4 @@
   <data name="Message.SubmissionSuccess" xml:space="preserve">
     <value>Form Successfully Submitted.</value>
   </data>
-  <data name="BackOffice.Text" xml:space="preserve">
-    <value> BackOffice</value>
-  </data>
-  <data name="ProjectName" xml:space="preserve">
-    <value>Project Name</value>
-  </data>
-  <data name="ProjectManager" xml:space="preserve">
-    <value>Project Manager</value>
-  </data>
-  <data name="CreatedOn" xml:space="preserve">
-    <value>Submitted On</value>
-  </data>
 </root>

@@ -121,73 +121,6 @@ namespace GIBS.Module.DesignRequest.Services
             }
         }
 
-        //public async Task<Models.DesignRequest> AddDesignRequestAsync(Models.DesignRequest DesignRequest)
-        //{
-        //    // check honeypot field
-        //    if (!string.IsNullOrEmpty(DesignRequest.Fax))
-        //    {
-        //        _logger.Log(LogLevel.Error, this, LogFunction.Security, "Bot submission detected based on honeypot field.");
-        //        return await Task.FromResult<Models.DesignRequest>(null); // Ensure async behavior
-        //    }
-
-        //    Models.DesignRequest savedDesignRequest;
-
-        //    // check for authenticated users with edit permissions
-        //    if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, DesignRequest.ModuleId, PermissionNames.Edit))
-        //    {
-        //        savedDesignRequest = _DesignRequestRepository.AddDesignRequest(DesignRequest);
-        //        _logger.Log(LogLevel.Information, this, LogFunction.Create, "DesignRequest Added {DesignRequest}", savedDesignRequest);
-        //    }
-        //    else
-        //    {
-        //        // handle anonymous submissions
-        //        var site = _alias.SiteId;
-        //        var request = _accessor.HttpContext.Request;
-        //        var mySite = $"{request.Scheme}://{request.Host}{request.PathBase}";
-
-        //        var body = new StringBuilder();
-        //        body.AppendLine($"<p>You have received a new design request form submission:</p>");
-        //        body.AppendLine($"<p><b>Contact Name:</b> {DesignRequest.ContactName}</p>");
-        //        body.AppendLine($"<p><b>Company:</b> {DesignRequest.Company}</p>");
-        //        body.AppendLine($"<p><b>Address:</b> {DesignRequest.Address}</p>");
-        //        body.AppendLine($"<p><b>Phone:</b> {DesignRequest.Phone}</p>");
-        //        body.AppendLine($"<p><b>Email:</b> {DesignRequest.Email}</p>");
-        //        body.AppendLine($"<p><b>Website:</b> {DesignRequest.Website}</p>");
-        //        body.AppendLine($"<p><b>Interest:</b> {DesignRequest.Interest}</p>");
-        //        body.AppendLine($"<p><b>Questions/Comments:</b></p>");
-        //        body.AppendLine($"<p>{DesignRequest.QuestionComments}</p>");
-        //        body.AppendLine($"<hr />");
-        //        body.AppendLine($"<p><b>Submitted On:</b> {DesignRequest.CreatedOn}</p>");
-        //        body.AppendLine($"<p><b>IP Address:</b> https://ip-address-lookup-v4.com/ip/{DesignRequest.IP_Address}</p>");
-        //        body.AppendLine($"<p><b>Site:</b> " + mySite.ToString() + "</p>");
-
-        //        var sendon = DateTime.UtcNow;
-        //        var sendtoname = DesignRequest.SendToName ?? "Contact Form Submission";
-        //        var sendtoemail = DesignRequest.SendToEmail ?? "";
-
-        //        // sanitize the input to prevent XSS attacks
-        //        DesignRequest.ContactName = WebUtility.HtmlEncode(DesignRequest.ContactName);
-        //        DesignRequest.Company = WebUtility.HtmlEncode(DesignRequest.Company);
-        //        DesignRequest.Address = WebUtility.HtmlEncode(DesignRequest.Address);
-        //        DesignRequest.Phone = WebUtility.HtmlEncode(DesignRequest.Phone);
-        //        DesignRequest.Email = WebUtility.HtmlEncode(DesignRequest.Email);
-        //        DesignRequest.Website = WebUtility.HtmlEncode(DesignRequest.Website);
-        //        DesignRequest.QuestionComments = WebUtility.HtmlEncode(DesignRequest.QuestionComments);
-
-        //        savedDesignRequest = _DesignRequestRepository.AddDesignRequest(DesignRequest);
-        //        _logger.Log(LogLevel.Information, this, LogFunction.Create, "DesignRequest Added {DesignRequest}", savedDesignRequest);
-
-        //        var recordID = savedDesignRequest.DesignRequestId;
-        //        var subject = $"DesignRequest Form Submission - " + recordID.ToString();
-
-        //        var notification = new Notification(site, sendtoname.ToString(), sendtoemail.ToString(), subject, body.ToString(), sendon);
-        //        _notifications.AddNotification(notification);
-        //        _logger.Log(LogLevel.Information, this, LogFunction.Create, "Notification Added", notification);
-        //    }
-
-        //    return await Task.FromResult(savedDesignRequest);
-        //}
-
         public async Task<Models.DesignRequest> AddDesignRequestAsync(Models.DesignRequest DesignRequest)
         {
             // check honeypot field
@@ -354,7 +287,7 @@ namespace GIBS.Module.DesignRequest.Services
             return Task.CompletedTask;
         }
 
-        // ... other service methods for Appliance, Detail, etc.
+        // Appliance Methods
         public Task<List<Appliance>> GetAppliancesAsync(int moduleId)
         {
             if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
@@ -425,7 +358,7 @@ namespace GIBS.Module.DesignRequest.Services
             return Task.CompletedTask;
         }
 
-        // Detail Methods...
+        // Detail Methods
         public Task<List<Detail>> GetDetailsAsync(int moduleId)
         {
             if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
@@ -496,7 +429,7 @@ namespace GIBS.Module.DesignRequest.Services
             return Task.CompletedTask;
         }
 
-        // ApplianceToRequest Methods...
+        // ApplianceToRequest Methods
         public Task<List<ApplianceToRequest>> GetApplianceToRequestsAsync(int designRequestId, int moduleId)
         {
             if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
@@ -570,7 +503,7 @@ namespace GIBS.Module.DesignRequest.Services
             return Task.CompletedTask;
         }
 
-        // DetailToRequest Methods...
+        // DetailToRequest Methods
         public Task<List<DetailToRequest>> GetDetailToRequestsAsync(int designRequestId, int moduleId)
         {
             if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
@@ -872,6 +805,213 @@ namespace GIBS.Module.DesignRequest.Services
             else
             {
                 _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized NotificationToRequest Delete Attempt on non-existent item {NotificationToRequestId} {ModuleId}", notificationToRequestId, moduleId);
+            }
+            return Task.CompletedTask;
+        }
+
+        // UserCredits Methods
+        public Task<List<UserCredit>> GetUserCreditsAsync(int ModuleId)
+        {
+            if (_accessor.HttpContext.User.IsInRole(RoleNames.Admin))
+            {
+                return Task.FromResult(_DesignRequestRepository.GetUserCredits(ModuleId).ToList());
+            }
+            else
+            {
+                return Task.FromResult(new List<UserCredit>());
+            }
+        }
+
+        public Task<UserCredit> GetUserCreditAsync(int UserCreditId, int ModuleId)
+        {
+            var userCredit = _DesignRequestRepository.GetUserCredit(UserCreditId);
+            if (userCredit != null && userCredit.ModuleId == ModuleId)
+            {
+                return Task.FromResult(userCredit);
+            }
+            return Task.FromResult<UserCredit>(null);
+        }
+
+        public Task<UserCredit> GetUserCreditByUserAsync(int ModuleId, int UserId)
+        {
+            return Task.FromResult(_DesignRequestRepository.GetUserCreditByUser(ModuleId, UserId));
+        }
+
+        public Task<UserCredit> AddUserCreditAsync(UserCredit UserCredit)
+        {
+            return Task.FromResult(_DesignRequestRepository.AddUserCredit(UserCredit));
+        }
+
+        public Task<UserCredit> UpdateUserCreditAsync(UserCredit UserCredit)
+        {
+            return Task.FromResult(_DesignRequestRepository.UpdateUserCredit(UserCredit));
+        }
+
+        public Task DeleteUserCreditAsync(int UserCreditId, int ModuleId)
+        {
+            _DesignRequestRepository.DeleteUserCredit(UserCreditId);
+            return Task.CompletedTask;
+        }
+
+        // CreditPackage methods
+        public Task<List<CreditPackage>> GetCreditPackagesAsync(int ModuleId)
+        {
+            return Task.FromResult(_DesignRequestRepository.GetCreditPackages(ModuleId).ToList());
+        }
+
+        public Task<CreditPackage> GetCreditPackageAsync(int CreditPackageId, int ModuleId)
+        {
+            var package = _DesignRequestRepository.GetCreditPackage(CreditPackageId);
+            if (package != null && package.ModuleId == ModuleId)
+            {
+                return Task.FromResult(package);
+            }
+            return Task.FromResult<CreditPackage>(null);
+        }
+
+        public Task<CreditPackage> AddCreditPackageAsync(CreditPackage CreditPackage)
+        {
+            return Task.FromResult(_DesignRequestRepository.AddCreditPackage(CreditPackage));
+        }
+
+        public Task<CreditPackage> UpdateCreditPackageAsync(CreditPackage CreditPackage)
+        {
+            return Task.FromResult(_DesignRequestRepository.UpdateCreditPackage(CreditPackage));
+        }
+
+        public Task DeleteCreditPackageAsync(int CreditPackageId, int ModuleId)
+        {
+            _DesignRequestRepository.DeleteCreditPackage(CreditPackageId);
+            return Task.CompletedTask;
+        }
+
+        // CreditTransaction methods
+        public Task<List<CreditTransaction>> GetCreditTransactionsAsync(int ModuleId)
+        {
+            return Task.FromResult(_DesignRequestRepository.GetCreditTransactions(ModuleId).ToList());
+        }
+
+        public Task<List<CreditTransaction>> GetCreditTransactionsByUserAsync(int ModuleId, int UserId)
+        {
+            return Task.FromResult(_DesignRequestRepository.GetCreditTransactionsByUser(ModuleId, UserId).ToList());
+        }
+
+        public Task<CreditTransaction> GetCreditTransactionAsync(int TransactionId, int ModuleId)
+        {
+            return Task.FromResult(_DesignRequestRepository.GetCreditTransaction(TransactionId));
+        }
+
+        public Task<CreditTransaction> AddCreditTransactionAsync(CreditTransaction CreditTransaction, int ModuleId)
+        {
+            // Note: Updated to match interface which likely just passes model in future refactor, but kept compatible
+            return Task.FromResult(_DesignRequestRepository.AddCreditTransaction(CreditTransaction));
+        }
+
+        // Overload to match interface if needed, or separate method. 
+        // Based on previous step, I defined only AddCreditTransactionAsync(CreditTransaction) in interface, 
+        // but here it was implemented with ModuleId.
+        public Task<CreditTransaction> AddCreditTransactionAsync(CreditTransaction CreditTransaction)
+        {
+            return Task.FromResult(_DesignRequestRepository.AddCreditTransaction(CreditTransaction));
+        }
+
+        public Task<CreditTransaction> UpdateCreditTransactionAsync(CreditTransaction CreditTransaction, int ModuleId)
+        {
+            return Task.FromResult(_DesignRequestRepository.UpdateCreditTransaction(CreditTransaction));
+        }
+
+        public Task DeleteCreditTransactionAsync(int TransactionId, int ModuleId)
+        {
+            _DesignRequestRepository.DeleteCreditTransaction(TransactionId);
+            return Task.CompletedTask;
+        }
+
+        // PaymentRecord Methods
+        public Task<List<PaymentRecord>> GetPaymentRecordsAsync(int moduleId)
+        {
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
+            {
+                return Task.FromResult(_DesignRequestRepository.GetPaymentRecords(moduleId).ToList());
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized PaymentRecord Get Attempt {ModuleId}", moduleId);
+                return null;
+            }
+        }
+
+        public Task<List<PaymentRecord>> GetPaymentRecordsByUserAsync(int moduleId, int userId)
+        {
+            var user = _accessor.HttpContext.User;
+            var currentUserIdStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (user.IsInRole(RoleNames.Admin) ||
+                user.IsInRole(RoleNames.Host) ||
+                (currentUserIdStr != null && currentUserIdStr == userId.ToString()))
+            {
+                return Task.FromResult(_DesignRequestRepository.GetPaymentRecordsByUser(moduleId, userId).ToList());
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized PaymentRecord Get By User Attempt {ModuleId} {UserId}", moduleId, userId);
+                return null;
+            }
+        }
+
+        public Task<PaymentRecord> GetPaymentRecordAsync(int paymentId, int moduleId)
+        {
+            var payment = _DesignRequestRepository.GetPaymentRecord(paymentId);
+            if (payment != null)
+            {
+                // Basic view check. For strict security, check ownership in caller or here if needed.
+                if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.View))
+                {
+                    return Task.FromResult(payment);
+                }
+            }
+            _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized PaymentRecord Get Attempt {PaymentId} {ModuleId}", paymentId, moduleId);
+            return Task.FromResult<PaymentRecord>(null);
+        }
+
+        public Task<PaymentRecord> AddPaymentRecordAsync(PaymentRecord paymentRecord)
+        {
+            // Typically Admin or System adding payments, or callbacks. 
+            // If public callback handles param, checks might differ.
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, paymentRecord.ModuleId, PermissionNames.Edit) ||
+                _accessor.HttpContext.User.IsInRole(RoleNames.Admin))
+            {
+                return Task.FromResult(_DesignRequestRepository.AddPaymentRecord(paymentRecord));
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized PaymentRecord Add Attempt {PaymentRecord}", paymentRecord);
+                return Task.FromResult<PaymentRecord>(null);
+            }
+        }
+
+        public Task<PaymentRecord> UpdatePaymentRecordAsync(PaymentRecord paymentRecord)
+        {
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, paymentRecord.ModuleId, PermissionNames.Edit))
+            {
+                return Task.FromResult(_DesignRequestRepository.UpdatePaymentRecord(paymentRecord));
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized PaymentRecord Update Attempt {PaymentRecord}", paymentRecord);
+                return Task.FromResult<PaymentRecord>(null);
+            }
+        }
+
+        public Task DeletePaymentRecordAsync(int paymentId, int moduleId)
+        {
+            if (_userPermissions.IsAuthorized(_accessor.HttpContext.User, _alias.SiteId, EntityNames.Module, moduleId, PermissionNames.Edit))
+            {
+                _DesignRequestRepository.DeletePaymentRecord(paymentId);
+                _logger.Log(LogLevel.Information, this, LogFunction.Delete, "PaymentRecord Deleted {PaymentId}", paymentId);
+            }
+            else
+            {
+                _logger.Log(LogLevel.Error, this, LogFunction.Security, "Unauthorized PaymentRecord Delete Attempt {PaymentId} {ModuleId}", paymentId, moduleId);
             }
             return Task.CompletedTask;
         }

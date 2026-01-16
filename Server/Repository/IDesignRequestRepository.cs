@@ -23,5 +23,38 @@ namespace GIBS.Module.DesignRequest.Repository
         Models.FileToRequest AddFileToRequest(Models.FileToRequest FileToRequest);
         Models.FileToRequest UpdateFileToRequest(Models.FileToRequest FileToRequest);
         void DeleteFileToRequest(int FileToRequestId);
+
+        // UserCredit Methods
+        IEnumerable<Models.UserCredit> GetUserCredits(int ModuleId);
+        Models.UserCredit GetUserCredit(int UserCreditId);
+        Models.UserCredit GetUserCreditByUser(int ModuleId, int UserId);
+        Models.UserCredit AddUserCredit(Models.UserCredit UserCredit);
+        Models.UserCredit UpdateUserCredit(Models.UserCredit UserCredit);
+        void DeleteUserCredit(int UserCreditId);
+
+        // CreditPackage Methods
+        IEnumerable<Models.CreditPackage> GetCreditPackages(int ModuleId);
+        Models.CreditPackage GetCreditPackage(int CreditPackageId);
+        Models.CreditPackage AddCreditPackage(Models.CreditPackage CreditPackage);
+        Models.CreditPackage UpdateCreditPackage(Models.CreditPackage CreditPackage);
+        void DeleteCreditPackage(int CreditPackageId);
+
+        // CreditTransaction Methods
+        IEnumerable<Models.CreditTransaction> GetCreditTransactions(int ModuleId);
+        IEnumerable<Models.CreditTransaction> GetCreditTransactionsByUser(int ModuleId, int UserId);
+        Models.CreditTransaction GetCreditTransaction(int TransactionId);
+        Models.CreditTransaction AddCreditTransaction(Models.CreditTransaction CreditTransaction);
+        Models.CreditTransaction UpdateCreditTransaction(Models.CreditTransaction CreditTransaction);
+        void DeleteCreditTransaction(int TransactionId);
+
+        // PaymentRecord Methods
+        IEnumerable<Models.PaymentRecord> GetPaymentRecords(int ModuleId);
+        IEnumerable<Models.PaymentRecord> GetPaymentRecordsByUser(int ModuleId, int UserId);
+        Models.PaymentRecord GetPaymentRecord(int PaymentId);
+        Models.PaymentRecord AddPaymentRecord(Models.PaymentRecord PaymentRecord);
+        Models.PaymentRecord UpdatePaymentRecord(Models.PaymentRecord PaymentRecord);
+        void DeletePaymentRecord(int PaymentId);
+
+
     }
 }

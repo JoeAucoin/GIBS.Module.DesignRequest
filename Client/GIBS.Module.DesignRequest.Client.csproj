@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <Version>1.0.4</Version>
+    <Version>1.0.6</Version>
     <Authors>GIBS</Authors>
     <Company>GIBS</Company>
     <Description>Design Request Module for Oqtane</Description>
@@ -27,6 +27,48 @@
   <ItemGroup>
     <Reference Include="Oqtane.Client"><HintPath>..\..\oqtane.framework-6.1.2-Source\Oqtane.Server\bin\Debug\net9.0\Oqtane.Client.dll</HintPath></Reference>
     <Reference Include="Oqtane.Shared"><HintPath>..\..\oqtane.framework-6.1.2-Source\Oqtane.Server\bin\Debug\net9.0\Oqtane.Shared.dll</HintPath></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\GIBS.Module.DesignRequest\BackOffice.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>BackOffice.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\GIBS.Module.DesignRequest\DesignRequestUpdate.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DesignRequestUpdate.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\GIBS.Module.DesignRequest\ManageCreditPackages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ManageCreditPackages.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\GIBS.Module.DesignRequest\ManageUserCredits.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ManageUserCredits.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\GIBS.Module.DesignRequest\BackOffice.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>BackOffice.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\GIBS.Module.DesignRequest\DesignRequestUpdate.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>DesignRequestUpdate.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\GIBS.Module.DesignRequest\ManageCreditPackages.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ManageCreditPackages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\GIBS.Module.DesignRequest\ManageUserCredits.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ManageUserCredits.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
   <PropertyGroup>

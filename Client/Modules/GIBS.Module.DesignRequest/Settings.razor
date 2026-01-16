@@ -14,6 +14,64 @@
 @inject IRoleService RoleService
 
 <div class="container">
+
+    <h5 class="mb-3">PayPal Settings</h5>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="payPalSandboxMode" HelpText="payPalSandboxMode" ResourceKey="PayPalSandboxMode" ResourceType="@resourceType">PayPal Sandbox Mode: </Label>
+        <div class="col-sm-9">
+            <input type="checkbox" id="payPalSandboxMode" class="form-check-input" @bind="@_PayPalSandboxMode" />
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <h5 class="mb-3">Sandbox Credentials</h5>
+    <div class="row mb-1">
+        <Label Class="col-sm-3" For="sandboxPayee" HelpText="Enter your PayPal Sandbox Payee." ResourceKey="SandboxPayee">Sandbox Payee: </Label>
+        <div class="col-sm-9">
+            <input id="sandboxPayee" class="form-control" @bind="@_payPalSandboxPayee" />
+        </div>
+    </div>
+    <div class="row mb-1">
+        <Label Class="col-sm-3" For="sandboxClientId" HelpText="Enter your PayPal Sandbox Client ID." ResourceKey="SandboxClientId">Sandbox Client ID: </Label>
+        <div class="col-sm-9">
+            <input id="sandboxClientId" class="form-control" @bind="@_payPalSandboxClientId" />
+        </div>
+    </div>
+    <div class="row mb-1">
+        <Label Class="col-sm-3" For="sandboxClientSecret" HelpText="Enter your PayPal Sandbox Client Secret." ResourceKey="SandboxClientSecret">Sandbox Client Secret: </Label>
+        <div class="col-sm-9">
+            <input id="sandboxClientSecret" class="form-control" @bind="@_payPalSandboxClientSecret" />
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <h5 class="mb-3">Production Credentials</h5>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="payPalPayee" HelpText="Enter your OAuthClientId" ResourceKey="PayPalPayee" ResourceType="@resourceType">PayPal Payee: </Label>
+        <div class="col-sm-9">
+            <input id="payPalPayee" type="text" class="form-control" @bind="@_PayPalPayee" />
+        </div>
+    </div>
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="oAuthClientId" HelpText="Enter your OAuthClientId" ResourceKey="OAuthClientId" ResourceType="@resourceType">PayPal OAuthClientId: </Label>
+        <div class="col-sm-9">
+            <input id="oAuthClientId" type="text" class="form-control" @bind="@_OAuthClientId" />
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="oAuthClientSecret" HelpText="Enter Records Per Page" ResourceKey="OAuthClientSecret" ResourceType="@resourceType">PayPal OAuthClientSecret: </Label>
+        <div class="col-sm-9">
+            <input id="oAuthClientSecret" type="text" class="form-control" @bind="@_OAuthClientSecret" />
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <h5 class="mb-3">General Settings</h5>
+
     <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="googleApiKey" HelpText="Enter a Google ApiKey" ResourceKey="GoogleApiKey" ResourceType="@resourceType">Google ApiKey: </Label>
         <div class="col-sm-9">
@@ -248,6 +306,15 @@
     private string _authorizedUser;
     public List<User> _users { get; set; } = new List<User>();
     private List<Role> _roles { get; set; } = new List<Role>();
+
+    private string _PayPalPayee;
+    private bool _PayPalSandboxMode;
+    private string _OAuthClientId;
+    private string _OAuthClientSecret;
+    private string _payPalSandboxClientId;
+    private string _payPalSandboxClientSecret;
+    private string _payPalSandboxPayee;
+
     private bool _showCompany;
     private bool _showAddress;
     private bool _showPhone;
@@ -324,6 +391,13 @@
             _activeTab = SettingService.GetSetting(settings, "ActiveTab", "Files");
             _handlePullLink = SettingService.GetSetting(settings, "HandlePullLink", "");
 
+            _PayPalPayee = SettingService.GetSetting(settings, "PayPalPayee", "");
+            _payPalSandboxPayee = SettingService.GetSetting(settings, "PayPalSandboxPayee", "");
+            _PayPalSandboxMode = bool.Parse(SettingService.GetSetting(settings, "PayPalSandboxMode", "true"));
+            _payPalSandboxClientId = SettingService.GetSetting(settings, "PayPalSandboxClientId", "");
+            _payPalSandboxClientSecret = SettingService.GetSetting(settings, "PayPalSandboxClientSecret", "");
+            _OAuthClientId = SettingService.GetSetting(settings, "OAuthClientId", "");
+            _OAuthClientSecret = SettingService.GetSetting(settings, "OAuthClientSecret", "");
         }
         catch (Exception ex)
         {
@@ -367,6 +441,15 @@
             SettingService.SetSetting(settings, "ProjectManagerRole", _projectManagerRole);
             SettingService.SetSetting(settings, "ActiveTab", _activeTab);
             SettingService.SetSetting(settings, "HandlePullLink", _handlePullLink);
+
+            SettingService.SetSetting(settings, "PayPalPayee", _PayPalPayee);
+            SettingService.SetSetting(settings, "PayPalSandboxPayee", _payPalSandboxPayee);
+            SettingService.SetSetting(settings, "PayPalSandboxMode", _PayPalSandboxMode.ToString());
+            SettingService.SetSetting(settings, "PayPalSandboxClientId", _payPalSandboxClientId);
+            SettingService.SetSetting(settings, "PayPalSandboxClientSecret", _payPalSandboxClientSecret);
+            SettingService.SetSetting(settings, "OAuthClientId", _OAuthClientId);
+            SettingService.SetSetting(settings, "OAuthClientSecret", _OAuthClientSecret);
+
             await SettingService.UpdateModuleSettingsAsync(settings, ModuleState.ModuleId);
         }
         catch (Exception ex)

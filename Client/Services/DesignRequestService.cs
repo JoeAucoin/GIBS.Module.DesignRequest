@@ -265,5 +265,142 @@ namespace GIBS.Module.DesignRequest.Services
         {
             await DeleteAsync($"{NotificationToRequestApiurl}/{notificationToRequestId}?moduleid={moduleId}");
         }
+
+        //UserCredits Methods
+        //UserCredits Methods
+        private string UserCreditApiurl => CreateApiUrl("UserCredit");
+
+        public async Task<List<UserCredit>> GetUserCreditsAsync(int ModuleId)
+        {
+            // CHANGE: Used UserCreditApiurl instead of Apiurl
+            List<UserCredit> userCredits = await GetJsonAsync<List<UserCredit>>(CreateAuthorizationPolicyUrl($"{UserCreditApiurl}?moduleid={ModuleId}", EntityNames.Module, ModuleId));
+            return userCredits.OrderBy(item => item.CreatedOn).ToList();
+        }
+
+        public async Task<UserCredit> GetUserCreditAsync(int UserCreditId, int ModuleId)
+        {
+            // CHANGE: Used UserCreditApiurl instead of Apiurl
+            return await GetJsonAsync<UserCredit>(CreateAuthorizationPolicyUrl($"{UserCreditApiurl}/{UserCreditId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<UserCredit> GetUserCreditByUserAsync(int ModuleId, int UserId)
+        {
+            // CHANGE: Used UserCreditApiurl instead of Apiurl
+            return await GetJsonAsync<UserCredit>(CreateAuthorizationPolicyUrl($"{UserCreditApiurl}/user/{UserId}?moduleid={ModuleId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<UserCredit> AddUserCreditAsync(UserCredit UserCredit)
+        {
+            // CHANGE: Used UserCreditApiurl instead of Apiurl
+            return await PostJsonAsync<UserCredit>(CreateAuthorizationPolicyUrl($"{UserCreditApiurl}", EntityNames.Module, UserCredit.ModuleId), UserCredit);
+        }
+
+        public async Task<UserCredit> UpdateUserCreditAsync(UserCredit UserCredit)
+        {
+            // CHANGE: Used UserCreditApiurl instead of Apiurl
+            return await PutJsonAsync<UserCredit>(CreateAuthorizationPolicyUrl($"{UserCreditApiurl}/{UserCredit.UserCreditId}", EntityNames.Module, UserCredit.ModuleId), UserCredit);
+        }
+
+        public async Task DeleteUserCreditAsync(int UserCreditId, int ModuleId)
+        {
+            // CHANGE: Used UserCreditApiurl instead of Apiurl
+            await DeleteAsync(CreateAuthorizationPolicyUrl($"{UserCreditApiurl}/{UserCreditId}", EntityNames.Module, ModuleId));
+        }
+
+        // CreditPackage Methods
+        private string CreditPackageApiurl => CreateApiUrl("CreditPackage");
+
+        public async Task<List<CreditPackage>> GetCreditPackagesAsync(int ModuleId)
+        {
+            return await GetJsonAsync<List<CreditPackage>>(CreateAuthorizationPolicyUrl($"{CreditPackageApiurl}?moduleid={ModuleId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<CreditPackage> GetCreditPackageAsync(int CreditPackageId, int ModuleId)
+        {
+            return await GetJsonAsync<CreditPackage>(CreateAuthorizationPolicyUrl($"{CreditPackageApiurl}/{CreditPackageId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<CreditPackage> AddCreditPackageAsync(CreditPackage CreditPackage)
+        {
+            return await PostJsonAsync<CreditPackage>(CreateAuthorizationPolicyUrl($"{CreditPackageApiurl}", EntityNames.Module, CreditPackage.ModuleId), CreditPackage);
+        }
+
+        public async Task<CreditPackage> UpdateCreditPackageAsync(CreditPackage CreditPackage)
+        {
+            return await PutJsonAsync<CreditPackage>(CreateAuthorizationPolicyUrl($"{CreditPackageApiurl}/{CreditPackage.CreditPackageId}", EntityNames.Module, CreditPackage.ModuleId), CreditPackage);
+        }
+
+        public async Task DeleteCreditPackageAsync(int CreditPackageId, int ModuleId)
+        {
+            await DeleteAsync(CreateAuthorizationPolicyUrl($"{CreditPackageApiurl}/{CreditPackageId}", EntityNames.Module, ModuleId));
+        }
+
+        // CreditTransaction Methods
+        private string CreditTransactionApiurl => CreateApiUrl("CreditTransaction");
+
+        public async Task<List<CreditTransaction>> GetCreditTransactionsAsync(int ModuleId)
+        {
+            return await GetJsonAsync<List<CreditTransaction>>(CreateAuthorizationPolicyUrl($"{CreditTransactionApiurl}?moduleid={ModuleId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<List<CreditTransaction>> GetCreditTransactionsByUserAsync(int ModuleId, int UserId)
+        {
+            return await GetJsonAsync<List<CreditTransaction>>(CreateAuthorizationPolicyUrl($"{CreditTransactionApiurl}/user/{UserId}?moduleid={ModuleId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<CreditTransaction> GetCreditTransactionAsync(int TransactionId, int ModuleId)
+        {
+            return await GetJsonAsync<CreditTransaction>(CreateAuthorizationPolicyUrl($"{CreditTransactionApiurl}/{TransactionId}", EntityNames.Module, ModuleId));
+        }
+
+        public async Task<CreditTransaction> AddCreditTransactionAsync(CreditTransaction CreditTransaction, int ModuleId)
+        {
+            return await PostJsonAsync<CreditTransaction>(CreateAuthorizationPolicyUrl($"{CreditTransactionApiurl}?moduleid={ModuleId}", EntityNames.Module, ModuleId), CreditTransaction);
+        }
+
+        public async Task<CreditTransaction> UpdateCreditTransactionAsync(CreditTransaction CreditTransaction, int ModuleId)
+        {
+            return await PutJsonAsync<CreditTransaction>(CreateAuthorizationPolicyUrl($"{CreditTransactionApiurl}/{CreditTransaction.TransactionId}?moduleid={ModuleId}", EntityNames.Module, ModuleId), CreditTransaction);
+        }
+
+        public async Task DeleteCreditTransactionAsync(int TransactionId, int ModuleId)
+        {
+            await DeleteAsync(CreateAuthorizationPolicyUrl($"{CreditTransactionApiurl}/{TransactionId}", EntityNames.Module, ModuleId));
+        }
+
+        // PaymentRecord Methods
+        private string PaymentRecordApiurl => CreateApiUrl("PaymentRecord");
+
+        public async Task<List<Models.PaymentRecord>> GetPaymentRecordsAsync(int moduleId)
+        {
+            return await GetJsonAsync<List<Models.PaymentRecord>>($"{PaymentRecordApiurl}?moduleid={moduleId}");
+        }
+
+        public async Task<List<Models.PaymentRecord>> GetPaymentRecordsByUserAsync(int moduleId, int userId)
+        {
+            return await GetJsonAsync<List<Models.PaymentRecord>>($"{PaymentRecordApiurl}/user/{userId}?moduleid={moduleId}");
+        }
+
+        public async Task<Models.PaymentRecord> GetPaymentRecordAsync(int paymentId, int moduleId)
+        {
+            return await GetJsonAsync<Models.PaymentRecord>($"{PaymentRecordApiurl}/{paymentId}?moduleid={moduleId}");
+        }
+
+        public async Task<Models.PaymentRecord> AddPaymentRecordAsync(Models.PaymentRecord paymentRecord)
+        {
+            return await PostJsonAsync<Models.PaymentRecord>($"{PaymentRecordApiurl}?moduleid={paymentRecord.ModuleId}", paymentRecord);
+        }
+
+        public async Task<Models.PaymentRecord> UpdatePaymentRecordAsync(Models.PaymentRecord paymentRecord)
+        {
+            return await PutJsonAsync<Models.PaymentRecord>($"{PaymentRecordApiurl}/{paymentRecord.PaymentId}?moduleid={paymentRecord.ModuleId}", paymentRecord);
+        }
+
+        public async Task DeletePaymentRecordAsync(int paymentId, int moduleId)
+        {
+            await DeleteAsync($"{PaymentRecordApiurl}/{paymentId}?moduleid={moduleId}");
+        }
+
+
     }
 }

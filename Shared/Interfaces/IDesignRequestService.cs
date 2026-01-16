@@ -61,5 +61,37 @@ namespace GIBS.Module.DesignRequest.Services
         Task<NotificationToRequest> AddNotificationToRequestAsync(NotificationToRequest notificationToRequest);
         Task<NotificationToRequest> UpdateNotificationToRequestAsync(NotificationToRequest notificationToRequest);
         Task DeleteNotificationToRequestAsync(int notificationToRequestId, int moduleId);
+       
+        // UserCredits methods
+        Task<List<UserCredit>> GetUserCreditsAsync(int ModuleId);
+        Task<UserCredit> GetUserCreditAsync(int UserCreditId, int ModuleId);
+        Task<UserCredit> GetUserCreditByUserAsync(int ModuleId, int UserId);
+        Task<UserCredit> AddUserCreditAsync(UserCredit UserCredit);
+        Task<UserCredit> UpdateUserCreditAsync(UserCredit UserCredit);
+        Task DeleteUserCreditAsync(int UserCreditId, int ModuleId);
+
+        // CreditPackage methods
+        Task<List<CreditPackage>> GetCreditPackagesAsync(int ModuleId);
+        Task<CreditPackage> GetCreditPackageAsync(int CreditPackageId, int ModuleId);
+        Task<CreditPackage> AddCreditPackageAsync(CreditPackage CreditPackage);
+        Task<CreditPackage> UpdateCreditPackageAsync(CreditPackage CreditPackage);
+        Task DeleteCreditPackageAsync(int CreditPackageId, int ModuleId);
+
+        // CreditTransaction methods
+        Task<List<CreditTransaction>> GetCreditTransactionsAsync(int ModuleId);
+        Task<List<CreditTransaction>> GetCreditTransactionsByUserAsync(int ModuleId, int UserId);
+        Task<CreditTransaction> GetCreditTransactionAsync(int TransactionId, int ModuleId);
+        Task<CreditTransaction> AddCreditTransactionAsync(CreditTransaction CreditTransaction, int ModuleId);
+        Task<CreditTransaction> UpdateCreditTransactionAsync(CreditTransaction CreditTransaction, int ModuleId);
+        Task DeleteCreditTransactionAsync(int TransactionId, int ModuleId);
+
+        // PaymentRecord Methods
+        Task<List<Models.PaymentRecord>> GetPaymentRecordsAsync(int moduleId);
+        Task<List<Models.PaymentRecord>> GetPaymentRecordsByUserAsync(int moduleId, int userId);
+        Task<Models.PaymentRecord> GetPaymentRecordAsync(int paymentId, int moduleId);
+        Task<Models.PaymentRecord> AddPaymentRecordAsync(Models.PaymentRecord paymentRecord);
+        Task<Models.PaymentRecord> UpdatePaymentRecordAsync(Models.PaymentRecord paymentRecord);
+        Task DeletePaymentRecordAsync(int paymentId, int moduleId);
+
     }
 }

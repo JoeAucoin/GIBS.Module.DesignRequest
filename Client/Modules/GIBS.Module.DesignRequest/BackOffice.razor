@@ -1,0 +1,40 @@
+﻿@using System.Net
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using Oqtane.Models
+@using System.Text
+@using Microsoft.AspNetCore.Components.Authorization
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<BackOffice> Localizer
+@inject ISettingService SettingService
+@inject INotificationService NotificationService
+@inject IUserService UserService
+@inject IFileService FileService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>BackOffice</h3>
+
+<div class="text-center mb-3">
+
+
+    <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Style="margin:5px;" Class="btn btn-secondary" IconName="menu" Text="List Records" ResourceKey="List" />
+    <ActionLink Action="ManageUserCredits" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="people" Text="Manage User Credits" ResourceKey="ManageUserCredits" />
+    <ActionLink Action="ManageCreditPackages" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="tags" Text="Manage Credit Packages" ResourceKey="ManageCreditPackages" />
+    <ActionLink Action="Appliances" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="tablet" Text="Manage Appliances" ResourceKey="Appliances" />
+    <ActionLink Action="Details" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="cog" Text="Manage Details" ResourceKey="Details" />
+</div>
+
+
+@code {
+
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+
+    public override bool UseAdminContainer => false;
+
+}
