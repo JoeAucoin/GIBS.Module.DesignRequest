@@ -6,12 +6,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System;
 
 namespace GIBS.Module.DesignRequest.Services
 {
     public class DesignRequestService : ServiceBase, IDesignRequestService
     {
         public DesignRequestService(HttpClient http, SiteState siteState) : base(http, siteState) { }
+
+        private string PayPalApiUrl => CreateApiUrl("PayPal");
+
+        public async Task<PayPalOrderResponseDto> CreatePayPalOrderAsync(Models.PaymentRecord paymentRecord)
+        {
+            // Calls PayPalController.CreateOrder and deserializes into PayPalOrderResponseDto
+            return await PostJsonAsync<PayPalOrderResponseDto>(
+                CreateAuthorizationPolicyUrl(PayPalApiUrl, EntityNames.Module, paymentRecord.ModuleId),
+                paymentRecord);
+        }
+
+        private Task<T> PostJsonAsync<T>(string v, PaymentRecord paymentRecord)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<string> CapturePayPalOrderAsync(string orderId, int moduleId)
+        {
+            var url = CreateAuthorizationPolicyUrl($"{PayPalApiUrl}/CaptureOrder/{orderId}", EntityNames.Module, moduleId);
+            //  ServiceBase.HttpClient HttpClient => base.HttpClient;
+            // Change 2: Corrected to use the HttpClient instance property from ServiceBase
+            using var client = new HttpClient();
+            var response = await client.PostAsync(url, null);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
 
         private string Apiurl => CreateApiUrl("DesignRequest");
 
@@ -401,6 +429,22 @@ namespace GIBS.Module.DesignRequest.Services
             await DeleteAsync($"{PaymentRecordApiurl}/{paymentId}?moduleid={moduleId}");
         }
 
+        public async Task SendHtmlEmailAsync(string recipientName, string recipientEmail, string bccName, string bccEmail, string replyToName, string replyToEmail, string subject, string htmlMessage)
+        {
+            var request = new EmailRequest
+            {
+                RecipientName = recipientName,
+                RecipientEmail = recipientEmail,
+                BccName = bccName,
+                BccEmail = bccEmail,
+                ReplyToName = replyToName,
+                ReplyToEmail = replyToEmail,
+                Subject = subject,
+                HtmlMessage = htmlMessage
+            };
+
+            await PostJsonAsync($"{Apiurl}/SendEmail", request);
+        }
 
     }
 }

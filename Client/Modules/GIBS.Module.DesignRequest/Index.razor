@@ -12,6 +12,7 @@
 @inherits ModuleBase
 @inject Services.IDesignRequestService DesignRequestService
 @inject IUserService UserService
+@inject ISettingService SettingService
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<Index> Localizer
 
@@ -47,11 +48,11 @@ else
             <div class="col-md-4 text-end">
                
 
-                @if (_userCredits >= 3)
+                @if (_userCredits >= _creditsNeeeded)
                 {
                     @* Replaced ActionLink with standard anchor tag to support nested HTML (icon) *@
                     <a href="@NavigateUrl(ModuleState.ModuleId, "NewDesignRequest")" class="btn btn-lg btn-primary mx-2">
-                        <span class="oi oi-plus"></span> New Design Request<br />(3 Credits)
+                        <span class="oi oi-plus"></span> New Design Request<br />(@_creditsNeeeded Credits)
                     </a>
                 }
                 else
@@ -81,7 +82,8 @@ else
                                 <li>@pkg.Description</li>
                                 <li><strong>$@((pkg.Price / pkg.Credits).ToString("F2"))</strong> per credit</li>
                             </ul>
-                            <button type="button" class="btn btn-lg btn-outline-primary" @onclick="() => InitiatePayPalPurchase(pkg)">Buy Now</button>
+                            <ActionLink Action="BuyCredits" Parameters="@($"id={pkg.CreditPackageId}")" Security="SecurityAccessLevel.View" Class="btn btn-lg btn-outline-primary" Text="Buy Now" />
+                            
                         </div>
                     </div>
                 </div>
@@ -103,7 +105,8 @@ else
                         <th>@Localizer["Status"]</th>
                         <th>@Localizer["ProjectManager"]</th>
                         <th>@Localizer["CreatedOn"]</th>
-                        <th>@Localizer["Revisions"]</th>
+                        <th class="text-center">@Localizer["Revisions"]</th>
+                        <th class="text-center">@Localizer["CreditsUsed"]</th>
                         <th>@Localizer["Action"]</th>
                       
                         </Header>
@@ -113,8 +116,13 @@ else
                            
                             <td>@GetUserName(context.ProjectManagerUserId ?? 0)</td>
                             <td>@context.CreatedOn.ToShortDateString()</td>
-                            <td>
-                                <span class="badge bg-secondary">@(context.RevisionsUsed ?? 0) / 2 Free</span>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">@(context.RevisionsUsed ?? 0) / @_revisionsAllowed Free</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge @(context.CreditsSpent <= _creditsNeeeded ? "bg-success" : "bg-warning text-dark")">
+                                    @(context.CreditsSpent ?? 0)
+                                </span>
                             </td>
                             <td>
                                 <ActionLink Action="DesignRequestUpdate" Parameters="@($"id={context.DesignRequestId}")" Security="SecurityAccessLevel.View" Class="btn btn-sm btn-outline-dark" Text="View" />
@@ -137,7 +145,7 @@ else
                     <Pager Items="@_historyJobs" PageSize="10" Class="table table-sm text-muted mb-0">
                         <Header>
                         <th>@Localizer["Date"]</th>
-                        <th>@Localizer["Project"]</th>
+                        <th>@Localizer["ProjectName"]</th>
                         <th>@Localizer["ProjectManager"]</th>
                         <th>@Localizer["Status"]</th>
                         <th class="text-center">@Localizer["Revisions"]</th>
@@ -167,10 +175,13 @@ else
 
 @code {
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
+    public override bool UseAdminContainer => false;
 
     private bool IsLoggedIn = false;
     private int _userCredits = 0;
     private int _clientUserId = 0;
+    private int _creditsNeeeded = 3;
+    private int _revisionsAllowed = 2;
 
     private List<User> _users;
     // Additional properties mimicking the models for the wireframe
@@ -186,6 +197,10 @@ else
             _clientUserId = this.PageState.User.UserId; // Get current user
 
         }
+
+        var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+        _revisionsAllowed = int.Parse(SettingService.GetSetting(settings, "RevisionsAllowed", "2"));
+        _creditsNeeeded = int.Parse(SettingService.GetSetting(settings, "CreditsNeeded", "3"));
 
         _users = await DesignRequestService.GetUsersAsync();
         

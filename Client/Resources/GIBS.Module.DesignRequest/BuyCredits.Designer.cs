@@ -22,14 +22,14 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class ManageUserCredits {
+    internal class BuyCredits {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal ManageUserCredits() {
+        internal BuyCredits() {
         }
         
         /// <summary>
@@ -39,8 +39,7 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest.ManageUserCr" +
-                            "edits", typeof(ManageUserCredits).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest.BuyCredits", typeof(BuyCredits).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -62,29 +61,11 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Registered On.
+        ///   Looks up a localized string similar to  credits have been added to your account..
         /// </summary>
-        internal static string CreatedOn {
+        internal static string Message_PaymentSuccess {
             get {
-                return ResourceManager.GetString("CreatedOn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Credit Balance.
-        /// </summary>
-        internal static string CreditBalance {
-            get {
-                return ResourceManager.GetString("CreditBalance", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Display Name.
-        /// </summary>
-        internal static string DisplayName {
-            get {
-                return ResourceManager.GetString("DisplayName", resourceCulture);
+                return ResourceManager.GetString("Message_PaymentSuccess", resourceCulture);
             }
         }
     }

@@ -44,7 +44,7 @@
             <Row>
                 <td>@context.Name</td>
                 <td>@context.Credits</td>
-                <td>@context.Price.ToString("C")</td>
+                <td>$@context.Price.ToString("F2")</td>
                 <td>@context.Description</td>
                 <td>
                     @if (context.IsActive)
@@ -117,7 +117,8 @@
                             <InputCheckbox id="isActive" class="form-check-input" @bind-Value="_currentPackage.IsActive" />
                             <label class="form-check-label" for="isActive">@Localizer["IsActive"]</label>
                         </div>
-
+                       
+                        <AuditInfo CreatedBy="@_currentPackage.CreatedBy" CreatedOn="@_currentPackage.CreatedOn" ModifiedBy="@_currentPackage.ModifiedBy" ModifiedOn="@_currentPackage.ModifiedOn"></AuditInfo>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary me-2" @onclick="CloseModal">@Localizer["Cancel"]</button>
                             <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>

@@ -1,0 +1,221 @@
+﻿@using System.Net
+@using System.Linq
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Services
+@using Oqtane.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject IDesignRequestService DesignRequestService
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<ManagePaymentRecord> Localizer
+@inject IUserService UserService
+
+<h3>Payment Records</h3>
+
+@if (_isEditing)
+{
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">Edit Payment #@_editingPayment.PaymentId</h5>
+            <small class="fs-4 text-muted">@_editingDisplayName</small>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@_editingPayment" OnValidSubmit="@SaveAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Amount</label>
+                        <InputNumber class="form-control" @bind-Value="_editingPayment.Amount" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Credits</label>
+                        <InputNumber class="form-control" @bind-Value="_editingPayment.Credits" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Status</label>
+                        <InputText class="form-control" @bind-Value="_editingPayment.Status" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Provider</label>
+                        <InputText class="form-control" @bind-Value="_editingPayment.Provider" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Transaction Id</label>
+                        <InputText class="form-control" @bind-Value="_editingPayment.TransactionId" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">PayPal Payment Id</label>
+                        <InputText class="form-control" @bind-Value="_editingPayment.PP_PaymentId" />
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label fw-bold">PayPal Response (JSON)</label>
+                    <InputTextArea class="form-control" rows="6" @bind-Value="_editingPayment.PP_Response" />
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+                <br />
+                <AuditInfo CreatedBy="@_editingPayment.CreatedBy" CreatedOn="@_editingPayment.CreatedOn" ModifiedBy="@_editingPayment.ModifiedBy" ModifiedOn="@_editingPayment.ModifiedOn"></AuditInfo>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    @if (_paymentList == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="row mb-3">
+            <div class="col-md-6 offset-md-6 text-end">
+                <button class="btn btn-secondary btn-sm" @onclick="Refresh"><span class="oi oi-reload"></span> Refresh</button>
+            </div>
+        </div>
+
+        <Pager Items="@_paymentList" PageSize="10" Class="table table-striped table-hover align-middle mb-0">
+            <Header>
+            <th>@Localizer["PaymentId"]</th>
+            <th>@Localizer["User"]</th>
+            <th class="text-end">@Localizer["Amount"]</th>
+            <th class="text-center">@Localizer["Credits"]</th>
+            <th>@Localizer["Status"]</th>
+            <th>@Localizer["CreatedOn"]</th>
+            <th>@Localizer["Action"]</th>
+            </Header>
+            <Row>
+                <td>@context.PaymentId</td>
+                <td>@context.DisplayName</td>
+                <td class="text-end">$@context.Amount.ToString("F2")</td>
+                <td class="text-center">
+                    <span class="badge @(context.Credits > 0 ? "bg-success" : "bg-secondary")">@context.Credits</span>
+                </td>
+                <td>@context.Status</td>
+                <td>@context.CreatedOn.ToShortDateString()</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-dark" @onclick="@(() => Edit(context.PaymentId))">View / Edit</button>
+                </td>
+            </Row>
+        </Pager>
+    }
+}
+
+<div class="text-center mt-3 mb-3">
+    <ActionLink Action="BackOffice" Security="SecurityAccessLevel.Edit" Style="margin-right:10px;" Class="btn btn-secondary" IconName="menu" Text="Return to BackOffice" ResourceKey="BackOffice" />
+</div>
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+    public override bool UseAdminContainer => false;
+
+    private class PaymentRecordViewModel
+    {
+        public int PaymentId { get; set; }
+        public int UserId { get; set; }
+        public string DisplayName { get; set; }
+        public decimal Amount { get; set; }
+        public int Credits { get; set; }
+        public string Status { get; set; }
+        public DateTime CreatedOn { get; set; }
+    }
+
+    private List<PaymentRecordViewModel> _paymentList;
+    private bool _isEditing = false;
+    private PaymentRecord _editingPayment = new();
+    private string _editingDisplayName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error loading payment records {Error}", ex.Message);
+            AddModuleMessage("Error loading payment records", MessageType.Error);
+        }
+    }
+
+    private async Task LoadData()
+    {
+        var users = await DesignRequestService.GetUsersAsync();
+        var payments = await DesignRequestService.GetPaymentRecordsAsync(ModuleState.ModuleId);
+
+        _paymentList = payments
+            .Select(p =>
+            {
+                var user = users.FirstOrDefault(u => u.UserId == p.UserId);
+                return new PaymentRecordViewModel
+                {
+                    PaymentId = p.PaymentId,
+                    UserId = p.UserId,
+                    DisplayName = user?.DisplayName ?? $"User {p.UserId}",
+                    Amount = p.Amount,
+                    Credits = p.Credits,
+                    Status = p.Status,
+                    CreatedOn = p.CreatedOn
+                };
+            })
+            .OrderByDescending(p => p.CreatedOn)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task Refresh()
+    {
+        await LoadData();
+    }
+
+    private async Task Edit(int paymentId)
+    {
+        try
+        {
+            _editingPayment = await DesignRequestService.GetPaymentRecordAsync(paymentId, ModuleState.ModuleId);
+            var users = await DesignRequestService.GetUsersAsync();
+            _editingDisplayName = users.FirstOrDefault(u => u.UserId == _editingPayment.UserId)?.DisplayName ?? $"User {_editingPayment.UserId}";
+            _isEditing = true;
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error loading payment record {Error}", ex.Message);
+            AddModuleMessage("Error loading record", MessageType.Error);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            await DesignRequestService.UpdatePaymentRecordAsync(_editingPayment);
+            AddModuleMessage("Payment saved", MessageType.Success);
+            _isEditing = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error saving payment record {Error}", ex.Message);
+            AddModuleMessage("Error saving record", MessageType.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        _isEditing = false;
+    }
+}

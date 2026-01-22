@@ -89,7 +89,7 @@ namespace GIBS.Module.DesignRequest.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = PolicyNames.EditModule)] // Typically only Admins/System creates transactions
+        [Authorize(Policy = PolicyNames.ViewModule)] // Typically only Admins/System creates transactions
         public CreditTransaction Post([FromBody] CreditTransaction creditTransaction)
         {
             if (ModelState.IsValid)

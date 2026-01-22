@@ -27,5 +27,8 @@ namespace GIBS.Module.DesignRequest.Models
         public string ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
 
+        [NotMapped] 
+        public string DisplayName { get; set; }
+
     }
 }

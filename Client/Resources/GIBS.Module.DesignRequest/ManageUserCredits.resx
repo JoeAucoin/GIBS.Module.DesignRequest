@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CreatedOn" xml:space="preserve">
-    <value>Created On</value>
+    <value>Registered On</value>
   </data>
   <data name="CreditBalance" xml:space="preserve">
     <value>Credit Balance</value>

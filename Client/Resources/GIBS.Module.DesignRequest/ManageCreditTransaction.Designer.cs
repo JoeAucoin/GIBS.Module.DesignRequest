@@ -22,14 +22,14 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class ManageUserCredits {
+    internal class ManageCreditTransaction {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal ManageUserCredits() {
+        internal ManageCreditTransaction() {
         }
         
         /// <summary>
@@ -39,8 +39,8 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest.ManageUserCr" +
-                            "edits", typeof(ManageUserCredits).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest.ManageCredit" +
+                            "Transaction", typeof(ManageCreditTransaction).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -62,29 +62,20 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Registered On.
+        ///   Looks up a localized string similar to Design.
         /// </summary>
-        internal static string CreatedOn {
+        internal static string DesignRequestId {
             get {
-                return ResourceManager.GetString("CreatedOn", resourceCulture);
+                return ResourceManager.GetString("DesignRequestId", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Credit Balance.
+        ///   Looks up a localized string similar to ID.
         /// </summary>
-        internal static string CreditBalance {
+        internal static string TransactionId {
             get {
-                return ResourceManager.GetString("CreditBalance", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Display Name.
-        /// </summary>
-        internal static string DisplayName {
-            get {
-                return ResourceManager.GetString("DisplayName", resourceCulture);
+                return ResourceManager.GetString("TransactionId", resourceCulture);
             }
         }
     }

@@ -436,43 +436,38 @@ else
 
             </TabPanel>
             <TabPanel Name="Files">
-                <h4 class="mt-4">Files</h4>
+                <h4 class="mt-1">Files Ready to Review</h4>
                 @if (_fileToRequests != null && _fileToRequests.Any())
                 {
-                    <table class="table table-striped mt-3">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Notes</th>
-                                <th class="text-end">Added By</th>
-                                <th class="text-end">Date</th>
-                                <th style="width:1px;"></th>
-                                <th style="width:1px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var file in _fileToRequests.OrderByDescending(f => f.CreatedOn))
-                            {
-                                <tr>
-                                    <td>@file.Name</td>
-                                    <td>@file.Description</td>
-                                    <td class="text-end">@file.CreatedBy</td>
-                                    <td class="text-end">@file.CreatedOn.ToLocalTime().ToString("g")</td>
-                                    <td class="text-end">
-                                        <a href="@file.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
-                                    </td>
-                                    <td class="text-end">
-                                        <ActionDialog Header="Confirm Delete" Message="@($"Are you sure you want to delete the file '{file.Name}'?")" Action="Delete" OnClick="@(async () => await DeleteFileToRequest(file))" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
-
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <Pager Items="@_fileToRequests.OrderByDescending(f => f.CreatedOn)" Class="table table-striped mt-3">
+                        <Header>
+                        <th>Name</th>
+                        <th>Notes</th>
+                        <th class="text-center">Ready to Review</th>
+                        <th class="text-end">Updated By</th>
+                        <th class="text-end">Date</th>
+                        <th style="width:1px;"></th>
+                        </Header>
+                        <Row>
+                            <td>@context.Name</td>
+                            <td>@context.Description</td>
+                            <td class="text-center align-top">
+                                <input type="checkbox"
+                                       class="form-check-input form-check-input-lg"
+                                       checked="@context.ApprovedForClientReview"
+                                       disabled />
+                            </td>
+                            <td class="text-end">@context.ModifiedBy</td>
+                            <td class="text-end">@context.ModifiedOn.ToLocalTime().ToString("g")</td>
+                            <td class="text-end">
+                                <a href="@context.FilePath" target="_blank" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </Row>
+                    </Pager>
                 }
                 else
                 {
-                    <p class="mt-3"><em>No files have been added to this request.</em></p>
+                    <p class="mt-3"><em>No files have been marked "Ready to Review".</em></p>
                 }
                 <div class="card mt-3">
                     <div class="card-header">
@@ -488,7 +483,7 @@ else
                         <div class="row mb-3">
                             <Label Class="col-sm-3" For="fileDescription">Notes:</Label>
                             <div class="col-sm-9">
-                                <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3" maxlength="254"></textarea>
+                                <textarea id="fileDescription" class="form-control" @bind="@_newFileToRequest.Description" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -496,7 +491,7 @@ else
                             <div class="col-sm-9">
                                 <div class="form-check">
                                     <input id="notifyProjectManager" type="checkbox" class="form-check-input" @bind="@_notifyProjectManagerOnUpload" />
-                                    <label class="form-check-label" for="notifyProjectManager">Send a notification email to the @_whoAmI_Emailing.</label>
+                                    <label class="form-check-label" for="notifyProjectManager">Send an email to your @_whoAmI_Emailing.</label>
                                 </div>
                             </div>
                         </div>
@@ -515,8 +510,8 @@ else
                 </div>
 
             </TabPanel>
-            <TabPanel Name="Notes" Heading="Internal Notes">
-                <h4 class="mt-4">Project Notes</h4>
+            <TabPanel Name="Notes" Heading="Client Notes">
+                <h4 class="mt-4">Client Communication/Notes</h4>
                 @if (_noteToRequests != null && _noteToRequests.Any())
                 {
                     <div class="list-group mt-3">
@@ -537,7 +532,7 @@ else
                 }
                 else
                 {
-                    <p class="mt-3"><em>No designer notes have been added to this request.</em></p>
+                    <p class="mt-3"><em>No notes have been added to this request.</em></p>
                 }
                 <div class="card mt-3">
                     <div class="card-body">
@@ -552,7 +547,7 @@ else
                     </div>
                 </div>
             </TabPanel>
-            <TabPanel Name="Notifications" Heading="Notifications">
+            <TabPanel Name="Notifications" Heading="Notifications" Security="SecurityAccessLevel.Edit">
                 <h4 class="mt-4">Notification History</h4>
                 <div class="card mt-3">
                     <div class="card-header">Send New Notification</div>
@@ -615,7 +610,7 @@ else
 
         <div class="mt-3">
             <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
-            <NavLink class="btn btn-secondary" href="@NavigateUrl(ModuleState.ModuleId, "List")">@Localizer["Cancel"]</NavLink>
+            <NavLink class="btn btn-secondary" href="@NavigateUrl()">@Localizer["Cancel"]</NavLink>
 
 
         </div>
@@ -626,13 +621,14 @@ else
 
 @code {
 
+    public override string Actions => "DesignRequestUpdate"; // or remove this override
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
 
     public override bool UseAdminContainer => false;
 
     // private Oqtane.Models.User UserDetails;
 
-    public override string Actions => "Edit";
+    
     private string _title = "Manage Design Request";
     public override string Title => _title;
 
@@ -667,8 +663,8 @@ else
     private string _projectManagerRole;
 
     // private string _returnurl = string.Empty;
-    private bool IsDesignerRole { get; set; }
-    private bool isDesignerLoggedIn = false;
+    //private bool IsDesignerRole { get; set; }
+    //private bool isDesignerLoggedIn = false;
     private int _emailToUserId = 0;
     private string _whoAmI_Emailing = "Project Manager";
 
@@ -691,7 +687,7 @@ else
         try
         {
 
-            //  SetCustomModuleTitle("Hello World");
+            await CheckAuthenticationAsync();
 
             _users = await DesignRequestService.GetUsersAsync();
 
@@ -731,27 +727,11 @@ else
                 _designRequest = await DesignRequestService.GetDesignRequestAsync(designRequestId, ModuleState.ModuleId);
                 if (_designRequest != null)
                 {
-                    // modifiedon = _designRequest.ModifiedOn.ToLocalTime();
-                    // Now that _designRequest is loaded, check access
-                    if (!HasAccess())
-                    {
-                        AddModuleMessage("You do not have permission to view this record.", MessageType.Error);
-                        NavigationManager.NavigateTo(NavigateUrl());
-                        return;
-                    }
+                    // Need to check if a Project Manager has been assigned
+                    _emailToUserId = _designRequest.ProjectManagerUserId ?? 0;
+                    _whoAmI_Emailing = "Project Manager";
 
-                    if (isDesignerLoggedIn)
-                    {
-                        _emailToUserId = _designRequest.ProjectManagerUserId ?? 0;
-                        _whoAmI_Emailing = "Project Manager";
-                    }
-                    else
-                    {
-                        _emailToUserId = _designRequest.AssignedToUserId;
-                        _whoAmI_Emailing = "Designer";
-                    }
-
-                    //_users = await DesignRequestService.GetUsersByRoleAsync(PageState.Site.SiteId,_designerRole);
+                  
                     DecodeDesignRequestProperties();
                     await LoadApplianceData();
                     await LoadDetailData();
@@ -782,6 +762,19 @@ else
         {
             await logger.LogError(ex, "Error Loading Design Request {Error}", ex.Message);
             AddModuleMessage(Localizer["Message.LoadError"], MessageType.Error);
+        }
+    }
+
+    private async Task CheckAuthenticationAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // Redirect to the Oqtane login page, appending the current URL as a return parameter
+            NavigationManager.NavigateTo(NavigateUrl());
         }
     }
 
@@ -933,31 +926,31 @@ else
         return user?.DisplayName ?? $"Unknown User ({userId})";
     }
 
-    private bool HasAccess()
-    {
-        var user = PageState.User;
-        if (user == null) return false;
+    // private bool HasAccess()
+    // {
+    //     var user = PageState.User;
+    //     if (user == null) return false;
 
-        if(user.UserId == _designRequest.UserId)
-        {
-            // Request Owner: can access their own records
-            return true;
-        }   
+    //     if(user.UserId == _designRequest.UserId)
+    //     {
+    //         // Request Owner: can access their own records
+    //         return true;
+    //     }   
 
-        // Project Manager Role: can access all records
-        if (UserSecurity.IsAuthorized(user, _projectManagerRole) || UserSecurity.IsAuthorized(user, "Administrators"))
-            return true;
+    //     // Project Manager Role: can access all records
+    //     if (UserSecurity.IsAuthorized(user, _projectManagerRole) || UserSecurity.IsAuthorized(user, "Administrators"))
+    //         return true;
 
 
-        // Designer Role: can access if assigned
-        if (UserSecurity.IsAuthorized(user, _designerRole) && user.UserId == _designRequest.AssignedToUserId)
-        {
-            isDesignerLoggedIn = true;
-            return true;
-        }
+    //     // Designer Role: can access if assigned
+    //     if (UserSecurity.IsAuthorized(user, _designerRole) && user.UserId == _designRequest.AssignedToUserId)
+    //     {
+    //         isDesignerLoggedIn = true;
+    //         return true;
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 
     private async Task SendFileNotificationToProjectManagerAsync(FileToRequest fileToRequest)
     {
@@ -1170,7 +1163,10 @@ else
 
     private async Task LoadFileData()
     {
-        _fileToRequests = await DesignRequestService.GetFileToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        var files = await DesignRequestService.GetFileToRequestsAsync(_designRequest.DesignRequestId, ModuleState.ModuleId);
+        var currentUserName = PageState.User?.Username;
+        _fileToRequests = files.Where(f => f.ApprovedForClientReview || f.CreatedBy == currentUserName).ToList();
+        //_fileToRequests = files.Where(f => f.ApprovedForClientReview).ToList();
         StateHasChanged();
     }
 
@@ -1339,6 +1335,9 @@ else
             {
                 string newFileName = $"{_designRequest.DesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
                 newFileName = newFileName.Replace(" ", "_"); // Replace spaces with underscores
+                // Remove any non-alphanumeric characters except for underscore, hyphen, and dot
+                newFileName = System.Text.RegularExpressions.Regex.Replace(newFileName, @"[^a-zA-Z0-9_\-\.]", "");
+
                 var renamedFile = await RenameFile(fileId, newFileName);
                 if (renamedFile == null)
                 {
@@ -1408,22 +1407,22 @@ else
         return null;
     }
 
-    private async Task DeleteFileToRequest(FileToRequest file)
-    {
-        try
-        {
-            await DesignRequestService.DeleteFileToRequestAsync(file.FileToRequestId, ModuleState.ModuleId);
+    // private async Task DeleteFileToRequest(FileToRequest file)
+    // {
+    //     try
+    //     {
+    //         await DesignRequestService.DeleteFileToRequestAsync(file.FileToRequestId, ModuleState.ModuleId);
 
-            await FileService.DeleteFileAsync(file.FileId);
-            await LoadFileData();
-            AddModuleMessage("File removed successfully.", MessageType.Success);
-        }
-        catch (Exception ex)
-        {
-            await logger.LogError(ex, "Error Deleting File From Request: {Error}", ex.Message);
-            AddModuleMessage("Error removing file.", MessageType.Error);
-        }
-    }
+    //         await FileService.DeleteFileAsync(file.FileId);
+    //         await LoadFileData();
+    //         AddModuleMessage("File removed successfully.", MessageType.Success);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         await logger.LogError(ex, "Error Deleting File From Request: {Error}", ex.Message);
+    //         AddModuleMessage("Error removing file.", MessageType.Error);
+    //     }
+    // }
 
     private async Task Save()
     {

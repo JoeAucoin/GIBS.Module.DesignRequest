@@ -25,5 +25,14 @@ namespace GIBS.Module.DesignRequest.Models
         public DateTime CreatedOn { get; set; }
         public string ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
+
+        [NotMapped]
+        public string EmailAddress { get; set; }
+
+        [NotMapped]
+        public string PurchaserName { get; set; }
+
+        [NotMapped]
+        public int Credits { get; set; }
     }
 }

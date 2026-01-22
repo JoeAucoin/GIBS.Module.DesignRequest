@@ -141,4 +141,13 @@
   <data name="ContactName.Text" xml:space="preserve">
     <value>Contact Name:</value>
   </data>
+  <data name="SendFileLink" xml:space="preserve">
+    <value>Send File Link to Client</value>
+  </data>
+  <data name="DesignStatus" xml:space="preserve">
+    <value>Design Status:</value>
+  </data>
+  <data name="ProjectStatus" xml:space="preserve">
+    <value>Project Status:</value>
+  </data>
 </root>

@@ -80,7 +80,7 @@ else
             </select>
         </div>
         <div class="col-md-2">
-            <label for="statusFilter">Status:</label>
+            <label for="statusFilter">Design Status:</label>
             <select id="statusFilter" class="form-select" @bind="SelectedStatus">
                 <option value="">All</option>
                 @if (_statusOptions != null)
@@ -309,6 +309,8 @@ else
     {
         try
         {
+            await CheckAuthenticationAsync();
+
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
             _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "Administrators");
@@ -347,6 +349,22 @@ else
         {
             await logger.LogError(ex, "Error Loading Design Requests {Error}", ex.Message);
             AddModuleMessage(Localizer["Error Loading Design Requests"], MessageType.Error);
+        }
+    }
+
+    private async Task CheckAuthenticationAsync()
+    {
+        // @inject AuthenticationStateProvider AuthenticationStateProvider
+        // @inject NavigationManager NavigationManager
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // Redirect to the Oqtane login page, appending the current URL as a return parameter
+            NavigationManager.NavigateTo(NavigateUrl());
         }
     }
 

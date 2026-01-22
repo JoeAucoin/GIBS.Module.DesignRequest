@@ -89,7 +89,7 @@ namespace GIBS.Module.DesignRequest.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public PaymentRecord Post([FromBody] PaymentRecord paymentRecord)
         {
             if (ModelState.IsValid)
@@ -107,7 +107,7 @@ namespace GIBS.Module.DesignRequest.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public PaymentRecord Put(int id, [FromBody] PaymentRecord paymentRecord)
         {
             if (ModelState.IsValid && _repository.GetPaymentRecord(id) != null)

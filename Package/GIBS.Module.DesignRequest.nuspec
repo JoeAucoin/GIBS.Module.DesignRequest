@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>$projectname$</id>
-        <version>1.0.6</version>
+        <version>1.0.7</version>
         <authors>GIBS</authors>
         <owners>GIBS</owners>
         <title>DesignRequest</title>
@@ -26,6 +26,13 @@
         <file src="..\Server\bin\Release\$targetframework$\$ProjectName$.Server.Oqtane.pdb" target="lib\$targetframework$" />
         <file src="..\Shared\bin\Release\$targetframework$\$ProjectName$.Shared.Oqtane.dll" target="lib\$targetframework$" />
         <file src="..\Shared\bin\Release\$targetframework$\$ProjectName$.Shared.Oqtane.pdb" target="lib\$targetframework$" />
+        <!-- PayPal Dependencies -->
+        <file src="..\Server\bin\Release\$targetframework$\PayPalServerSDK.dll" target="lib\$targetframework$" />
+        <file src="..\Server\bin\Release\$targetframework$\APIMatic.Core.dll" target="lib\$targetframework$" />
+        <file src="..\Server\bin\Release\$targetframework$\Newtonsoft.Json.dll" target="lib\$targetframework$" />
+        <file src="..\Server\bin\Release\$targetframework$\Polly.dll" target="lib\$targetframework$" />
+      <!--  <file src="..\Server\bin\Release\$targetframework$\Microsoft.Extensions.Configuration.Binder.dll" target="lib\$targetframework$" />  -->
+        <!-- Static Assets -->
         <file src="..\Server\wwwroot\**\*.*" target="wwwroot" />
         <file src="icon.png" target="" />
     </files>

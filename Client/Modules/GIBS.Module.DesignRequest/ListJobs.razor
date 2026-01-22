@@ -46,8 +46,8 @@ else
             <td>@context.CreatedOn.ToShortDateString()</td>
             <td>@context.ModifiedOn.ToShortDateString()</td>
             <td>
-                <ActionLink Action="Edit" Parameters="@($"id={context.DesignRequestId}&r=c")" Class="btn btn-primary btn-sm"
-                            Security="SecurityAccessLevel.Admin" ResourceKey="EditButton" Text="@Localizer["EditButton"]" />
+                <ActionLink Action="DesignRequestUpdate" Parameters="@($"id={context.DesignRequestId}&r=c")" Class="btn btn-primary btn-sm"
+                            Security="SecurityAccessLevel.View" ResourceKey="EditButton" Text="@Localizer["View"]" />
             </td>
             <td>
                 <ActionDialog Header="@Localizer["Header.Delete"]" Message="@(Localizer["Message.Delete", context.ProjectName])"
@@ -59,6 +59,9 @@ else
     </Pager>
 }
 
+<div class="text-center mt-3 mb-3">
+    <ActionLink Action="Index" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" IconName="dashboard" Text="Return to Dashboard" ResourceKey="Dashboard" />
+</div>
 
 @code {
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.View;
@@ -71,10 +74,14 @@ else
  //   private string _designerRole;
  //   private int _designerUserId = 0;
     private int _clientUserId = 0;
+
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            await CheckAuthenticationAsync();
+
             _clientUserId = this.PageState.User.UserId; // Default to current user
             // var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             // _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
@@ -98,7 +105,21 @@ else
         }
     }
 
+    private async Task CheckAuthenticationAsync()
+    {
+        // @inject AuthenticationStateProvider AuthenticationStateProvider
+        // @inject NavigationManager NavigationManager
+        
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
+        if (user?.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // Redirect to the Oqtane login page, appending the current URL as a return parameter
+            NavigationManager.NavigateTo(NavigateUrl());
+        }
+    }
 
     private string GetUserName(int userId)
     {

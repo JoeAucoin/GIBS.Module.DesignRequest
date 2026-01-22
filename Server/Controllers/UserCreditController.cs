@@ -74,7 +74,7 @@ namespace GIBS.Module.DesignRequest.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public UserCredit Post([FromBody] UserCredit userCredit)
         {
             if (ModelState.IsValid && IsAuthorizedEntityId(EntityNames.Module, userCredit.ModuleId))
@@ -92,7 +92,7 @@ namespace GIBS.Module.DesignRequest.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = PolicyNames.EditModule)]
+        [Authorize(Policy = PolicyNames.ViewModule)]
         public UserCredit Put(int id, [FromBody] UserCredit userCredit)
         {
             if (ModelState.IsValid && IsAuthorizedEntityId(EntityNames.Module, userCredit.ModuleId) && _repository.GetUserCredit(id) != null)

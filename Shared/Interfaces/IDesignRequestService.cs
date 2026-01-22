@@ -93,5 +93,15 @@ namespace GIBS.Module.DesignRequest.Services
         Task<Models.PaymentRecord> UpdatePaymentRecordAsync(Models.PaymentRecord paymentRecord);
         Task DeletePaymentRecordAsync(int paymentId, int moduleId);
 
+        // Return the DTO with both OrderId and raw PayPal JSON
+        Task<PayPalOrderResponseDto> CreatePayPalOrderAsync(Models.PaymentRecord paymentRecord);
+
+        // Update the return type to string
+        Task<string> CapturePayPalOrderAsync(string orderId, int moduleId);
+
+        // NEW METHOD
+        Task SendHtmlEmailAsync(string recipientName, string recipientEmail, string bccName, string bccEmail, string replyToName, string replyToEmail, string subject, string htmlMessage);
+
+
     }
 }

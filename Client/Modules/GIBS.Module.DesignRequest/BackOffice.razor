@@ -1,9 +1,12 @@
 ﻿@using System.Net
+@using System.Linq
+@using System.Globalization
 @using Oqtane.Modules.Controls
 @using GIBS.Module.DesignRequest.Services
 @using GIBS.Module.DesignRequest.Models
 @using Oqtane.Services
 @using Oqtane.Models
+@using Oqtane.Security
 @using System.Text
 @using Microsoft.AspNetCore.Components.Authorization
 
@@ -21,20 +24,408 @@
 <h3>BackOffice</h3>
 
 <div class="text-center mb-3">
-
-
     <ActionLink Action="List" Security="SecurityAccessLevel.Edit" Style="margin:5px;" Class="btn btn-secondary" IconName="menu" Text="List Records" ResourceKey="List" />
-    <ActionLink Action="ManageUserCredits" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="people" Text="Manage User Credits" ResourceKey="ManageUserCredits" />
+    @if (_hasAccess)
+    {
+        <ActionLink Action="ManageUserCredits" Security="SecurityAccessLevel.Edit" Style="margin:5px;" Class="btn btn-secondary" IconName="people" Text="Manage User Credits" ResourceKey="ManageUserCredits" />
+    }    
     <ActionLink Action="ManageCreditPackages" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="tags" Text="Manage Credit Packages" ResourceKey="ManageCreditPackages" />
     <ActionLink Action="Appliances" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="tablet" Text="Manage Appliances" ResourceKey="Appliances" />
     <ActionLink Action="Details" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="cog" Text="Manage Details" ResourceKey="Details" />
+    <ActionLink Action="ManageCreditTransaction" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="key" Text="Manage Credit Transactions" ResourceKey="ManageCreditTransaction" />
+    <ActionLink Action="ManagePaymentRecord" Security="SecurityAccessLevel.Admin" Style="margin:5px;" Class="btn btn-secondary" IconName="key" Text="Manage Payment Records" ResourceKey="ManagePaymentRecord" />
 </div>
 
+@if (_designRequests == null)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else
+{
+    @if (_hasAccess)
+    {
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Requests</div>
+                        <div class="h4 mb-0">@_totalRequests</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Active (ProjectStatus = Active)</div>
+                        <div class="h4 mb-0">@_activeCount</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Created Last 30 Days</div>
+                        <div class="h4 mb-0">@_createdLast30</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Unassigned (PM or Designer)</div>
+                        <div class="h4 mb-0">@_unassignedCount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">Project Status Distribution</div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center mb-3">
+                            <div title="@BuildPieTitle(_statusCounts.Select(k => (k.Key, k.Value)))"
+                            style="@($"width:180px;height:180px;border-radius:50%;background:{BuildPieBackground(_statusCounts.Select(k => (k.Key, k.Value)))};")"></div>
+                        </div>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th class="text-end">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var kvp in _statusCounts)
+                                {
+                                    <tr>
+                                        <td>@kvp.Key</td>
+                                        <td class="text-end">@kvp.Value</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">Assignments by Project Manager</div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center mb-3">
+                            <div title="@BuildPieTitle(_managerAssignments.Select(m => (m.Name, m.Count)))"
+                            style="@($"width:180px;height:180px;border-radius:50%;background:{BuildPieBackground(_managerAssignments.Select(m => (m.Name, m.Count)))};")"></div>
+                        </div>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Project Manager</th>
+                                    <th class="text-end">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _managerAssignments)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end">@item.Count</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">Assignments by Designer</div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center mb-3">
+                            <div title="@BuildPieTitle(_designerAssignments.Select(d => (d.Name, d.Count)))"
+                            style="@($"width:180px;height:180px;border-radius:50%;background:{BuildPieBackground(_designerAssignments.Select(d => (d.Name, d.Count)))};")"></div>
+                        </div>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Designer</th>
+                                    <th class="text-end">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _designerAssignments)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end">@item.Count</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (isDesignerLoggedIn)
+    {
+       <h2>@PageState.User.DisplayName</h2>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">My Assigned Design Requests</div>
+                        <div class="h4 mb-0">@_designerTotal</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Active</div>
+                        <div class="h4 mb-0">@_designerActive</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Last 30 Days</div>
+                        <div class="h4 mb-0">@_designerLast30</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">My Design Requests by Status</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr><th>Status</th><th class="text-end">Count</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kvp in _designerStatusCounts)
+                        {
+                            <tr>
+                                <td>@kvp.Key</td>
+                                <td class="text-end">@kvp.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
 
 @code {
 
     public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
-
     public override bool UseAdminContainer => false;
 
+    private List<User> _users;
+    private List<DesignRequest> _designRequests;
+
+    // Dashboard data
+    private Dictionary<string, int> _statusCounts = new();
+    private List<AssignmentCount> _managerAssignments = new();
+    private List<AssignmentCount> _designerAssignments = new();
+    private int _totalRequests;
+    private int _activeCount;
+    private int _createdLast30;
+    private int _unassignedCount;
+    private string _projectManagerRole;
+    private string _designerRole;
+    private bool _hasAccess = false;
+    private bool isDesignerLoggedIn = false;
+
+    private int _designerTotal;
+    private int _designerActive;
+    private int _designerLast30;
+    private Dictionary<string,int> _designerStatusCounts = new();
+
+    private class AssignmentCount
+    {
+        public string Name { get; set; }
+        public int Count { get; set; }
+    }
+
+    private readonly string[] _palette = new[]
+    {
+        "#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f",
+        "#edc949", "#af7aa1", "#ff9da7", "#9c755f", "#bab0ab"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthenticationAsync();
+        
+        _users = await DesignRequestService.GetUsersAsync();
+
+        var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+        _projectManagerRole = SettingService.GetSetting(settings, "ProjectManagerRole", "Administrators");
+        _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
+        
+        _hasAccess = HasAccess();
+        isDesignerLoggedIn = IsDesigner();
+
+        var requests = await DesignRequestService.GetDesignRequestsAsync(ModuleState.ModuleId);
+        _designRequests = requests?.ToList() ?? new List<DesignRequest>();
+
+        BuildDashboard();
+        BuildDesignerDashboard();
+    }
+
+    private async Task CheckAuthenticationAsync()
+    {
+        // @inject AuthenticationStateProvider AuthenticationStateProvider
+        // @inject NavigationManager NavigationManager
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // Redirect to the Oqtane login page, appending the current URL as a return parameter
+            NavigationManager.NavigateTo(NavigateUrl());
+        }
+    }
+
+    private bool HasAccess()
+    {
+        var user = PageState.User;
+        if (user == null) return false;
+        return UserSecurity.IsAuthorized(user, _projectManagerRole) || UserSecurity.IsAuthorized(user, "Administrators");
+    }
+
+    private bool IsDesigner()
+    {
+        var user = PageState.User;
+        if (user == null) return false;
+        return UserSecurity.IsAuthorized(user, _designerRole) && !_hasAccess; // designer but not admin/PM
+    }
+
+    private void BuildDashboard()
+    {
+        if (_designRequests == null || _designRequests.Count == 0)
+        {
+            _statusCounts = new Dictionary<string, int>();
+            _managerAssignments = new List<AssignmentCount>();
+            _designerAssignments = new List<AssignmentCount>();
+            _totalRequests = _activeCount = _createdLast30 = _unassignedCount = 0;
+            return;
+        }
+
+        _totalRequests = _designRequests.Count;
+        _activeCount = _designRequests.Count(r => string.Equals(r.ProjectStatus, "Active", StringComparison.OrdinalIgnoreCase));
+        _createdLast30 = _designRequests.Count(r => r.CreatedOn >= DateTime.UtcNow.AddDays(-30));
+        _unassignedCount = _designRequests.Count(r => (r.ProjectManagerUserId ?? 0) == 0 || r.AssignedToUserId == 0);
+
+        _statusCounts = _designRequests
+            .GroupBy(r => string.IsNullOrWhiteSpace(r.ProjectStatus) ? "Unspecified" : r.ProjectStatus)
+            .OrderByDescending(g => g.Count())
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        _managerAssignments = _designRequests
+            .GroupBy(r => r.ProjectManagerUserId ?? 0)
+            .Select(g => new AssignmentCount { Name = GetUserName(g.Key), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        _designerAssignments = _designRequests
+            .GroupBy(r => r.AssignedToUserId)
+            .Select(g => new AssignmentCount { Name = GetUserName(g.Key), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToList();
+    }
+
+    private void BuildDesignerDashboard()
+    {
+        if (!isDesignerLoggedIn || _designRequests == null) return;
+
+        var myId = PageState.User.UserId;
+        var mine = _designRequests.Where(r => r.AssignedToUserId == myId).ToList();
+
+        _designerTotal = mine.Count;
+        _designerActive = mine.Count(r => string.Equals(r.ProjectStatus, "Active", StringComparison.OrdinalIgnoreCase));
+        _designerLast30 = mine.Count(r => r.CreatedOn >= DateTime.UtcNow.AddDays(-30));
+        _designerStatusCounts = mine
+            .GroupBy(r => string.IsNullOrWhiteSpace(r.ProjectStatus) ? "Unspecified" : r.ProjectStatus)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private string BuildPieBackground(IEnumerable<(string Label, int Count)> slices)
+    {
+        var list = slices?.Where(s => s.Count > 0).ToList() ?? new List<(string Label, int Count)>();
+        var total = list.Sum(s => s.Count);
+        if (total <= 0)
+        {
+            return "conic-gradient(#e0e0e0 0deg 360deg)";
+        }
+
+        var sb = new StringBuilder("conic-gradient(");
+        double accumulated = 0;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var slice = list[i];
+            var color = _palette[i % _palette.Length];
+            var start = accumulated / total * 360.0;
+            accumulated += slice.Count;
+            var end = accumulated / total * 360.0;
+
+            sb.Append($"{color} {start.ToString("0.##", CultureInfo.InvariantCulture)}deg {end.ToString("0.##", CultureInfo.InvariantCulture)}deg");
+            if (i < list.Count - 1)
+            {
+                sb.Append(", ");
+            }
+        }
+        sb.Append(")");
+        return sb.ToString();
+    }
+
+    private string BuildPieTitle(IEnumerable<(string Label, int Count)> slices)
+    {
+        var list = slices?.Where(s => s.Count > 0).ToList() ?? new List<(string Label, int Count)>();
+        var total = list.Sum(s => s.Count);
+        if (total == 0)
+        {
+            return "No data";
+        }
+
+        var sb = new StringBuilder();
+        for (int i = 0; i < list.Count; i++)
+        {
+            var slice = list[i];
+            var pct = (double)slice.Count / total * 100.0;
+            sb.Append($"{slice.Label}: {slice.Count} ({pct.ToString("0.#", CultureInfo.InvariantCulture)}%)");
+            if (i < list.Count - 1)
+            {
+                //sb.Append("&#10;"); // newline for tooltip
+                sb.Append(Environment.NewLine); // newline for tooltip
+            }
+        }
+        return sb.ToString();
+    }
+
+    private string GetUserName(int userId)
+    {
+        if (userId == 0)
+        {
+            return "Unassigned";
+        }
+        var user = _users?.FirstOrDefault(u => u.UserId == userId);
+        return user?.DisplayName ?? $"User {userId}";
+    }
+
+    private readonly string[] _adminFunc = new[] { "Administrators", "ProjectManager" };
+
+    private bool IsAdmin()
+    {
+        var user = PageState.User;
+        if (user == null) return false;
+        return _adminFunc.Any(r => UserSecurity.IsAuthorized(user, r));
+    }
 }

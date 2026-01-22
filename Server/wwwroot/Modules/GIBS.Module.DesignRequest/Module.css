@@ -1,1 +1,6 @@
 /* Module Custom Styles */
+
+.form-check-input.form-check-input-lg {
+    width: 1em; /* Example large size */
+    height: 1em;
+}

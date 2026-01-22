@@ -70,7 +70,49 @@
 
     <hr class="my-4" />
 
+    <h5 class="mb-3">Email Settings</h5>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="sentToUserName" HelpText="Enter sentToUser Name" ResourceKey="SentToUserName" ResourceType="@resourceType">SentToUserName: </Label>
+        <div class="col-sm-9">
+            <input id="sentToUserName" class="form-control" @bind="@_sentToUserName" required />
+        </div>
+    </div>
+
+
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="sentToUserEmail" HelpText="Enter sentToUser Email" ResourceKey="SentToUserEmail" ResourceType="@resourceType">SentToUserEmail: </Label>
+        <div class="col-sm-9">
+            <input id="sentToUserEmail" class="form-control" @bind="@_sentToUserEmail" required />
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="emailBCC" HelpText="Enter BCC Email" ResourceKey="EmailBCC" ResourceType="@resourceType">BCC Email: </Label>
+        <div class="col-sm-9">
+            <input id="emailBCC" class="form-control" @bind="@_EmailBCC" />
+        </div>
+    </div>
+
+
+    <hr class="my-4" />
+
     <h5 class="mb-3">General Settings</h5>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="creditsNeeded" HelpText="Enter a value for number of credits needed to submit a design." ResourceKey="CreditsNeeded" ResourceType="@resourceType">Credits Needed: </Label>
+        <div class="col-sm-9">
+            <input id="creditsNeeded" type="number" step="1" class="form-control" @bind="@_creditsNeeded" />
+        </div>
+    </div>
+
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="revisionsAllowed" HelpText="Enter a value for number of revisions allowed per design." ResourceKey="RevisionsAllowed" ResourceType="@resourceType">Revisions Allowed: </Label>
+        <div class="col-sm-9">
+            <input id="revisionsAllowed" type="number" step="1" class="form-control" @bind="@_revisionsAllowed" />
+        </div>
+    </div>
 
     <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="googleApiKey" HelpText="Enter a Google ApiKey" ResourceKey="GoogleApiKey" ResourceType="@resourceType">Google ApiKey: </Label>
@@ -153,21 +195,7 @@
         </div>
     </div>
 
-    <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="sentToUserName" HelpText="Enter sentToUser Name" ResourceKey="SentToUserName" ResourceType="@resourceType">SentToUserName: </Label>
-        <div class="col-sm-9">
-            <input id="sentToUserName" class="form-control" @bind="@_sentToUserName" required />
-        </div>
-    </div>
 
-
-
-    <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="sentToUserEmail" HelpText="Enter sentToUser Email" ResourceKey="SentToUserEmail" ResourceType="@resourceType">SentToUserEmail: </Label>
-        <div class="col-sm-9">
-            <input id="sentToUserEmail" class="form-control" @bind="@_sentToUserEmail" required />
-        </div>
-    </div>
 
     <div class="row mb-1 align-items-center">
         <Label Class="col-sm-3" For="authorizedUser" HelpText="Select the user to manage contact form." ResourceKey="AuthorizedUser" ResourceType="@resourceType">Authorized User: </Label>
@@ -303,6 +331,7 @@
     private string _configurationShape;
     private string _sentToUserName;
     private string _sentToUserEmail;
+    private string _EmailBCC;
     private string _authorizedUser;
     public List<User> _users { get; set; } = new List<User>();
     private List<Role> _roles { get; set; } = new List<Role>();
@@ -314,7 +343,8 @@
     private string _payPalSandboxClientId;
     private string _payPalSandboxClientSecret;
     private string _payPalSandboxPayee;
-
+    private string _creditsNeeded = "3";
+    private string _revisionsAllowed = "2";
     private bool _showCompany;
     private bool _showAddress;
     private bool _showPhone;
@@ -359,6 +389,8 @@
             //_roles = await RoleService.GetRolesAsync(PageState.Site.SiteId);
             _users = await DesignRequestService.GetUsersAsync();
             Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _creditsNeeded = SettingService.GetSetting(settings, "CreditsNeeded", "3");
+            _revisionsAllowed = SettingService.GetSetting(settings, "RevisionsAllowed", "2");
             _googleApiKey = SettingService.GetSetting(settings, "GoogleApiKey", "");
             _zoomLevel = SettingService.GetSetting(settings, "ZoomLevel", "19");
             _instructions = SettingService.GetSetting(settings, "Instructions", "");
@@ -367,6 +399,7 @@
             _authorizedUser = SettingService.GetSetting(settings, "AuthorizedUser", "");
             _sentToUserName = SettingService.GetSetting(settings, "SentToUserName", "");
             _sentToUserEmail = SettingService.GetSetting(settings, "SentToUserEmail", "");
+            _EmailBCC = SettingService.GetSetting(settings, "EmailBCC", "");
             _interestList = SettingService.GetSetting(settings, "InterestList", "");
             _configurationShape = SettingService.GetSetting(settings, "ConfigurationShape", "");
             _statusList = SettingService.GetSetting(settings, "StatusList", "");
@@ -410,6 +443,8 @@
         try
         {
             Dictionary<string, string> settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            SettingService.SetSetting(settings, "CreditsNeeded", _creditsNeeded);
+            SettingService.SetSetting(settings, "RevisionsAllowed", _revisionsAllowed);
             SettingService.SetSetting(settings, "GoogleApiKey", _googleApiKey);
             SettingService.SetSetting(settings, "ZoomLevel", _zoomLevel);
             SettingService.SetSetting(settings, "Instructions", _instructions);
@@ -418,6 +453,7 @@
             SettingService.SetSetting(settings, "AuthorizedUser", _authorizedUser);
             SettingService.SetSetting(settings, "SentToUserEmail", _sentToUserEmail);
             SettingService.SetSetting(settings, "SentToUserName", _sentToUserName);
+            SettingService.SetSetting(settings, "EmailBCC", _EmailBCC);
             SettingService.SetSetting(settings, "InterestList", _interestList);
             SettingService.SetSetting(settings, "ConfigurationShape", _configurationShape);
             SettingService.SetSetting(settings, "StatusList", _statusList);

@@ -1,0 +1,459 @@
+﻿@using System.Net
+@using System.Linq
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Routing
+@using System.ComponentModel.DataAnnotations
+@using Oqtane.Modules.Controls
+@using GIBS.Module.DesignRequest.Services
+@using GIBS.Module.DesignRequest.Models
+@using Oqtane.Shared
+@using Oqtane.Services
+@using Oqtane.Modules
+@using Oqtane.Models
+@using Oqtane.Interfaces @* Important for IInterop *@
+@using Oqtane.UI
+@using MimeKit
+@using MailKit.Net.Smtp
+@using MailKit.Security
+@using System.Threading.Tasks
+@using System.Text.Json
+@using System.Text
+@using Microsoft.AspNetCore.Components.Authorization
+
+@namespace GIBS.Module.DesignRequest
+@inherits ModuleBase
+@inject Services.IDesignRequestService DesignRequestService
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IStringLocalizer<BuyCredits> Localizer
+@inject ISettingService SettingService
+@inject IJSRuntime JS
+
+
+
+@if (_loading)
+{
+    <p><em>@Localizer["Loading..."]</em></p>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-warning">@_error</div>
+}
+else if (_package is not null)
+{
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-3">Purchase Credits</h3>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-primary">
+                <div class="card-header text-center bg-primary text-white">
+                    <h4 class="my-0 text-white">@_package.Name</h4>
+                </div>
+                <div class="card-body text-center d-flex flex-column">
+                    <h1 class="card-title pricing-card-title">
+                        $@_package.Price.ToString("F0")
+                        <small class="text-muted">/ @_package.Credits Credits</small>
+                    </h1>
+                    <ul class="list-unstyled mt-3 mb-4 flex-grow-1">
+                        <li>@_package.Description</li>
+                        <li><strong>$@((_package.Price / _package.Credits).ToString("F2"))</strong> per credit</li>
+                    </ul>
+
+                    @* Show either the PayPal UI or the success banner *@
+                    @if (_purchaseComplete)
+                    {
+                        <div class="alert alert-success w-100 text-center">
+                            <span class="fs-3 fw-bold">SUCCESS</span>
+                            <p>@_package.Credits credits have been added to your account.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info w-100">
+                            Please review your selection, then continue with PayPal to complete your purchase.
+                        </div>
+                        <div id="paypal-button-container" class="paypal-button-container w-100"></div>
+                        @if (string.IsNullOrWhiteSpace(_payPalClientId))
+                        {
+                            <div class="alert alert-warning mt-3 w-100">PayPal Client ID not configured.</div>
+                        }
+                    }
+                </div>
+                <div class="card-footer text-end">
+                    <a href="@NavigateUrl()" class="btn btn-secondary">Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+}
+else
+{
+    <div class="alert alert-warning">No package found.</div>
+}
+
+@code {
+    public override bool UseAdminContainer => false;
+    public override string RenderMode => RenderModes.Interactive;
+
+
+    private bool _loading = true;
+    private string _error;
+    private CreditPackage _package = new();
+    private PaymentRecord _paymentRecord = new();
+    private DotNetObjectReference<BuyCredits> _objRef;
+    private bool _PayPalSandboxMode;
+    private bool _paypalInitialized = false;
+    private int _paypalInitAttempts = 0;
+    private const int MaxPaypalInitAttempts = 3;
+    private int _id;
+    private string _payPalClientId;
+    private string _EmailSubject;
+    private string _EmailReplyTo = "webmaster@gibs.net";
+    private string _EmailNotify = "";
+    private string _EmailBCC = "";
+    private bool _purchaseComplete = false;
+
+//    private Oqtane.Models.User CurrentUser;
+
+    public override List<Resource> Resources => new List<Resource>()
+    {
+        new Resource { ResourceType = ResourceType.Stylesheet, Url = "Modules/GIBS.Module.DesignRequest/Module.css?v=1.0.5" },
+        new Resource { ResourceType = ResourceType.Script, Level = ResourceLevel.Site, Url = "Modules/GIBS.Module.DesignRequest/Module.js?v=1.7" }
+
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CheckAuthenticationAsync();
+            
+            if (PageState?.QueryString == null || !PageState.QueryString.ContainsKey("id"))
+            {
+                _error = "Missing package id.";
+                return;
+            }
+
+            if (!int.TryParse(PageState.QueryString["id"], out _id))
+            {
+                _error = "Invalid package id.";
+                return;
+            }
+
+            var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
+            _PayPalSandboxMode = bool.Parse(SettingService.GetSetting(settings, "PayPalSandboxMode", "true"));
+
+            if (_PayPalSandboxMode)
+            {
+                _payPalClientId = SettingService.GetSetting(settings, "PayPalSandboxClientId", "");
+            }
+            else
+            {
+                _payPalClientId = SettingService.GetSetting(settings, "OAuthClientId", "");
+            }
+            _EmailNotify = SettingService.GetSetting(settings, "SentToUserEmail", "");
+            _EmailBCC = SettingService.GetSetting(settings, "EmailBCC", "");
+
+
+            _package = await DesignRequestService.GetCreditPackageAsync(_id, ModuleState.ModuleId);
+            if (_package == null)
+            {
+                _error = "Package not found or inactive.";
+            }
+            _EmailSubject = _package.Name + " - Design Credits Purchase Confirmation";
+            _paymentRecord.ModuleId = ModuleState.ModuleId;
+            _paymentRecord.Amount = _package.Price;
+            _paymentRecord.Credits = _package.Credits;
+            _paymentRecord.UserId = PageState.User.UserId;
+            _paymentRecord.Provider = "PayPal";
+            _paymentRecord.Status = "Pending";
+            _paymentRecord.PaypalPaymentState = "NOT-PAID";
+            _paymentRecord.TransactionId = "Pending";
+            _paymentRecord.PurchaserName = PageState.User.DisplayName;
+            _paymentRecord.EmailAddress = PageState.User.Email;
+            //  var newRecord = await DesignRequestService.AddPaymentRecordAsync(_paymentRecord);
+            // _paymentRecord.PaymentId = newRecord.PaymentId;
+           
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error loading package: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CheckAuthenticationAsync()
+    {
+        // @inject AuthenticationStateProvider AuthenticationStateProvider
+        // @inject NavigationManager NavigationManager
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // Redirect to the Oqtane login page, appending the current URL as a return parameter
+            NavigationManager.NavigateTo(NavigateUrl());
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (_package != null &&
+            !string.IsNullOrWhiteSpace(_payPalClientId) &&
+            !_paypalInitialized &&
+            _paypalInitAttempts < MaxPaypalInitAttempts)
+        {
+            var ok = await TryInitPayPalAsync();
+            if (!ok)
+            {
+                _paypalInitAttempts++;
+                await Task.Delay(200);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private async Task<bool> TryInitPayPalAsync()
+    {
+        try
+        {
+            await InitializePayPalButtonsAsync();
+            _paypalInitialized = true;
+            return true;
+        }
+        catch (JSException ex)
+        {
+            await logger.LogError(ex, "PayPal init failed (attempt {Attempt})", _paypalInitAttempts + 1);
+            _paypalInitialized = false;
+            return false;
+        }
+    }
+
+    private async Task InitializePayPalButtonsAsync()
+    {
+        _objRef ??= DotNetObjectReference.Create(this);
+        var sdkUrl = $"https://www.paypal.com/sdk/js?client-id={_payPalClientId}&currency=USD&intent=capture";
+        await JS.InvokeVoidAsync("GIBS.DesignRequest.loadPayPalSdk", sdkUrl, _objRef);
+    }
+
+    private async Task UpsertUserCreditsAsync(int moduleId, int userId, int credits)
+    {
+        var userCredit = await DesignRequestService.GetUserCreditByUserAsync(moduleId, userId);
+        if (userCredit == null)
+        {
+            userCredit = new UserCredit
+            {
+                ModuleId = moduleId,
+                UserId = userId,
+                CreditBalance = credits
+            };
+            await DesignRequestService.AddUserCreditAsync(userCredit);
+        }
+        else
+        {
+            userCredit.CreditBalance += credits;
+            await DesignRequestService.UpdateUserCreditAsync(userCredit);
+        }
+    }
+
+    private async Task AddCreditTransactionAsync(int moduleId, int userId, int credits, decimal price, string orderId)
+    {
+        var tx = new CreditTransaction
+        {
+            UserId = userId,
+            Credits = credits,
+            Price = price,
+            TransactionType = "Purchase",
+            TransactionDate = DateTime.UtcNow,
+            Notes = $"PayPal OrderId: {orderId}"
+        };
+        await DesignRequestService.AddCreditTransactionAsync(tx, moduleId);
+    }
+
+    [JSInvokable]
+    public async Task<string> CreateOrderOnServer()
+    {
+        try
+        {
+            // Create the pending record only once
+            if (_paymentRecord.PaymentId == 0)
+            {
+                var pending = await DesignRequestService.AddPaymentRecordAsync(_paymentRecord);
+                _paymentRecord.PaymentId = pending.PaymentId;
+            }
+
+            var orderResponse = await DesignRequestService.CreatePayPalOrderAsync(_paymentRecord);
+            if (orderResponse != null && !string.IsNullOrEmpty(orderResponse.OrderId))
+            {
+                await logger.LogInformation("PayPal Order Created On Server with ID: {OrderId}", orderResponse.OrderId);
+                return orderResponse.OrderId;
+            }
+            else
+            {
+                await logger.LogError("Failed to create PayPal order on server.");
+                return string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Creating PayPal Order On Server {Error}", ex.Message);
+            return string.Empty;
+        }
+    }
+
+    [JSInvokable]
+    public async Task<object> CaptureOrderOnServer(string orderId)
+    {
+        try
+        {
+            var resultJson = await DesignRequestService.CapturePayPalOrderAsync(orderId, ModuleState.ModuleId);
+            if (string.IsNullOrEmpty(resultJson))
+            {
+                throw new Exception("Server returned an empty response for order capture.");
+            }
+
+            using var jsonDoc = JsonDocument.Parse(resultJson);
+            var root = jsonDoc.RootElement;
+
+            // The PayPal Orders API may return Status as number (4) or string ("COMPLETED"/"SUCCESS")
+            if (root.TryGetProperty("Status", out var statusElement))
+            {
+                int? statusNumber = statusElement.ValueKind == JsonValueKind.Number ? statusElement.GetInt32() : (int?)null;
+                var statusString = statusElement.ValueKind == JsonValueKind.String
+                    ? statusElement.GetString()
+                    : statusNumber?.ToString() ?? string.Empty;
+
+                var isCompleted =
+                    (statusNumber == 4) ||
+                    statusString.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase) ||
+                    statusString.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase);
+
+                if (isCompleted)
+                {
+                    await logger.LogInformation("PayPal Order Capture Status: {Status} for Order ID: {OrderId}", statusString, orderId);
+
+                    var paypalid = root.GetProperty("Id").GetString();
+                    _paymentRecord.Status = "SUCCESS";
+                    _paymentRecord.PP_Response = resultJson;
+                    _paymentRecord.PaypalPaymentState = "PAID";
+                    _paymentRecord.TransactionId = orderId;
+                    _paymentRecord.PP_PaymentId = paypalid;
+
+                    await DesignRequestService.UpdatePaymentRecordAsync(_paymentRecord);
+
+                    await UpsertUserCreditsAsync(ModuleState.ModuleId, PageState.User.UserId, _paymentRecord.Credits);
+                    await UpsertUserCreditsAsync(ModuleState.ModuleId, PageState.User.UserId, _paymentRecord.Credits);
+                    await AddCreditTransactionAsync(ModuleState.ModuleId, PageState.User.UserId, _paymentRecord.Credits, _paymentRecord.Amount, orderId);
+
+                    _purchaseComplete = true;
+
+                    var currentUrl = NavigationManager.Uri;
+                    var baseUri = NavigationManager.BaseUri;
+                   
+                    //var request = _accessor.HttpContext.Request;
+                    var mySite = $"{currentUrl.ToString()}";
+
+                    var body = new StringBuilder();
+                    body.AppendLine($"<p>You have successfully ordered new Design Credits:</p>");
+                    body.AppendLine($"<p><b>Name:</b> {_paymentRecord.PurchaserName}</p>");
+                    body.AppendLine($"<p><b>Package:</b> {_package.Name}</p>");
+                    body.AppendLine($"<p><b>Credits:</b> {_paymentRecord.Credits}</p>");
+                    body.AppendLine($"<p><b>Amount:</b> ${_paymentRecord.Amount}</p>");
+                    
+                    body.AppendLine($"<p><b>Email:</b> {_paymentRecord.EmailAddress}</p>");
+                    
+                    body.AppendLine($"<hr />");
+                    body.AppendLine($"<p><b>Submitted On:</b> {_paymentRecord.CreatedOn.ToLocalTime()}</p>");
+                  //  body.AppendLine($"<p><b>IP Address:</b> https://ip-address-lookup-v4.com/ip/{_giftCert.IP_Address}</p>");
+                    body.AppendLine($"<p><b>Site:</b> " + baseUri.ToString() + "</p>");
+
+                    // NOTIFY purchaser
+                    await DesignRequestService.SendHtmlEmailAsync(
+                      PageState.User.DisplayName,               // Recipient Name
+                      PageState.User.Email,            // Recipient Email (or wherever you want it to go)
+                      _EmailBCC,            // BCC Name
+                      _EmailBCC,               // BCC Email
+                      _EmailReplyTo,
+                        _EmailReplyTo,     // ReplyTo Email
+                      _EmailSubject ,     // Subject
+                     body.ToString());
+ 
+                    // NOTIFY ADMIN
+                    await DesignRequestService.SendHtmlEmailAsync(
+                       _EmailNotify,               // Recipient Name
+                       _EmailNotify,            // Recipient Email (or wherever you want it to go)
+                       _EmailBCC,            // BCC Name
+                       _EmailBCC,               // BCC Email
+                       PageState.User.DisplayName,               // ReplyTo Name
+                       PageState.User.Email,            // ReplyTo Email (or wherever you want it to go)
+                    _EmailSubject ,     // Subject
+                      body.ToString());
+
+                  
+                    // Hide the PayPal buttons and show a success message
+                    var interop = new Oqtane.UI.Interop(JSRuntime);
+
+                    await JS.InvokeVoidAsync("eval", "document.getElementById('paypal-button-container').style.display = 'none';");
+
+
+                //    AddModuleMessage(Localizer["Message_PaymentSuccess"], MessageType.Success);
+                    await InvokeAsync(StateHasChanged);
+
+                    return new { status = "COMPLETED" };
+                }
+                else if (root.TryGetProperty("name", out var errorName) &&
+                         errorName.GetString() == "INSTRUMENT_DECLINED")
+                {
+                    await logger.LogWarning("PayPal payment failed: Instrument Declined. Order ID: {OrderId}", orderId);
+                    return new { error = "INSTRUMENT_DECLINED" };
+                }
+                else
+                {
+                    await logger.LogError("PayPal capture was not completed. Status: {Status}. Response: {Response}",
+                        root.TryGetProperty("status", out var s) ? s.GetString() : "Unknown", resultJson);
+                    return string.Empty;
+                }
+            }
+
+            // Status not present
+            await logger.LogError("PayPal capture response missing Status. Response: {Response}", resultJson);
+            return string.Empty;
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Capturing PayPal Order On Server for Order {OrderId}", orderId);
+            return string.Empty;
+        }
+    }
+
+    // [JSInvokable]
+    // public async Task PersistPayPalCaptureAsync(string orderId, string transactionId, string status)
+    // {
+    //     //    _paymentRecord
+    //     _paymentRecord.PP_PaymentId = transactionId;
+    //     _paymentRecord.PaypalPaymentState = status;
+    //     _paymentRecord.PP_Response = orderId;
+    //     _paymentRecord.Status = string.Equals(status, "COMPLETED", StringComparison.OrdinalIgnoreCase) ? "Completed" : "Pending";
+
+    //     await DesignRequestService.UpdatePaymentRecordAsync(_paymentRecord);
+    //     AddModuleMessage(Localizer["Message.PaymentCaptured"], MessageType.Success);
+    // }
+
+
+
+    public ValueTask DisposeAsync()
+    {
+        _objRef?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

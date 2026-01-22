@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <Product>GIBS.Module.DesignRequest</Product>
     <Authors>GIBS</Authors>
     <Company>GIBS</Company>
@@ -23,6 +23,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.9" />
+    <PackageReference Include="PayPalServerSDK" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="MailKit">
+      <HintPath>..\..\oqtane.framework-6.1.2-Source\Oqtane.Server\bin\Release\net9.0\MailKit.dll</HintPath>
+    </Reference>
+    <Reference Include="MimeKit">
+      <HintPath>..\..\oqtane.framework-6.1.2-Source\Oqtane.Server\bin\Release\net9.0\MimeKit.dll</HintPath>
+    </Reference>
     <Reference Include="Oqtane.Server"><HintPath>..\..\oqtane.framework-6.1.2-Source\Oqtane.Server\bin\Debug\net9.0\Oqtane.Server.dll</HintPath></Reference>
     <Reference Include="Oqtane.Shared"><HintPath>..\..\oqtane.framework-6.1.2-Source\Oqtane.Server\bin\Debug\net9.0\Oqtane.Shared.dll</HintPath></Reference>
   </ItemGroup>

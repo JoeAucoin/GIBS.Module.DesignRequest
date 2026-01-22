@@ -425,6 +425,7 @@ else
     private bool _showCountertop;
     private int _folderId = 1;
 
+
     private List<Appliance> _availableAppliances = new();
     private List<Detail> _availableDetails = new();
     private Dictionary<int, ApplianceSelection> _selectedAppliances = new();
@@ -440,6 +441,7 @@ else
     private string _doorStyleLink = "";
     private string _colorsLink = "";
     private string _handlePullLink = "";
+    private int _creditCostPerRequest = 3;
     // private List<string> _cabinetColors = new();
     private List<string> _countertopThicknesses = new();
 
@@ -454,6 +456,7 @@ else
     {
         try
         {
+            await CheckAuthenticationAsync();
 
             _DesignRequest.IP_Address = PageState.RemoteIPAddress;
 
@@ -462,7 +465,7 @@ else
             _DesignRequest.Fax = "";
             _DesignRequest.ContactName = PageState.User?.DisplayName ?? "";
             _DesignRequest.Email = PageState.User?.Email ?? "";
-
+            _DesignRequest.RevisionsUsed = 0;
 
             var settings = await SettingService.GetModuleSettingsAsync(ModuleState.ModuleId);
             _instructions = SettingService.GetSetting(settings, "Instructions", "");
@@ -471,7 +474,11 @@ else
             _sentToUserEmail = SettingService.GetSetting(settings, "SentToUserEmail", "");
             _sentToUserName = SettingService.GetSetting(settings, "SentToUserName", "");
             _authorizedUser = SettingService.GetSetting(settings, "AuthorizedUser", "");
+            _creditCostPerRequest = int.Parse(SettingService.GetSetting(settings, "CreditsNeeded", "3"));
             var interestList = SettingService.GetSetting(settings, "InterestList", "");
+
+            _DesignRequest.CreditsSpent = _creditCostPerRequest;
+
             if (!string.IsNullOrEmpty(interestList))
             {
                 _interests = interestList.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -538,17 +545,7 @@ else
                 _folderId = 1; // Default value or handle error
             }
 
-            // var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            // var user = authState.User;
-
-            // IsDesigner = false;
-
-            // if (user.IsInRole(_designerRole) || user.IsInRole("Administrators")) // Replace "Administrators" with the desired role name
-            // {
-            //     IsDesigner = true;
-            // }
-
-
+           
 
             if (_showAppliances)
             {
@@ -592,6 +589,22 @@ else
         }
     }
 
+    private async Task CheckAuthenticationAsync()
+    {
+        // @inject AuthenticationStateProvider AuthenticationStateProvider
+        // @inject NavigationManager NavigationManager
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // Redirect to the Oqtane login page, appending the current URL as a return parameter
+            NavigationManager.NavigateTo(NavigateUrl());
+        }
+    }
+
     private void OnInterestChanged(ChangeEventArgs e, string interest)
     {
         if (_selectedInterests.ContainsKey(interest))
@@ -610,71 +623,128 @@ else
 
     private async void HandleFileUpload(int fileId)
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
 
-
-        if (_currentDesignRequestId != 0)
+        var uploadedFile = await FileService.GetFileAsync(fileId);
+        if (uploadedFile != null)
         {
-            var uploadedFile = await FileService.GetFileAsync(fileId);
-            if (uploadedFile != null)
+            _newFileToRequest.DesignRequestId = _currentDesignRequestId;
+            _newFileToRequest.FileId = uploadedFile.FileId;
+            _newFileToRequest.FilePath = uploadedFile.Url;
+
+            try
             {
-                try
+                string newFileName = $"{_currentDesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
+                newFileName = newFileName.Replace(" ", "_"); // Replace spaces with underscores
+                //CHECK FILEMANE FOR INVALID CHARACTERS HERE
+                // Remove any non-alphanumeric characters except for underscore, hyphen, and dot
+                newFileName = System.Text.RegularExpressions.Regex.Replace(newFileName, @"[^a-zA-Z0-9_\-\.]", "");
+
+
+                var renamedFile = await RenameFile(fileId, newFileName);
+                if (renamedFile == null)
                 {
-                    // Construct the new file name
-                    string newFileName = $"{_currentDesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
-
-                    _newFileToRequest.DesignRequestId = _currentDesignRequestId;
-
-                    // Rename the file and get the updated file object
-
-                    if (user.Identity.IsAuthenticated)
-                    {
-                        var renamedFile = await RenameFile(fileId, newFileName);
-                        if (renamedFile == null)
-                        {
-                            AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
-                            return;
-                        }
-
-                        // Use the custom friendly name if provided, otherwise use the new (renamed) file name
-                        _newFileToRequest.FileId = renamedFile.FileId;
-                        _newFileToRequest.FilePath = renamedFile.Url;
-                        if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
-                        {
-                            _newFileToRequest.Name = renamedFile.Name;
-                        }
-
-                    }
-                    else
-                    {
-                        if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
-                        {
-                            _newFileToRequest.Name = uploadedFile.Name;
-                        }
-                        _newFileToRequest.FileId = fileId;
-                        _newFileToRequest.FilePath = uploadedFile.Url;
-                    }
-
-                    var result = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
-
-                    _uploadedFiles.Add(result);
-                    _newFileToRequest = new(); // Reset for next upload
-                    AddModuleMessage("File uploaded successfully.", MessageType.Success);
+                    //    AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
+                    return;
                 }
-                catch (Exception ex)
+
+                // Use the custom friendly name if provided, otherwise use the new (renamed) file name
+                _newFileToRequest.FileId = renamedFile.FileId;
+                _newFileToRequest.FilePath = renamedFile.Url;
+                if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
                 {
-                    await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
-                    AddModuleMessage("There was an error saving the file information.", MessageType.Error);
+                    _newFileToRequest.Name = renamedFile.Name;
                 }
+
+                var newFileToRequest = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+               
+
+                _newFileToRequest = new(); // Reset form
+               
+
+                AddModuleMessage("File uploaded successfully.", MessageType.Success);
+
+            
             }
-            else
+            catch (Exception ex)
             {
-                AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+                await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
+                AddModuleMessage("There was an error saving the file information.", MessageType.Error);
             }
-            StateHasChanged();
         }
+        else
+        {
+            AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+        }
+        StateHasChanged();
     }
+
+    // private async void HandleFileUpload(int fileId)
+    // {
+    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    //     var user = authState.User;
+
+
+    //     if (_currentDesignRequestId != 0)
+    //     {
+    //         var uploadedFile = await FileService.GetFileAsync(fileId);
+    //         if (uploadedFile != null)
+    //         {
+    //             try
+    //             {
+    //                 // Construct the new file name
+    //                 string newFileName = $"{_currentDesignRequestId}_{uploadedFile.FileId}_{uploadedFile.Name}";
+
+    //                 _newFileToRequest.DesignRequestId = _currentDesignRequestId;
+
+    //                 // Rename the file and get the updated file object
+
+    //                 if (user.Identity.IsAuthenticated)
+    //                 {
+    //                     var renamedFile = await RenameFile(fileId, newFileName);
+    //                     if (renamedFile == null)
+    //                     {
+    //                         AddModuleMessage("Could not rename the uploaded file.", MessageType.Error);
+    //                         return;
+    //                     }
+
+    //                     // Use the custom friendly name if provided, otherwise use the new (renamed) file name
+    //                     _newFileToRequest.FileId = renamedFile.FileId;
+    //                     _newFileToRequest.FilePath = renamedFile.Url;
+    //                     if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+    //                     {
+    //                         _newFileToRequest.Name = renamedFile.Name;
+    //                     }
+
+    //                 }
+    //                 else
+    //                 {
+    //                     if (string.IsNullOrWhiteSpace(_newFileToRequest.Name))
+    //                     {
+    //                         _newFileToRequest.Name = uploadedFile.Name;
+    //                     }
+    //                     _newFileToRequest.FileId = fileId;
+    //                     _newFileToRequest.FilePath = uploadedFile.Url;
+    //                 }
+
+    //                 var result = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
+
+    //                 _uploadedFiles.Add(result);
+    //                 _newFileToRequest = new(); // Reset for next upload
+    //                 AddModuleMessage("File uploaded successfully.", MessageType.Success);
+    //             }
+    //             catch (Exception ex)
+    //             {
+    //                 await logger.LogError(ex, "Error saving file information: {Error}", ex.Message);
+    //                 AddModuleMessage("There was an error saving the file information.", MessageType.Error);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             AddModuleMessage("Could not retrieve file details after upload.", MessageType.Error);
+    //         }
+    //         StateHasChanged();
+    //     }
+    // }
 
 
     public async Task<Oqtane.Models.File> RenameFile(int fileId, string newFileName)
@@ -748,6 +818,7 @@ else
                 if (designRequest != null && designRequest.DesignRequestId != 0)
                 {
                     _currentDesignRequestId = designRequest.DesignRequestId;
+                    await DebitUserCreditsAsync(ModuleState.ModuleId, PageState.User.UserId, _creditCostPerRequest, designRequest.DesignRequestId);
 
                     foreach (var selectedAppliance in _selectedAppliances.Where(kvp => kvp.Value.IsSelected))
                     {
@@ -808,6 +879,39 @@ else
         }
 
     }
+
+
+    private async Task<bool> DebitUserCreditsAsync(int moduleId, int userId, int creditsToDeduct, int designRequestId)
+    {
+        var userCredit = await DesignRequestService.GetUserCreditByUserAsync(moduleId, userId);
+        if (userCredit == null || userCredit.CreditBalance < creditsToDeduct)
+        {
+            return false; // no record or insufficient credits
+        }
+
+        userCredit.CreditBalance -= creditsToDeduct;
+        await DesignRequestService.UpdateUserCreditAsync(userCredit);
+
+        await AddCreditTransactionAsync(moduleId, userId, -creditsToDeduct, designRequestId);
+        return true;
+    }
+
+    private async Task AddCreditTransactionAsync(int moduleId, int userId, int credits, int designRequestId)
+    {
+        var tx = new CreditTransaction
+        {
+            UserId = userId,
+            Credits = credits,
+            Price = 0,
+            TransactionType = "DesignRequest",
+            DesignRequestId = designRequestId,
+            TransactionDate = DateTime.UtcNow,
+            Notes = $"Credits used for DesignRequest {designRequestId}"
+        };
+
+        await DesignRequestService.AddCreditTransactionAsync(tx, moduleId);
+    }
+
 
     private async Task UpdateProfileFields()
     {
