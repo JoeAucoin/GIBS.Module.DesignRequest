@@ -195,7 +195,7 @@ else
 
                     @if (_projectManagers != null)
                     {
-                        <select id="projectManager" class="form-select" @bind="@ProjectManagerUserId">
+                        <select id="projectManager" class="form-select" @bind="@ProjectManagerUserId" disabled="disabled">
                             <option value="0">-- Unassigned --</option>
 
 
@@ -215,7 +215,7 @@ else
 
                     @if (_designerUsers != null)
                     {
-                        <select id="assignedTo" class="form-select" @bind="@AssignedToUserId">
+                        <select id="assignedTo" class="form-select" @bind="@AssignedToUserId" disabled="disabled">
                             <option value="0">-- Unassigned --</option>
 
 
@@ -229,9 +229,9 @@ else
                 </div>
             </div>
             <div class="row mb-1 align-items-center">
-                <Label Class="col-sm-3" For="status" HelpText="Select the status" ResourceKey="Status">Status: </Label>
+                <Label Class="col-sm-3" For="status" HelpText="Select the status" ResourceKey="Status">Design Status: </Label>
                 <div class="col-sm-9">
-                    <select id="status" class="form-select" @bind="@Status">
+                    <select id="status" class="form-select" @bind="@Status" disabled="disabled">
                         @if (_status != null)
                         {
                             @foreach (var statusValue in _status)
@@ -245,7 +245,7 @@ else
             <div class="row mb-1 align-items-center">
                 <Label Class="col-sm-3" For="projectStatus" HelpText="Select the status" ResourceKey="ProjectStatus">Project Status: </Label>
                 <div class="col-sm-9">
-                    <select id="projectStatus" class="form-select" @bind="@ProjectStatus">
+                    <select id="projectStatus" class="form-select" @bind="@ProjectStatus" disabled="disabled">
                         @if (_projectStatus != null)
                         {
                             @foreach (var statusValue in _projectStatus)
@@ -294,51 +294,53 @@ else
                 {
                     <p class="mt-3"><em>No appliances have been added to this request.</em></p>
                 }
-                <div class="card mt-3">
-                    <div class="card-header">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add New" : "Edit") Appliance</div>
-                    <div class="card-body">
-                        <div class="row mb-2 align-items-end">
-                            <div class="col-md-3">
-                                <Label For="applianceSelect">Select Appliance:</Label>
-                                <select id="applianceSelect" class="form-select" @bind="@_newApplianceToRequest.ApplianceId">
-                                    <option value="0">-- Select --</option>
-                                    @if (_availableAppliances != null)
-                                    {
-                                        @foreach (var appliance in _availableAppliances)
+                @if (ShowStuff)
+                {
+                    <div class="card mt-3">
+                        <div class="card-header">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add New" : "Edit") Appliance</div>
+                        <div class="card-body">
+                            <div class="row mb-2 align-items-end">
+                                <div class="col-md-3">
+                                    <Label For="applianceSelect">Select Appliance:</Label>
+                                    <select id="applianceSelect" class="form-select" @bind="@_newApplianceToRequest.ApplianceId">
+                                        <option value="0">-- Select --</option>
+                                        @if (_availableAppliances != null)
                                         {
-                                            <option value="@appliance.ApplianceId">@appliance.ApplianceName</option>
+                                            @foreach (var appliance in _availableAppliances)
+                                            {
+                                                <option value="@appliance.ApplianceId">@appliance.ApplianceName</option>
+                                            }
                                         }
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <Label For="brandModel">Brand/Model:</Label>
+                                    <input id="brandModel" class="form-control" @bind="@_newApplianceToRequest.BrandModel" />
+                                </div>
+                                <div class="col-md-2">
+                                    <Label For="applianceSize">Size:</Label>
+                                    <input id="applianceSize" class="form-control" @bind="@_newApplianceToRequest.Size" />
+                                </div>
+                                <div class="col-md-2">
+                                    <Label For="fuelType">Fuel Type:</Label>
+                                    <select id="fuelType" class="form-select" @bind="@_newApplianceToRequest.FuelType">
+                                        <option value="">-- Select --</option>
+                                        <option value="Electric">Electric</option>
+                                        <option value="Natural Gas">Natural Gas</option>
+                                        <option value="Propane">Propane</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-success" @onclick="SaveApplianceToRequest">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add" : "Update")</button>
+                                    @if (_newApplianceToRequest.ApplianceToRequestId != 0)
+                                    {
+                                        <button type="button" class="btn btn-secondary" @onclick="CancelEditAppliance">Cancel</button>
                                     }
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <Label For="brandModel">Brand/Model:</Label>
-                                <input id="brandModel" class="form-control" @bind="@_newApplianceToRequest.BrandModel" />
-                            </div>
-                            <div class="col-md-2">
-                                <Label For="applianceSize">Size:</Label>
-                                <input id="applianceSize" class="form-control" @bind="@_newApplianceToRequest.Size" />
-                            </div>
-                            <div class="col-md-2">
-                                <Label For="fuelType">Fuel Type:</Label>
-                                <select id="fuelType" class="form-select" @bind="@_newApplianceToRequest.FuelType">
-                                    <option value="">-- Select --</option>
-                                    <option value="Electric">Electric</option>
-                                    <option value="Natural Gas">Natural Gas</option>
-                                    <option value="Propane">Propane</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-success" @onclick="SaveApplianceToRequest">@(_newApplianceToRequest.ApplianceToRequestId == 0 ? "Add" : "Update")</button>
-                                @if (_newApplianceToRequest.ApplianceToRequestId != 0)
-                                {
-                                    <button type="button" class="btn btn-secondary" @onclick="CancelEditAppliance">Cancel</button>
-                                }
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
+                }
             </TabPanel>
             <TabPanel Name="Details">
                 <h4 class="mt-4">Details for this Design</h4>
@@ -347,12 +349,12 @@ else
                     <table class="table table-striped mt-3">
                         <thead>
                             <tr>
-                                <th>Detail</th>
-                                <th>Notes</th>
+                                <th class="text-start">Detail</th>
+                                <th class="text-start">Notes</th>
                                 @*  <th>Model</th>
                                 <th>Size</th>
                                 <th>Color</th> *@
-                                <th class="text-end">Actions</th>
+                                <th class="text-end">&nbsp;</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -365,7 +367,10 @@ else
                                     <td>@item.DetailSize</td>
                                     <td>@item.DetailColor</td> *@
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetailToRequest(item)">Edit</button>
+                                        @if (ShowStuff)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-primary" @onclick="() => EditDetailToRequest(item)">Edit</button>
+                                        }
                                         <ActionDialog Header="Confirm Delete" Message="@($"Are you sure you want to delete the detail '{item.Detail?.DetailName}'?")" Action="Delete" OnClick="@(async () => await DeleteDetailToRequest(item))" Class="btn btn-sm btn-danger" Security="SecurityAccessLevel.Admin" />
                                     </td>
                                 </tr>
@@ -377,49 +382,41 @@ else
                 {
                     <p class="mt-3"><em>No details have been added to this request.</em></p>
                 }
-                <div class="card mt-3">
-                    <div class="card-header">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add New" : "Edit") Detail</div>
-                    <div class="card-body">
-                        <div class="row mb-2 align-items-start">
-                            <div class="col-md-3">
-                                <Label For="detailSelect">Select Detail:</Label>
-                                <select id="detailSelect" class="form-select" @bind="@_newDetailToRequest.DetailId">
-                                    <option value="0">-- Select --</option>
-                                    @if (_availableDetails != null)
-                                    {
-                                        @foreach (var detail in _availableDetails)
+                @if (ShowStuff)
+                {
+                    <div class="card mt-3">
+                        <div class="card-header">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add New" : "Edit") Detail</div>
+                        <div class="card-body">
+                            <div class="row mb-2 align-items-start">
+                                <div class="col-md-3">
+                                    <Label For="detailSelect">Select Detail:</Label>
+                                    <select id="detailSelect" class="form-select" @bind="@_newDetailToRequest.DetailId">
+                                        <option value="0">-- Select --</option>
+                                        @if (_availableDetails != null)
                                         {
-                                            <option value="@detail.DetailId">@detail.DetailName</option>
+                                            @foreach (var detail in _availableDetails)
+                                            {
+                                                <option value="@detail.DetailId">@detail.DetailName</option>
+                                            }
                                         }
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <Label For="detailNote">Notes:</Label>
+                                    <textarea id="detailNote" class="form-control" @bind="@_newDetailToRequest.DetailNote" rows="3"></textarea>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-success" @onclick="SaveDetailToRequest">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add" : "Update")</button>
+                                    @if (_newDetailToRequest.DetailToRequestId != 0)
+                                    {
+                                        <button type="button" class="btn btn-secondary" @onclick="CancelEditDetail">Cancel</button>
                                     }
-                                </select>
-                            </div>
-                            <div class="col-md-5">
-                                <Label For="detailNote">Notes:</Label>
-                                <textarea id="detailNote" class="form-control" @bind="@_newDetailToRequest.DetailNote" rows="3"></textarea>
-                            </div>
-                            @*                             <div class="col-md-2">
-                                <Label For="detailModel">Model:</Label>
-                                <input id="detailModel" class="form-control" @bind="@_newDetailToRequest.DetailModel" />
-                            </div>
-                            <div class="col-md-1">
-                                <Label For="detailSize">Size:</Label>
-                                <input id="detailSize" class="form-control" @bind="@_newDetailToRequest.DetailSize" />
-                            </div>
-                            <div class="col-md-1">
-                                <Label For="detailColor">Color:</Label>
-                                <input id="detailColor" class="form-control" @bind="@_newDetailToRequest.DetailColor" />
-                            </div> *@
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-success" @onclick="SaveDetailToRequest">@(_newDetailToRequest.DetailToRequestId == 0 ? "Add" : "Update")</button>
-                                @if (_newDetailToRequest.DetailToRequestId != 0)
-                                {
-                                    <button type="button" class="btn btn-secondary" @onclick="CancelEditDetail">Cancel</button>
-                                }
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                }
             </TabPanel>
             <TabPanel Name="Location" Heading="Project Map">
 
@@ -477,7 +474,7 @@ else
                         <div class="row mb-3">
                             <Label Class="col-sm-3" For="fileName">File Name:</Label>
                             <div class="col-sm-9">
-                                <input id="fileName" class="form-control" placeholder="Custom/Friendly File Name" @bind="@_newFileToRequest.Name" maxlength="100" />
+                                <input id="fileName" class="form-control" placeholder="Custom/Friendly Name" @bind="@_newFileToRequest.Name" maxlength="100" />
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -510,8 +507,8 @@ else
                 </div>
 
             </TabPanel>
-            <TabPanel Name="Notes" Heading="Client Notes">
-                <h4 class="mt-4">Client Communication/Notes</h4>
+            <TabPanel Name="Notes" Heading="Communication/Notes">
+                <h4 class="mt-4">Project Manager Communication/Notes</h4>
                 @if (_noteToRequests != null && _noteToRequests.Any())
                 {
                     <div class="list-group mt-3">
@@ -609,7 +606,10 @@ else
         </TabStrip>
 
         <div class="mt-3">
-            <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
+            @if (ShowStuff)
+            {
+                <button type="button" class="btn btn-success" @onclick="Save">@Localizer["Save"]</button>
+            }
             <NavLink class="btn btn-secondary" href="@NavigateUrl()">@Localizer["Cancel"]</NavLink>
 
 
@@ -679,8 +679,7 @@ else
     private bool _notifyProjectManagerOnUpload = true;
     //    private DateTime modifiedon;
 
-    //  private readonly IRoleService _RoleService;
-    //  private readonly UserRoleService userRoleService;
+    private bool ShowStuff = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -778,34 +777,7 @@ else
         }
     }
 
-    private int? ProjectManagerUserId
-    {
-        get => _designRequest?.ProjectManagerUserId;
-        set
-        {
-            if (_designRequest != null && _designRequest.ProjectManagerUserId != value)
-            {
-                _designRequest.ProjectManagerUserId = value == 0 ? null : value;
-                InvokeAsync(() => Save());
-            }
-        }
-    }
 
-    private int AssignedToUserId
-    {
-        get => _designRequest?.AssignedToUserId ?? 0;
-        set
-        {
-            if (_designRequest != null && _designRequest.AssignedToUserId != value)
-            {
-                _designRequest.AssignedToUserId = value;
-                // Send notification to newly assigned designer
-
-                InvokeAsync(() => Save());
-                InvokeAsync(() => SendNotificationToAssignedDesignerAsync(_designRequest.AssignedToUserId));
-            }
-        }
-    }
 
     private async Task SendNotificationToAssignedDesignerAsync(int newDesignerUserId)
     {
@@ -892,7 +864,7 @@ else
             if (_designRequest != null && _designRequest.Status != value)
             {
                 _designRequest.Status = value;
-                InvokeAsync(() => Save());
+               // InvokeAsync(() => Save());
             }
         }
     }
@@ -905,7 +877,36 @@ else
             if (_designRequest != null && _designRequest.ProjectStatus != value)
             {
                 _designRequest.ProjectStatus = value;
-                InvokeAsync(() => Save());
+              //  InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    private int? ProjectManagerUserId
+    {
+        get => _designRequest?.ProjectManagerUserId;
+        set
+        {
+            if (_designRequest != null && _designRequest.ProjectManagerUserId != value)
+            {
+                _designRequest.ProjectManagerUserId = value == 0 ? null : value;
+              //  InvokeAsync(() => Save());
+            }
+        }
+    }
+
+    private int AssignedToUserId
+    {
+        get => _designRequest?.AssignedToUserId ?? 0;
+        set
+        {
+            if (_designRequest != null && _designRequest.AssignedToUserId != value)
+            {
+                _designRequest.AssignedToUserId = value;
+                // Send notification to newly assigned designer
+
+           //     InvokeAsync(() => Save());
+          //      InvokeAsync(() => SendNotificationToAssignedDesignerAsync(_designRequest.AssignedToUserId));
             }
         }
     }

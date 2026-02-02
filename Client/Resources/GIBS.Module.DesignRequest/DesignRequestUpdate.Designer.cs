@@ -60,5 +60,14 @@ namespace GIBS.Module.DesignRequest.Client.Resources.GIBS.Module.DesignRequest {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Return to Dashboard.
+        /// </summary>
+        internal static string Cancel {
+            get {
+                return ResourceManager.GetString("Cancel", resourceCulture);
+            }
+        }
     }
 }

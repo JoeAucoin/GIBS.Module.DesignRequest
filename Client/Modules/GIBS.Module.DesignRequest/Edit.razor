@@ -59,7 +59,10 @@ else
                     </div>
                 </div>
                 <div class="col-sm-1 text-center">
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-1" @onclick="UseRevisionUserCredit">Record Revision Use</button>
+                    @if (!isDesignerLoggedIn)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-1" @onclick="UseRevisionUserCredit">Record Revision Use</button>
+                    }
                 </div>
             </div>
             @* Collapsible Contact Info Section *@
@@ -761,6 +764,8 @@ else
     private bool _sendingClientEmail = false;
     private FileToRequest _clientReviewFile = new();
     private string _clientReviewNote = string.Empty;
+
+   
 
     //    private DateTime modifiedon;
 

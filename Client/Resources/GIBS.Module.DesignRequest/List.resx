@@ -165,4 +165,7 @@
   <data name="ProjectStatus" xml:space="preserve">
     <value>Project Status</value>
   </data>
+  <data name="Status" xml:space="preserve">
+    <value>Design Status</value>
+  </data>
 </root>

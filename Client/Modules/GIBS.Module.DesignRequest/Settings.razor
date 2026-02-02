@@ -226,7 +226,7 @@
     </div>
 
     <div class="row mb-1 align-items-center">
-        <Label Class="col-sm-3" For="statusList" HelpText="Enter available status types" ResourceKey="StatusList" ResourceType="@resourceType">Status List: </Label>
+        <Label Class="col-sm-3" For="statusList" HelpText="Enter available status types" ResourceKey="StatusList" ResourceType="@resourceType">Design Status List: </Label>
         <div class="col-sm-9">
             <textarea id="statusList" class="form-control" @bind="@_statusList" rows="3"></textarea>
         </div>
@@ -259,6 +259,15 @@
         <Label Class="col-sm-3" For="countertopThickness" HelpText="Enter a list of countertop thicknesses" ResourceKey="CountertopThickness" ResourceType="@resourceType">Countertop Thickness: </Label>
         <div class="col-sm-9">
             <textarea id="countertopThickness" class="form-control" @bind="@_countertopThickness" rows="3"></textarea>
+        </div>
+    </div>
+
+    
+    <div class="row mb-1 align-items-center">
+        <Label Class="col-sm-3" For="termsAndConditions" HelpText="Enter the terms and conditions for design requests" ResourceKey="TermsAndConditions" ResourceType="@resourceType">Terms and Conditions: </Label>
+        <div class="col-sm-9">
+           
+            <RichTextEditor id="htmlContent" Content="@_termsAndConditions" @bind="@_termsAndConditions" @ref="@RichTextEditorHtml"></RichTextEditor>
         </div>
     </div>
 
@@ -317,7 +326,7 @@
 
 @code {
 
-
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
 
     private string resourceType = "GIBS.Module.DesignRequest.Settings, GIBS.Module.DesignRequest.Client.Oqtane"; // for localization
     public override string Title => "DesignRequest Settings";
@@ -363,6 +372,9 @@
     private string _countertopThickness;
     private string _cabinetColor;
     private string _googleApiKey;
+    private string _termsAndConditions;
+    private RichTextEditor RichTextEditorHtml;
+
     string _zoomLevel = "19"; // default zoom level
 
     private string _activeTab;
@@ -431,6 +443,7 @@
             _payPalSandboxClientSecret = SettingService.GetSetting(settings, "PayPalSandboxClientSecret", "");
             _OAuthClientId = SettingService.GetSetting(settings, "OAuthClientId", "");
             _OAuthClientSecret = SettingService.GetSetting(settings, "OAuthClientSecret", "");
+            _termsAndConditions = SettingService.GetSetting(settings, "TermsAndConditions", "");
         }
         catch (Exception ex)
         {
@@ -485,6 +498,7 @@
             SettingService.SetSetting(settings, "PayPalSandboxClientSecret", _payPalSandboxClientSecret);
             SettingService.SetSetting(settings, "OAuthClientId", _OAuthClientId);
             SettingService.SetSetting(settings, "OAuthClientSecret", _OAuthClientSecret);
+            SettingService.SetSetting(settings, "TermsAndConditions", await RichTextEditorHtml.GetHtml());
 
             await SettingService.UpdateModuleSettingsAsync(settings, ModuleState.ModuleId);
         }

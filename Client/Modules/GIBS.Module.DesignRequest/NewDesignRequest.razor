@@ -18,14 +18,13 @@
 @inject IFileService FileService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-
 @if (_isSubmitted)
 {
 
     @if (!string.IsNullOrEmpty(_fileUploadInstructions))
     {
-        <div class="alert alert-info text-center" style="white-space: pre-wrap;">
-            @((MarkupString)_fileUploadInstructions)
+        <div class="alert alert-info text-center">
+            @Localizer["Please review the"] <a href="javascript:void(0)" class="alert-link" @onclick="() => _displayUploadInstructionsModal = true">@Localizer["File Upload Instructions"]</a>.
         </div>
     }
 
@@ -80,12 +79,7 @@
 }
 else
 {
-    <div class="text-center mb-3">
-        @if (IsLoggedIn)
-        {
-            <ActionLink Action="ListJobs" Security="SecurityAccessLevel.View" Style="margin-right:10px;" Class="btn btn-secondary" Text="List My Jobs" ResourceKey="List" />
-        }
-    </div>
+
     <form @ref="form" class="@(validated ? " was-validated" : "needs-validation")" novalidate>
 
         @if (!string.IsNullOrEmpty(_instructions))
@@ -368,10 +362,67 @@ else
                 </div>
             }
 
+            @if (!string.IsNullOrEmpty(_termsAndConditions))
+            {
+                <div class="row mb-3 mt-3">
+                    <div class="col-sm-7 offset-sm-5">
+                        <div class="form-check">
+                            <input id="acceptTerms" type="checkbox" class="form-check-input" @bind="_acceptedTerms" required />
+                            <label class="form-check-label" for="acceptTerms">
+                                @Localizer["I accept the"] <a href="javascript:void(0)" @onclick="() => _displayTermsModal = true">@Localizer["Terms and Conditions"]</a>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            }
+
         </div>
         <div style="width:100%;" class="mb-2 mt-2 text-center"><button type="button" class="btn btn-success" @onclick="Save">@Localizer["Submit"]</button></div>
 
     </form>
+}
+
+@if (_displayTermsModal)
+{
+    <div class="modal fade show" tabindex="-1" role="dialog" style="display: block; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer["Terms and Conditions"]</h5>
+                    <button type="button" class="btn-close" @onclick="() => _displayTermsModal = false" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @((MarkupString)_termsAndConditions)
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => _displayTermsModal = false">@Localizer["Close"]</button>
+                    <button type="button" class="btn btn-primary" @onclick="AcceptTerms">@Localizer["I Accept"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (_displayUploadInstructionsModal)
+{
+    <div class="modal fade show" tabindex="-1" role="dialog" style="display: block; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer["File Upload Instructions"]</h5>
+                    <button type="button" class="btn-close" @onclick="() => _displayUploadInstructionsModal = false" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @((MarkupString)_fileUploadInstructions)
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => _displayUploadInstructionsModal = false">@Localizer["Close"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
 }
 
 @code {
@@ -425,6 +476,9 @@ else
     private bool _showCountertop;
     private int _folderId = 1;
 
+    private bool _acceptedTerms = false;
+    private bool _displayTermsModal = false;
+    private bool _displayUploadInstructionsModal = false;
 
     private List<Appliance> _availableAppliances = new();
     private List<Detail> _availableDetails = new();
@@ -441,6 +495,7 @@ else
     private string _doorStyleLink = "";
     private string _colorsLink = "";
     private string _handlePullLink = "";
+    private string _termsAndConditions = "";
     private int _creditCostPerRequest = 3;
     // private List<string> _cabinetColors = new();
     private List<string> _countertopThicknesses = new();
@@ -534,6 +589,7 @@ else
             _showCountertop = bool.Parse(SettingService.GetSetting(settings, "ShowCountertop", "true"));
             _designerRole = SettingService.GetSetting(settings, "DesignerRole", "DesignRequest");
             _handlePullLink = SettingService.GetSetting(settings, "HandlePullLink", "");
+            _termsAndConditions = SettingService.GetSetting(settings, "TermsAndConditions", "");
             // Correctly parse the setting as an integer
             if (int.TryParse(SettingService.GetSetting(ModuleState.Settings, "FileFolder", "1"), out int folderId))
             {
@@ -545,7 +601,7 @@ else
                 _folderId = 1; // Default value or handle error
             }
 
-           
+
 
             if (_showAppliances)
             {
@@ -656,14 +712,14 @@ else
                 }
 
                 var newFileToRequest = await DesignRequestService.AddFileToRequestAsync(_newFileToRequest);
-               
+
 
                 _newFileToRequest = new(); // Reset form
-               
+
 
                 AddModuleMessage("File uploaded successfully.", MessageType.Success);
 
-            
+
             }
             catch (Exception ex)
             {
@@ -770,6 +826,13 @@ else
         return null;
     }
 
+    private void AcceptTerms()
+    {
+        _acceptedTerms = true;
+        _displayTermsModal = false;
+        StateHasChanged();
+    }
+
     private async Task Save()
     {
         try
@@ -778,6 +841,12 @@ else
             var interop = new Oqtane.UI.Interop(JSRuntime);
             if (await interop.FormValid(form))
             {
+                if (!string.IsNullOrEmpty(_termsAndConditions) && !_acceptedTerms)
+                {
+                    AddModuleMessage("You must accept the Terms and Conditions to proceed.", MessageType.Warning);
+                    return;
+                }
+
                 // ensure honeypot is empty
                 //_DesignRequest.Fax = "";
                 _DesignRequest.UserId = PageState.User?.UserId ?? 0;

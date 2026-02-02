@@ -352,7 +352,7 @@ else
                     await DesignRequestService.UpdatePaymentRecordAsync(_paymentRecord);
 
                     await UpsertUserCreditsAsync(ModuleState.ModuleId, PageState.User.UserId, _paymentRecord.Credits);
-                    await UpsertUserCreditsAsync(ModuleState.ModuleId, PageState.User.UserId, _paymentRecord.Credits);
+                    
                     await AddCreditTransactionAsync(ModuleState.ModuleId, PageState.User.UserId, _paymentRecord.Credits, _paymentRecord.Amount, orderId);
 
                     _purchaseComplete = true;
