@@ -262,7 +262,9 @@ namespace GIBS.Module.DesignRequest.Services
         public Task<List<User>> GetUsersAsync()
         {
             // use the server-side IUserRepository to get the users
-            return Task.FromResult(_userRepository.GetUsers().ToList());
+            var users = _userRepository.GetUsers().ToList();
+            users = users.FindAll(u => u.IsDeleted == false); // Filter out deleted users
+            return Task.FromResult(users);
         }
 
         //GetUsersByRoleAsync

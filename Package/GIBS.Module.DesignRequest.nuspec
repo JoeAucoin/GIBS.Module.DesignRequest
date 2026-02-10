@@ -33,7 +33,7 @@
         <file src="..\Server\bin\Release\$targetframework$\Polly.dll" target="lib\$targetframework$" />
       <!--  <file src="..\Server\bin\Release\$targetframework$\Microsoft.Extensions.Configuration.Binder.dll" target="lib\$targetframework$" />  -->
         <!-- Static Assets -->
-        <file src="..\Server\wwwroot\**\*.*" target="wwwroot" />
+      <file src="..\Server\wwwroot\**\*.*" target="wwwroot\Modules\$ProjectName$" />
         <file src="icon.png" target="" />
     </files>
 </package>

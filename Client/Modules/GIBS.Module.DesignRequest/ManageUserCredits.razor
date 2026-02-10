@@ -135,7 +135,7 @@ else
     {
         var users = await DesignRequestService.GetUsersAsync();
         var userCredits = await DesignRequestService.GetUserCreditsAsync(ModuleState.ModuleId);
-
+        
         _userCreditList = new List<UserCreditViewModel>();
 
         foreach (var user in users)

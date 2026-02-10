@@ -36,7 +36,7 @@
             <div class="row mb-3">
                 <Label Class="col-sm-3" For="fileName" HelpText="Provide a name for the file" ResourceKey="Label.FileName">File Name:</Label>
                 <div class="col-sm-9">
-                    <input id="fileName" class="form-control" @bind="@_newFileToRequest.Name" placeholder="Custom Friendly File Name" />
+                    <input id="fileName" class="form-control" @bind="@_newFileToRequest.Name" placeholder="Custom Friendly File Name" maxlength="100" />
                 </div>
             </div>
             <div class="row mb-3">
@@ -50,7 +50,7 @@
                 <div class="col-sm-9">
                     <FileManager UploadMultiple="false" Filter="jpg,png,gif,jpeg,pdf"
                                  FolderId="@_folderId"
-                                 ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="true"
+                                 ShowSuccess="true" ShowFolders="false" ShowFiles="false" ShowImage="false"
                                  OnUpload="@HandleFileUpload" />
                 </div>
             </div>
@@ -546,7 +546,7 @@ else
             }
             else
             {
-                _status = new List<string> { "New Project", "Assigned", "Ready For Review", "Completed" };
+                _status = new List<string> { "Unassigned", "Assigned", "Ready For Review", "Completed" };
             }
 
             var configurationShapes = SettingService.GetSetting(settings, "ConfigurationShape", "");
@@ -851,7 +851,7 @@ else
                 //_DesignRequest.Fax = "";
                 _DesignRequest.UserId = PageState.User?.UserId ?? 0;
                 _DesignRequest.Status = _status.FirstOrDefault();
-                _DesignRequest.ProjectStatus = "Active";
+                _DesignRequest.ProjectStatus =  "Active";
                 _DesignRequest.ContactName = _DesignRequest.ContactName?.Trim();
                 _DesignRequest.Company = _DesignRequest.Company?.Trim();
                 _DesignRequest.ProjectName = _DesignRequest.ProjectName?.Trim();
